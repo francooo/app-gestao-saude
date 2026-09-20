@@ -1,7 +1,22 @@
-import { randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
+import {
+  randomBytes,
+  scrypt as scryptCallback,
+  timingSafeEqual,
+  type ScryptOptions,
+} from 'node:crypto';
 import { promisify } from 'node:util';
 
-const scrypt = promisify(scryptCallback);
+/**
+ * promisify escolhe a sobrecarga de 3 argumentos do scrypt e descarta a que
+ * aceita options, entao a chamada com { N, r, p } nao compila. O tipo abaixo
+ * declara a assinatura que realmente usamos.
+ */
+const scrypt = promisify(scryptCallback) as (
+  password: string | Buffer,
+  salt: string | Buffer,
+  keylen: number,
+  options: ScryptOptions,
+) => Promise<Buffer>;
 
 /**
  * Hashing de senha com scrypt do node:crypto.
@@ -28,12 +43,12 @@ const MAX_MEMORY = 128 * 1024 * 1024;
 
 export async function hashPassword(password: string): Promise<string> {
   const salt = randomBytes(SALT_LEN);
-  const key = (await scrypt(password.normalize('NFKC'), salt, KEY_LEN, {
+  const key = await scrypt(password.normalize('NFKC'), salt, KEY_LEN, {
     N,
     r,
     p,
     maxmem: MAX_MEMORY,
-  })) as Buffer;
+  });
 
   return `scrypt$${N}$${r}$${p}$${salt.toString('base64url')}$${key.toString('base64url')}`;
 }
@@ -51,10 +66,13 @@ export async function verifyPassword(password: string, stored: string): Promise<
   const salt = Buffer.from(rawSalt!, 'base64url');
   const expected = Buffer.from(rawKey!, 'base64url');
 
-  const actual = (await scrypt(password.normalize('NFKC'), salt, expected.length, {
+  // keylen 0 faz o scrypt lancar excecao; um hash corrompido deve so falhar.
+  if (expected.length === 0 || salt.length === 0) return false;
+
+  const actual = await scrypt(password.normalize('NFKC'), salt, expected.length, {
     ...params,
     maxmem: MAX_MEMORY,
-  })) as Buffer;
+  });
 
   // Comparacao de tempo constante: um === vazaria o prefixo correto por timing.
   return actual.length === expected.length && timingSafeEqual(actual, expected);
