@@ -73,14 +73,13 @@ export default function CadastroScreen() {
       // O guard de (auth) redireciona sozinho assim que o usuario entra no
       // contexto — o cadastro ja devolve a sessao.
     } catch (error) {
-      if (error instanceof ApiRequestError && error.code === 'NETWORK_ERROR') {
-        setErroGeral('Sem conexão com o servidor. Verifique sua internet.');
-      } else if (error instanceof ApiRequestError && error.code === 'EMAIL_ALREADY_REGISTERED') {
+      // E-mail duplicado aponta para o campo; o resto vira mensagem geral,
+      // traduzida pelo mapa central — que ja cobre falta de rede e app mal
+      // configurado.
+      if (error instanceof ApiRequestError && error.code === 'EMAIL_ALREADY_REGISTERED') {
         setErros({ email: 'Já existe uma conta com este e-mail' });
-      } else if (error instanceof ApiRequestError) {
-        setErroGeral(messageForError(error.code));
       } else {
-        setErroGeral(messageForError(undefined));
+        setErroGeral(messageForError(error instanceof ApiRequestError ? error.code : undefined));
       }
     } finally {
       setEnviando(false);

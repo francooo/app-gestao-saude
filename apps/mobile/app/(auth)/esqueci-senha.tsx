@@ -49,11 +49,7 @@ export default function EsqueciSenhaScreen() {
       // e-mails estao cadastrados. A tela de sucesso e sempre a mesma.
       setSent(true);
     } catch (error) {
-      if (error instanceof ApiRequestError && error.code === 'NETWORK_ERROR') {
-        setFormError('Sem conexão com o servidor. Verifique sua internet.');
-      } else {
-        setFormError(messageForError(error instanceof ApiRequestError ? error.code : undefined));
-      }
+      setFormError(messageForError(error instanceof ApiRequestError ? error.code : undefined));
     } finally {
       setSubmitting(false);
     }

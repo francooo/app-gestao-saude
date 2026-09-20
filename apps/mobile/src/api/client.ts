@@ -11,7 +11,7 @@ import {
   type RegisterResponse,
 } from '@gestao/shared';
 
-import { API_URL, REQUEST_TIMEOUT_MS } from '@/config';
+import { API_URL, API_URL_MAL_CONFIGURADA, REQUEST_TIMEOUT_MS } from '@/config';
 import { tokenStorage } from '@/auth/tokenStorage';
 
 /** Erro tipado que as telas capturam para decidir a mensagem exibida. */
@@ -131,6 +131,10 @@ export async function request<T>(
   try {
     response = await rawRequest(path, options, accessToken);
   } catch {
+    // Distingue os dois casos que produzem a mesma excecao do fetch: um bundle
+    // mal configurado apontando para localhost falha exatamente como falta de
+    // internet, e mandar a pessoa conferir a Wi-Fi nao resolve nada.
+    if (API_URL_MAL_CONFIGURADA) throw new ApiRequestError('API_NOT_CONFIGURED', 0);
     // Rede indisponivel, DNS, timeout do AbortController.
     throw new ApiRequestError('NETWORK_ERROR', 0);
   }

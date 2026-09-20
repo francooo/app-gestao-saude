@@ -66,13 +66,7 @@ export default function LoginScreen() {
       // A navegacao acontece sozinha: o guard de (auth) redireciona assim que
       // o usuario entra no contexto.
     } catch (error) {
-      if (error instanceof ApiRequestError && error.code === 'NETWORK_ERROR') {
-        setFormError('Sem conexão com o servidor. Verifique sua internet.');
-      } else if (error instanceof ApiRequestError) {
-        setFormError(messageForError(error.code));
-      } else {
-        setFormError(messageForError(undefined));
-      }
+      setFormError(messageForError(error instanceof ApiRequestError ? error.code : undefined));
     } finally {
       setSubmitting(false);
     }

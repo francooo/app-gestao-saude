@@ -6,13 +6,37 @@ import Constants from 'expo-constants';
  * Lembrete: o Expo Go rodando num celular fisico nao enxerga o localhost da sua
  * maquina. Em desenvolvimento, aponte EXPO_PUBLIC_API_URL para o preview
  * deployment da Vercel, ou para http://<ip-da-maquina>:3000 na mesma Wi-Fi.
+ *
+ * O valor precisa estar nas Environment Variables do EAS, e nao apenas no
+ * bloco `env` do eas.json: o `eas build` le o eas.json, mas o `eas update`
+ * NAO — ele usa as variaveis do servidor. Um update publicado sem a variavel
+ * sai apontando para localhost e o app falha como se fosse problema de rede.
  */
-const fromExtra = (Constants.expoConfig?.extra as { apiUrl?: string } | undefined)?.apiUrl;
+const doExtra = (Constants.expoConfig?.extra as { apiUrl?: string } | undefined)?.apiUrl;
+const configurada = process.env.EXPO_PUBLIC_API_URL ?? doExtra;
 
-export const API_URL = (process.env.EXPO_PUBLIC_API_URL ?? fromExtra ?? 'http://localhost:3000').replace(
-  /\/+$/,
-  '',
-);
+const LOCALHOST = 'http://localhost:3000';
+
+/**
+ * true quando o bundle saiu sem a URL da API, ou apontando para localhost
+ * fora do desenvolvimento.
+ *
+ * Existe para nao repetir o diagnostico ruim que isto ja causou: sem esta
+ * checagem, um erro de configuracao de build chega ao usuario como
+ * "verifique sua internet", que manda a pessoa investigar o lugar errado.
+ */
+export const API_URL_MAL_CONFIGURADA =
+  !__DEV__ && (!configurada || configurada.includes('localhost') || configurada.includes('10.0.2.2'));
+
+export const API_URL = (configurada ?? LOCALHOST).replace(/\/+$/, '');
+
+if (API_URL_MAL_CONFIGURADA) {
+  console.error(
+    '[config] EXPO_PUBLIC_API_URL ausente ou apontando para localhost neste bundle. ' +
+      'Defina a variavel no ambiente do EAS: eas env:set --environment <ambiente> ' +
+      '--name EXPO_PUBLIC_API_URL --value https://... ',
+  );
+}
 
 /** Requisicoes que passarem disso sao abortadas — rede movel pode travar sem erro. */
 export const REQUEST_TIMEOUT_MS = 15_000;

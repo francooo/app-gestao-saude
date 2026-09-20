@@ -81,6 +81,9 @@ export const API_ERROR = {
   TOO_MANY_ATTEMPTS: 'TOO_MANY_ATTEMPTS',
   METHOD_NOT_ALLOWED: 'METHOD_NOT_ALLOWED',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
+  /** Erros do lado do cliente, nunca vindos da API. */
+  NETWORK_ERROR: 'NETWORK_ERROR',
+  API_NOT_CONFIGURED: 'API_NOT_CONFIGURED',
 } as const;
 
 export type ApiErrorCode = (typeof API_ERROR)[keyof typeof API_ERROR];
@@ -105,6 +108,10 @@ export const ERROR_MESSAGES_PT: Record<string, string> = {
   [API_ERROR.TOO_MANY_ATTEMPTS]: 'Muitas tentativas. Aguarde alguns minutos e tente de novo.',
   [API_ERROR.METHOD_NOT_ALLOWED]: 'Requisição inválida.',
   [API_ERROR.INTERNAL_ERROR]: 'Algo deu errado do nosso lado. Tente novamente.',
+  [API_ERROR.NETWORK_ERROR]: 'Sem conexão com o servidor. Verifique sua internet.',
+  // Nao e problema da pessoa: o app foi publicado sem a URL da API.
+  [API_ERROR.API_NOT_CONFIGURED]:
+    'Esta versão do app está mal configurada e não consegue falar com o servidor. Avise o suporte.',
 };
 
 export function messageForError(code: string | undefined): string {
