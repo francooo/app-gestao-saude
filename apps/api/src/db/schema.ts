@@ -11,6 +11,7 @@ import {
   numeric,
   pgEnum,
   pgTable,
+  smallint,
   text,
   time,
   timestamp,
@@ -226,11 +227,34 @@ export const professionals = pgTable(
     phone: text('phone'),
     email: text('email'),
     clinicName: text('clinic_name'),
+    address: text('address'),
+    /**
+     * Preenchidos pela geocodificacao NO SERVIDOR ao salvar o endereco.
+     * Ficam nulos quando o endereco nao e reconhecido — endereco ruim nao
+     * pode impedir o cadastro, apenas tira o medico do mapa.
+     */
+    latitude: numeric('latitude'),
+    longitude: numeric('longitude'),
+    /**
+     * SUA nota, de 1 a 5. Privada por construcao: mora em professionals, que
+     * ja e escopado por user_id. Nao existe agregacao entre contas, entao nao
+     * ha como virar nota publica por acidente.
+     */
+    myRating: smallint('my_rating'),
+    ratingNote: text('rating_note'),
+    /** Modalidade habitual; cada consulta pode sobrescrever. */
+    defaultModality: appointmentModalityEnum('default_modality'),
     notes: text('notes'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index('professionals_user_id_idx').on(t.userId)],
+  (t) => [
+    index('professionals_user_id_idx').on(t.userId),
+    check(
+      'professionals_rating_range',
+      sql`${t.myRating} IS NULL OR (${t.myRating} >= 1 AND ${t.myRating} <= 5)`,
+    ),
+  ],
 );
 
 export const appointments = pgTable(

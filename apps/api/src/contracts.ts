@@ -93,3 +93,28 @@ export const registerRequestSchema = z
     message: 'As senhas nao sao iguais',
     path: ['passwordConfirmation'],
   });
+
+// ---------------------------------------------------------------------------
+// Profissionais de saude ("meus medicos")
+//
+// Escopados por conta. A nota e SUA, privada: nao existe agregacao entre
+// contas, entao nao ha como virar avaliacao publica por acidente.
+// ---------------------------------------------------------------------------
+
+export const modalityValues = ['presencial', 'teleconsulta'] as const;
+
+export const professionalInputSchema = z.object({
+  name: z.string().trim().min(2, { message: 'Informe o nome' }).max(120),
+  specialty: z.string().trim().max(80).optional().nullable(),
+  phone: z.string().trim().max(30).optional().nullable(),
+  email: z.string().trim().max(254).optional().nullable(),
+  clinicName: z.string().trim().max(120).optional().nullable(),
+  address: z.string().trim().max(300).optional().nullable(),
+  defaultModality: z.enum(modalityValues).optional().nullable(),
+  myRating: z.number().int().min(1).max(5).optional().nullable(),
+  ratingNote: z.string().trim().max(500).optional().nullable(),
+  notes: z.string().trim().max(1000).optional().nullable(),
+});
+
+/** No PATCH todos os campos sao opcionais, inclusive o nome. */
+export const professionalPatchSchema = professionalInputSchema.partial();

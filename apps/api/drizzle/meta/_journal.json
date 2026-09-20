@@ -15,6 +15,13 @@
       "when": 1789936284388,
       "tag": "0001_slimy_hitman",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789938569361,
+      "tag": "0002_clean_shaman",
+      "breakpoints": true
     }
   ]
 }
