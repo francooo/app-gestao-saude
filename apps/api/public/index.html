@@ -1,0 +1,37 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Gestão Saúde — API</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    padding: 24px; box-sizing: border-box;
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: #7F8E5C; color: #39432C;
+  }
+  main {
+    background: rgba(245,243,230,.88); border-radius: 28px;
+    padding: 32px; max-width: 420px; width: 100%;
+    box-shadow: 0 8px 24px rgba(44,53,32,.18);
+  }
+  h1 { margin: 0 0 4px; font-size: 22px; }
+  p  { margin: 0 0 20px; color: #5A6449; font-size: 14px; }
+  ul { margin: 0; padding: 0; list-style: none; }
+  li { padding: 8px 0; border-top: 1px solid rgba(57,67,44,.12); font-size: 14px; }
+  code { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: 13px; }
+  .m { display: inline-block; min-width: 46px; font-weight: 700; color: #B78842; }
+</style>
+<main>
+  <h1>Gestão Saúde</h1>
+  <p>Esta é a API do aplicativo. Não há interface aqui — o app mobile consome estes endpoints.</p>
+  <ul>
+    <li><span class="m">GET</span> <code>/api/health</code></li>
+    <li><span class="m">POST</span> <code>/api/auth/login</code></li>
+    <li><span class="m">POST</span> <code>/api/auth/refresh</code></li>
+    <li><span class="m">POST</span> <code>/api/auth/logout</code></li>
+    <li><span class="m">POST</span> <code>/api/auth/forgot-password</code></li>
+    <li><span class="m">POST</span> <code>/api/auth/reset-password</code></li>
+  </ul>
+</main>
