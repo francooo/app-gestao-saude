@@ -51,6 +51,22 @@ const config: ExpoConfig = {
         backgroundColor: SAGE,
       },
     ],
+    // Gera o codigo nativo do MapLibre. Renderizador open source, sem
+    // dependencia de servicos do Google — as imagens vem do MapTiler.
+    '@maplibre/maplibre-react-native',
+    [
+      'expo-location',
+      {
+        // A permissao e OPCIONAL: sem ela a tela de medicos funciona igual,
+        // apenas sem mostrar a distancia ate o consultorio. O texto precisa
+        // dizer para que serve, senao a pessoa nega por falta de contexto.
+        locationAlwaysAndWhenInUsePermission:
+          'O aplicativo usa sua localização apenas para mostrar a distância até os consultórios dos seus médicos.',
+        locationWhenInUsePermission:
+          'O aplicativo usa sua localização apenas para mostrar a distância até os consultórios dos seus médicos.',
+        isAndroidBackgroundLocationEnabled: false,
+      },
+    ],
   ],
 
   experiments: {

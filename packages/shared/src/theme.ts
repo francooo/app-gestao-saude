@@ -66,6 +66,15 @@ export const colors = {
   /** Gradiente do card do Assistente, da esquerda para a direita. */
   assistantGradientFrom: '#B77C32',
   assistantGradientTo: '#49623A',
+
+  // --- Tela de Medicos (doctors-screen-family-health.png) ---
+  /** Chip de especialidade selecionado. */
+  chipActive: '#326F3C',
+  /** Botao de acao no card do medico. */
+  actionGreen: '#467C43',
+  /** Estrelas da sua nota privada. */
+  star: '#E8A62A',
+  starEmpty: '#CBC9B2',
 } as const;
 
 /**

@@ -38,5 +38,17 @@ if (API_URL_MAL_CONFIGURADA) {
   );
 }
 
+/**
+ * Chave do MapTiler usada para baixar as imagens do mapa.
+ *
+ * Esta chave vai EMBUTIDA no aplicativo e e extraivel de qualquer APK — nao ha
+ * como esconde-la. A protecao correta e restringi-la ao bundle
+ * br.com.gestaosaude.app no painel do MapTiler, nao tentar oculta-la.
+ *
+ * A chave de geocodificacao e OUTRA e vive so na Vercel: converter endereco em
+ * coordenada acontece no servidor, nunca aqui.
+ */
+export const MAPTILER_KEY = process.env.EXPO_PUBLIC_MAPTILER_KEY ?? '';
+
 /** Requisicoes que passarem disso sao abortadas — rede movel pode travar sem erro. */
 export const REQUEST_TIMEOUT_MS = 15_000;
