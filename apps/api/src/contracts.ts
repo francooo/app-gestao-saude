@@ -47,6 +47,7 @@ export const resetPasswordRequestSchema = z.object({
 
 export const API_ERROR = {
   INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
+  EMAIL_ALREADY_REGISTERED: 'EMAIL_ALREADY_REGISTERED',
   INVALID_REFRESH_TOKEN: 'INVALID_REFRESH_TOKEN',
   INVALID_RESET_TOKEN: 'INVALID_RESET_TOKEN',
   VALIDATION_ERROR: 'VALIDATION_ERROR',
@@ -57,3 +58,38 @@ export const API_ERROR = {
 } as const;
 
 export type ApiErrorCode = (typeof API_ERROR)[keyof typeof API_ERROR];
+
+// ---------------------------------------------------------------------------
+// Cadastro — espelha packages/shared/src/auth.ts
+// ---------------------------------------------------------------------------
+
+/**
+ * Versao da politica de privacidade aceita no cadastro. Gravada junto do
+ * consentimento: a LGPD exige saber a QUAL texto a pessoa consentiu.
+ * Ao mudar o texto da politica, suba esta versao nos DOIS arquivos.
+ */
+export const POLICY_VERSION = '2026-09-20';
+
+export const fullNameSchema = z
+  .string()
+  .trim()
+  .min(3, { message: 'Informe seu nome completo' })
+  .max(120, { message: 'Nome muito longo' })
+  .refine((v) => v.includes(' '), { message: 'Informe nome e sobrenome' });
+
+export const registerRequestSchema = z
+  .object({
+    fullName: fullNameSchema,
+    email: emailSchema,
+    password: passwordSchema,
+    passwordConfirmation: z.string(),
+    // literal(true) e nao boolean: um payload sem o campo, ou com false,
+    // e recusado antes de chegar ao banco. O aceite tem que ser ativo.
+    acceptedPolicy: z.literal(true, {
+      message: 'E necessario aceitar a politica de privacidade',
+    }),
+  })
+  .refine((data) => data.password === data.passwordConfirmation, {
+    message: 'As senhas nao sao iguais',
+    path: ['passwordConfirmation'],
+  });

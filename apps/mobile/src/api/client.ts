@@ -3,9 +3,12 @@ import {
   apiErrorSchema,
   loginResponseSchema,
   refreshResponseSchema,
+  registerResponseSchema,
   type ForgotPasswordRequest,
   type LoginRequest,
   type LoginResponse,
+  type RegisterRequest,
+  type RegisterResponse,
 } from '@gestao/shared';
 
 import { API_URL, REQUEST_TIMEOUT_MS } from '@/config';
@@ -153,6 +156,12 @@ export const authApi = {
   login(payload: LoginRequest): Promise<LoginResponse> {
     return request('/api/auth/login', { method: 'POST', body: payload }, (data) =>
       loginResponseSchema.parse(data),
+    );
+  },
+
+  register(payload: RegisterRequest): Promise<RegisterResponse> {
+    return request('/api/auth/register', { method: 'POST', body: payload }, (data) =>
+      registerResponseSchema.parse(data),
     );
   },
 

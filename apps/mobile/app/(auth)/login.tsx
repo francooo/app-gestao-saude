@@ -20,7 +20,7 @@ import { GlassCard } from '@/components/GlassCard';
 import { IllustrationRegion } from '@/components/IllustrationRegion';
 import { PillInput, type PillInputHandle } from '@/components/PillInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { colors, spacing, typography } from '@/theme';
+import { colors, fonts, spacing, typography } from '@/theme';
 
 type FieldErrors = { email?: string; password?: string };
 
@@ -67,7 +67,7 @@ export default function LoginScreen() {
       // o usuario entra no contexto.
     } catch (error) {
       if (error instanceof ApiRequestError && error.code === 'NETWORK_ERROR') {
-        setFormError('Sem conexao com o servidor. Verifique sua internet.');
+        setFormError('Sem conexão com o servidor. Verifique sua internet.');
       } else if (error instanceof ApiRequestError) {
         setFormError(messageForError(error.code));
       } else {
@@ -159,6 +159,17 @@ export default function LoginScreen() {
                 loading={submitting}
                 style={styles.button}
               />
+
+              <Pressable
+                onPress={() => router.push('/cadastro')}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                accessibilityRole="link"
+                style={styles.criarConta}
+              >
+                <Text style={styles.criarContaTexto}>
+                  Ainda não tem conta? <Text style={styles.criarContaDestaque}>Criar conta</Text>
+                </Text>
+              </Pressable>
             </GlassCard>
           </View>
 
@@ -208,5 +219,18 @@ const styles = StyleSheet.create({
   },
   button: {
     marginTop: spacing.xl,
+  },
+  criarConta: { alignSelf: 'center', marginTop: spacing.lg },
+  criarContaTexto: {
+    // Peso normal na frase, negrito so no "Criar conta" — o destaque tem que
+    // recair sobre a acao, nao sobre a pergunta.
+    fontFamily: fonts.regular,
+    fontSize: typography.link.fontSize,
+    color: colors.textSecondary,
+  },
+  criarContaDestaque: {
+    ...typography.link,
+    color: colors.link,
+    textDecorationLine: 'underline',
   },
 });

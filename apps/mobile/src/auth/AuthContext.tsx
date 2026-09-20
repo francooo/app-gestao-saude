@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
-import type { LoginRequest, PublicUser } from '@gestao/shared';
+import type { LoginRequest, PublicUser, RegisterRequest } from '@gestao/shared';
 
 import { authApi, setOnSessionExpired } from '@/api/client';
 import { tokenStorage } from '@/auth/tokenStorage';
@@ -11,6 +11,7 @@ type AuthState = {
   /** true enquanto restauramos a sessao do SecureStore, no boot do app. */
   initializing: boolean;
   signIn: (credentials: LoginRequest) => Promise<void>;
+  signUp: (data: RegisterRequest) => Promise<void>;
   signOut: () => Promise<void>;
 };
 
@@ -53,6 +54,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(result.user);
   }, []);
 
+  // O cadastro ja devolve a sessao, entao a pessoa entra direto — sem
+  // precisar digitar as credenciais que acabou de criar.
+  const signUp = useCallback(async (data: RegisterRequest) => {
+    const result = await authApi.register(data);
+    await tokenStorage.save({
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+      user: result.user,
+    });
+    setUser(result.user);
+  }, []);
+
   const signOut = useCallback(async () => {
     const refreshToken = await tokenStorage.getRefreshToken();
     // Limpa o estado local primeiro: a UI nao deve esperar a rede para sair.
@@ -62,8 +75,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, initializing, signIn, signOut }),
-    [user, initializing, signIn, signOut],
+    () => ({ user, initializing, signIn, signUp, signOut }),
+    [user, initializing, signIn, signUp, signOut],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

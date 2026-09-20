@@ -73,6 +73,7 @@ export type ResetPasswordRequest = z.infer<typeof resetPasswordRequestSchema>;
  */
 export const API_ERROR = {
   INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
+  EMAIL_ALREADY_REGISTERED: 'EMAIL_ALREADY_REGISTERED',
   INVALID_REFRESH_TOKEN: 'INVALID_REFRESH_TOKEN',
   INVALID_RESET_TOKEN: 'INVALID_RESET_TOKEN',
   VALIDATION_ERROR: 'VALIDATION_ERROR',
@@ -94,17 +95,64 @@ export type ApiError = z.infer<typeof apiErrorSchema>;
 
 /** Mensagens em pt-BR exibidas ao usuario, indexadas pelo codigo de erro. */
 export const ERROR_MESSAGES_PT: Record<string, string> = {
-  [API_ERROR.INVALID_CREDENTIALS]: 'Usuario ou senha invalidos.',
-  [API_ERROR.INVALID_REFRESH_TOKEN]: 'Sua sessao expirou. Entre novamente.',
-  [API_ERROR.INVALID_RESET_TOKEN]: 'Este link de recuperacao expirou ou ja foi usado.',
+  [API_ERROR.INVALID_CREDENTIALS]: 'Usuário ou senha inválidos.',
+  [API_ERROR.EMAIL_ALREADY_REGISTERED]: 'Já existe uma conta com este e-mail.',
+  [API_ERROR.INVALID_REFRESH_TOKEN]: 'Sua sessão expirou. Entre novamente.',
+  [API_ERROR.INVALID_RESET_TOKEN]: 'Este link de recuperação expirou ou já foi usado.',
   [API_ERROR.VALIDATION_ERROR]: 'Verifique os dados informados.',
-  [API_ERROR.ACCOUNT_DISABLED]: 'Esta conta esta desativada. Fale com o suporte.',
+  [API_ERROR.ACCOUNT_DISABLED]: 'Esta conta está desativada. Fale com o suporte.',
   [API_ERROR.TOO_MANY_ATTEMPTS]: 'Muitas tentativas. Aguarde alguns minutos e tente de novo.',
-  [API_ERROR.METHOD_NOT_ALLOWED]: 'Requisicao invalida.',
+  [API_ERROR.METHOD_NOT_ALLOWED]: 'Requisição inválida.',
   [API_ERROR.INTERNAL_ERROR]: 'Algo deu errado do nosso lado. Tente novamente.',
 };
 
 export function messageForError(code: string | undefined): string {
   if (code && code in ERROR_MESSAGES_PT) return ERROR_MESSAGES_PT[code]!;
-  return 'Nao foi possivel completar a operacao. Tente novamente.';
+  return 'Não foi possível completar a operação. Tente novamente.';
 }
+
+// ---------------------------------------------------------------------------
+// Cadastro
+// ---------------------------------------------------------------------------
+
+/**
+ * Versao da politica de privacidade aceita no cadastro.
+ *
+ * Gravada junto do consentimento. Quando o texto da politica mudar, suba esta
+ * versao: a LGPD exige saber a QUAL texto a pessoa consentiu, nao apenas que
+ * consentiu. Sem isso, um consentimento antigo vira indefensavel.
+ */
+export const POLICY_VERSION = '2026-09-20';
+
+export const fullNameSchema = z
+  .string()
+  .trim()
+  .min(3, { message: 'Informe seu nome completo' })
+  .max(120, { message: 'Nome muito longo' })
+  .refine((v) => v.includes(' '), { message: 'Informe nome e sobrenome' });
+
+export const registerRequestSchema = z
+  .object({
+    fullName: fullNameSchema,
+    email: emailSchema,
+    password: passwordSchema,
+    passwordConfirmation: z.string(),
+    /**
+     * Consentimento LGPD Art. 11. Precisa ser um aceite ativo — por isso
+     * literal(true), e nao boolean: um payload sem o campo, ou com false,
+     * e recusado pelo schema antes de chegar ao banco.
+     */
+    acceptedPolicy: z.literal(true, {
+      message: 'É necessário aceitar a política de privacidade',
+    }),
+  })
+  .refine((data) => data.password === data.passwordConfirmation, {
+    message: 'As senhas não são iguais',
+    path: ['passwordConfirmation'],
+  });
+
+export type RegisterRequest = z.infer<typeof registerRequestSchema>;
+
+/** O cadastro ja devolve a sessao: a pessoa entra direto, sem relogar. */
+export const registerResponseSchema = loginResponseSchema;
+export type RegisterResponse = LoginResponse;
