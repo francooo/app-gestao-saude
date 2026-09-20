@@ -1,54 +1,122 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useAuth } from '@/auth/AuthContext';
-import { GlassCard } from '@/components/GlassCard';
-import { IllustrationRegion } from '@/components/IllustrationRegion';
-import { PrimaryButton } from '@/components/PrimaryButton';
-import { colors, spacing, typography } from '@/theme';
+import { AppointmentCard } from '@/components/AppointmentCard';
+import { AssistantCard } from '@/components/AssistantCard';
+import { FamilyMemberStrip } from '@/components/FamilyMemberStrip';
+import { HomeHeaderCard } from '@/components/HomeHeaderCard';
+import { MedicationCard } from '@/components/MedicationCard';
+import { SectionHeader } from '@/components/SectionHeader';
+import { SurfaceCard } from '@/components/SurfaceCard';
+import {
+  CONSULTAS_EXEMPLO,
+  MEDICAMENTOS_EXEMPLO,
+  MEMBROS_EXEMPLO,
+  USANDO_DADOS_DE_EXEMPLO,
+} from '@/mocks/home';
+import { colors, fonts, radii, spacing } from '@/theme';
 
-/**
- * Placeholder pos-login. Existe para provar o fluxo ponta a ponta e para dar
- * um lugar de onde sair. O app de verdade comeca aqui.
- */
+/** Altura da barra de abas flutuante, para o conteudo nao terminar embaixo dela. */
+const ESPACO_BARRA = 96;
+
 export default function InicioScreen() {
   const insets = useSafeAreaInsets();
-  const { user, signOut } = useAuth();
 
-  const firstName = user?.fullName?.split(' ')[0] ?? 'mamãe';
+  // A selecao ainda nao filtra nada: sem dominio de dados, nao ha o que
+  // filtrar. O estado existe para o strip ter comportamento real ao toque.
+  const [selecionadoId, setSelecionadoId] = useState(MEMBROS_EXEMPLO[0]?.id);
+
+  function emBreve(recurso: string) {
+    Alert.alert(recurso, 'Esta parte do aplicativo ainda está sendo construída.');
+  }
 
   return (
-    <View style={styles.screen}>
-      <View style={[styles.cardArea, { paddingTop: insets.top + spacing.lg }]}>
-        <GlassCard>
-          <Text style={styles.title} accessibilityRole="header">
-            Olá, {firstName}
-          </Text>
-          <Text style={styles.subtitle}>
-            Login concluído. As telas do app entram a partir daqui.
-          </Text>
-          <PrimaryButton title="Sair" onPress={signOut} style={styles.button} />
-        </GlassCard>
-      </View>
+    <View style={styles.tela}>
+      <LinearGradient
+        colors={[colors.homeBackgroundTop, colors.homeBackgroundBottom]}
+        style={StyleSheet.absoluteFill}
+      />
 
-      <IllustrationRegion />
+      <ScrollView
+        contentContainerStyle={[
+          styles.conteudo,
+          { paddingTop: insets.top + spacing.md, paddingBottom: ESPACO_BARRA + insets.bottom },
+        ]}
+        showsVerticalScrollIndicator={false}
+      >
+        {USANDO_DADOS_DE_EXEMPLO ? (
+          <View style={styles.faixaDemo}>
+            <Text style={styles.faixaDemoTexto}>
+              Dados de demonstração — nada aqui é real
+            </Text>
+          </View>
+        ) : null}
+
+        {/* Cabecalho e lista de membros formam um card so, como no mockup. */}
+        <SurfaceCard flush>
+          <HomeHeaderCard titulo="Bem-vinda de volta" subtitulo="Cuidando de quem você ama" />
+          <FamilyMemberStrip
+            membros={MEMBROS_EXEMPLO}
+            selecionadoId={selecionadoId}
+            onSelecionar={setSelecionadoId}
+            onAdicionar={() => emBreve('Adicionar membro')}
+          />
+        </SurfaceCard>
+
+        <View style={styles.secao}>
+          <AssistantCard onPress={() => emBreve('Assistente de Saúde')} />
+        </View>
+
+        <View style={styles.secao}>
+          <SectionHeader
+            title="Medicamentos de hoje"
+            onVerTodos={() => emBreve('Medicamentos')}
+          />
+          {MEDICAMENTOS_EXEMPLO.map((m) => (
+            <MedicationCard
+              key={m.id}
+              medicamento={m}
+              onPress={() => emBreve('Detalhe do medicamento')}
+            />
+          ))}
+        </View>
+
+        <View style={styles.secao}>
+          <SectionHeader title="Próximas consultas" onVerTodos={() => emBreve('Consultas')} />
+          {CONSULTAS_EXEMPLO.map((c) => (
+            <AppointmentCard
+              key={c.id}
+              consulta={c}
+              onPress={() => emBreve('Detalhe da consulta')}
+            />
+          ))}
+        </View>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.sage },
-  cardArea: { paddingHorizontal: spacing.xl },
-  title: {
-    ...typography.title,
-    color: colors.textPrimary,
-    textAlign: 'center',
+  tela: { flex: 1, backgroundColor: colors.homeBackgroundTop },
+  conteudo: {
+    paddingHorizontal: spacing.xl,
   },
-  subtitle: {
-    ...typography.input,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginTop: spacing.md,
+  faixaDemo: {
+    backgroundColor: 'rgba(44, 53, 32, 0.28)',
+    borderRadius: radii.pill,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    alignSelf: 'center',
+    marginBottom: spacing.lg,
   },
-  button: { marginTop: spacing.xl },
+  faixaDemoTexto: {
+    fontFamily: fonts.semibold,
+    fontSize: 12,
+    color: colors.onAccent,
+  },
+  secao: {
+    marginTop: spacing.xxl,
+  },
 });

@@ -1,6 +1,9 @@
-import { Redirect, Stack } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
+import { Redirect, Tabs } from 'expo-router';
+import { Platform, StyleSheet } from 'react-native';
 
 import { useAuth } from '@/auth/AuthContext';
+import { colors, fonts, radii } from '@/theme';
 
 /**
  * Area autenticada. O guard tambem cobre a expiracao da sessao: quando o
@@ -11,5 +14,87 @@ export default function AppLayout() {
 
   if (!user) return <Redirect href="/login" />;
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: colors.accentGreen,
+        tabBarInactiveTintColor: colors.textSecondary,
+        tabBarStyle: styles.barra,
+        tabBarLabelStyle: styles.rotulo,
+        tabBarItemStyle: styles.item,
+        sceneStyle: { backgroundColor: colors.homeBackgroundTop },
+      }}
+    >
+      <Tabs.Screen
+        name="inicio"
+        options={{
+          title: 'Início',
+          tabBarIcon: ({ color, size }) => <Feather name="home" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="remedios"
+        options={{
+          title: 'Remédios',
+          // O Feather nao tem icone de capsula; "thermometer" e o mais proximo
+          // do campo da saude sem recorrer a outra familia de icones.
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="thermometer" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="medicos"
+        options={{
+          title: 'Médicos',
+          tabBarIcon: ({ color, size }) => <Feather name="map-pin" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="assistente"
+        options={{
+          title: 'Assistente',
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="message-square" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="ajustes"
+        options={{
+          title: 'Ajustes',
+          tabBarIcon: ({ color, size }) => <Feather name="sliders" size={size} color={color} />,
+        }}
+      />
+    </Tabs>
+  );
 }
+
+const styles = StyleSheet.create({
+  barra: {
+    backgroundColor: colors.surface,
+    borderTopWidth: 0,
+    // Barra flutuante, como no mockup, em vez de colada na borda da tela.
+    position: 'absolute',
+    left: 12,
+    right: 12,
+    bottom: Platform.OS === 'ios' ? 24 : 12,
+    height: 68,
+    borderRadius: radii.card,
+    paddingTop: 8,
+    paddingBottom: 8,
+    shadowColor: '#2C3520',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.16,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  rotulo: {
+    fontFamily: fonts.semibold,
+    fontSize: 11,
+  },
+  item: {
+    paddingVertical: 4,
+  },
+});

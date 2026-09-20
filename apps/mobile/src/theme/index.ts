@@ -3,4 +3,15 @@
  * ferramentas fora do app (geracao de assets, futuro painel web).
  * Este modulo so reexporta, para as telas importarem de "@/theme".
  */
-export { colors, radii, spacing, sizes, typography, fonts, BG_FLAT_TOP_RATIO } from '@gestao/shared';
+export {
+  colors,
+  radii,
+  spacing,
+  sizes,
+  typography,
+  fonts,
+  avatarColors,
+  pickAvatarColor,
+  initialsFor,
+  BG_FLAT_TOP_RATIO,
+} from '@gestao/shared';

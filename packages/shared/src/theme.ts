@@ -37,7 +37,59 @@ export const colors = {
   accentPressed: '#9E7436',
   accentDisabled: '#B78842A0',
   onAccent: '#FFFFFF',
+
+  // -------------------------------------------------------------------------
+  // Tela inicial (home-screen-warm-family.png)
+  //
+  // A area logada e um ambiente mais claro e quente que as telas de
+  // autenticacao. Estes tokens SE SOMAM aos de cima, nao os substituem:
+  // login, cadastro e recuperacao continuam usando sage/cardFill.
+  // -------------------------------------------------------------------------
+
+  /** Fundo da area logada — degrade vertical suave. */
+  homeBackgroundTop: '#99A270',
+  homeBackgroundBottom: '#A5AD7C',
+
+  /** Cards da home: creme SOLIDO, ao contrario do cardFill translucido. */
+  surface: '#F8F3DE',
+  /** Variante quente, usada no icone do medicamento. */
+  surfaceWarm: '#F4E2BE',
+
+  /** Verde de destaque: aba ativa, contorno do membro selecionado. */
+  accentGreen: '#1E603E',
+  /** Verde mais claro: botao de enviar do assistente. */
+  accentGreenSoft: '#3E765B',
+
+  /** Titulos de secao ("Medicamentos de hoje"). */
+  sectionTitle: '#2E4D30',
+
+  /** Gradiente do card do Assistente, da esquerda para a direita. */
+  assistantGradientFrom: '#B77C32',
+  assistantGradientTo: '#49623A',
 } as const;
+
+/**
+ * Cores dos avatares.
+ *
+ * A escolha e deterministica a partir do nome (ver pickAvatarColor), para a
+ * mesma pessoa aparecer sempre com a mesma cor em qualquer tela. Sortear por
+ * indice de lista faria a cor mudar quando alguem fosse adicionado ou removido.
+ */
+export const avatarColors = ['#3E765B', '#D19628', '#6A774B', '#BF6A4F'] as const;
+
+export function pickAvatarColor(nome: string): string {
+  let soma = 0;
+  for (let i = 0; i < nome.length; i += 1) soma += nome.charCodeAt(i);
+  return avatarColors[soma % avatarColors.length]!;
+}
+
+/** Iniciais exibidas no avatar: primeira letra do primeiro e do ultimo nome. */
+export function initialsFor(nome: string): string {
+  const partes = nome.trim().split(/\s+/).filter(Boolean);
+  if (partes.length === 0) return '?';
+  if (partes.length === 1) return partes[0]!.slice(0, 2).toUpperCase();
+  return (partes[0]![0]! + partes[partes.length - 1]![0]!).toUpperCase();
+}
 
 export const radii = {
   card: 28,
