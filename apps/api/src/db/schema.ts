@@ -227,6 +227,8 @@ export const professionals = pgTable(
     phone: text('phone'),
     email: text('email'),
     clinicName: text('clinic_name'),
+    /** CEP guardado a parte para reconsultar o ViaCEP sem reescrever tudo. */
+    postalCode: text('postal_code'),
     address: text('address'),
     /**
      * Preenchidos pela geocodificacao NO SERVIDOR ao salvar o endereco.
@@ -275,6 +277,14 @@ export const appointments = pgTable(
     location: text('location'),
     address: text('address'),
     status: appointmentStatusEnum('status').notNull().default('agendada'),
+    /**
+     * Antecedencia do lembrete, em minutos. Nulo = sem lembrete.
+     *
+     * O banco guarda a INTENCAO; o agendamento em si vive no aparelho. Guardar
+     * aqui o id da notificacao seria errado — ele e local de cada celular, e um
+     * id do aparelho A nao significa nada no aparelho B.
+     */
+    reminderMinutesBefore: integer('reminder_minutes_before'),
     notes: text('notes'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

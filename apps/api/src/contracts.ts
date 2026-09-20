@@ -118,3 +118,40 @@ export const professionalInputSchema = z.object({
 
 /** No PATCH todos os campos sao opcionais, inclusive o nome. */
 export const professionalPatchSchema = professionalInputSchema.partial();
+
+// ---------------------------------------------------------------------------
+// Consultas
+//
+// Uma consulta pertence a um PERFIL, nao a conta. Toda verificacao de dono
+// passa por um join com profiles — filtrar so pelo id da consulta deixaria
+// alguem ler ou criar consulta no perfil de outra conta.
+// ---------------------------------------------------------------------------
+
+export const appointmentStatusValues = [
+  'agendada',
+  'realizada',
+  'cancelada',
+  'faltou',
+] as const;
+
+/** Antecedencias oferecidas na tela. Nulo = sem lembrete. */
+export const reminderOptions = [30, 60, 120, 24 * 60, 48 * 60] as const;
+
+export const appointmentInputSchema = z.object({
+  profileId: z.uuid({ message: 'Escolha para quem é a consulta' }),
+  professionalId: z.uuid().optional().nullable(),
+  title: z.string().trim().max(120).optional().nullable(),
+  /** ISO 8601 com fuso. O app envia o instante absoluto. */
+  scheduledAt: z.iso.datetime({ offset: true, message: 'Data ou hora inválida' }),
+  durationMinutes: z.number().int().min(5).max(480).optional().nullable(),
+  modality: z.enum(modalityValues).default('presencial'),
+  location: z.string().trim().max(200).optional().nullable(),
+  address: z.string().trim().max(300).optional().nullable(),
+  reminderMinutesBefore: z.number().int().min(0).max(10080).optional().nullable(),
+  notes: z.string().trim().max(1000).optional().nullable(),
+});
+
+export const appointmentPatchSchema = appointmentInputSchema
+  .omit({ profileId: true })
+  .partial()
+  .extend({ status: z.enum(appointmentStatusValues).optional() });
