@@ -59,6 +59,21 @@ const config: ExpoConfig = {
 
   extra: {
     apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000',
+    // Escrito a mao porque o `eas init` nao consegue editar config dinamica.
+    // Identifica o projeto em expo.dev/accounts/francooo/projects.
+    eas: {
+      projectId: '5aac8cc3-be3d-45d3-a69d-f2c699e78cea',
+    },
+  },
+
+  owner: 'francooo',
+
+  updates: {
+    url: 'https://u.expo.dev/5aac8cc3-be3d-45d3-a69d-f2c699e78cea',
+  },
+
+  runtimeVersion: {
+    policy: 'appVersion',
   },
 };
 
