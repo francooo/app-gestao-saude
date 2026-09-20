@@ -4,7 +4,7 @@ import { eq, gte, sql, and } from 'drizzle-orm';
 import { createSession } from '../../src/auth/session';
 import { API_ERROR, POLICY_VERSION, registerRequestSchema } from '../../src/contracts';
 import { db } from '../../src/db/client';
-import { consents, loginAttempts, users } from '../../src/db/schema';
+import { consents, loginAttempts, profiles, users } from '../../src/db/schema';
 import {
   clientIp,
   fail,
@@ -85,6 +85,18 @@ export default withErrorHandling(async (req: VercelRequest, res: VercelResponse)
       policyVersion: POLICY_VERSION,
       ip,
       userAgent: ua,
+    });
+
+    // Perfil do titular, tambem na mesma transacao.
+    //
+    // Medicamentos e consultas sempre pertencem a um perfil. Uma conta sem
+    // perfil seria um estado que a tela inicial nao consegue representar, e
+    // que exigiria tratar "os meus dados" como caso especial em todo lugar.
+    await tx.insert(profiles).values({
+      userId: created.id,
+      fullName: body.fullName,
+      relationship: 'titular',
+      isAccountHolder: true,
     });
 
     return created.id;

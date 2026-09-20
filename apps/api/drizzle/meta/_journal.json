@@ -8,6 +8,13 @@
       "when": 1789864477109,
       "tag": "0000_tricky_red_shift",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1789936284388,
+      "tag": "0001_slimy_hitman",
+      "breakpoints": true
     }
   ]
 }
