@@ -1,0 +1,31 @@
+node_modules/
+.pnpm-store/
+
+# Expo
+.expo/
+dist/
+web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# Vercel
+.vercel/
+
+# Ambiente — nunca versionar segredos
+.env
+.env.*
+!.env.example
+
+# Build
+*.tsbuildinfo
+apps/*/build/
+packages/*/dist/
+
+# SO / editor
+.DS_Store
+Thumbs.db
+*.log

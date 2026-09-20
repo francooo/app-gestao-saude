@@ -1,0 +1,20 @@
+{
+  "name": "app-gestao-saude",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@9.15.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "mobile": "pnpm --filter @gestao/mobile start",
+    "api:dev": "pnpm --filter @gestao/api dev",
+    "db:generate": "pnpm --filter @gestao/api db:generate",
+    "db:migrate": "pnpm --filter @gestao/api db:migrate",
+    "db:seed": "pnpm --filter @gestao/api db:seed",
+    "typecheck": "pnpm -r typecheck"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.2"
+  }
+}
