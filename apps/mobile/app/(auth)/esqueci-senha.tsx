@@ -1,4 +1,3 @@
-import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -19,7 +18,7 @@ import { GlassCard } from '@/components/GlassCard';
 import { IllustrationRegion } from '@/components/IllustrationRegion';
 import { PillInput } from '@/components/PillInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { colors, sizes, spacing, typography } from '@/theme';
+import { colors, spacing, typography } from '@/theme';
 
 export default function EsqueciSenhaScreen() {
   const insets = useSafeAreaInsets();
@@ -68,17 +67,6 @@ export default function EsqueciSenhaScreen() {
       >
         <View style={styles.screen}>
           <View style={[styles.cardArea, { paddingTop: insets.top + spacing.lg }]}>
-            <Pressable
-              onPress={() => router.back()}
-              hitSlop={12}
-              accessibilityRole="button"
-              accessibilityLabel="Voltar"
-              style={styles.back}
-            >
-              <Feather name="arrow-left" size={sizes.iconSize + 2} color={colors.textPrimary} />
-              <Text style={styles.backLabel}>Voltar</Text>
-            </Pressable>
-
             <GlassCard>
               {sent ? (
                 <>
@@ -98,11 +86,10 @@ export default function EsqueciSenhaScreen() {
               ) : (
                 <>
                   <Text style={styles.title} accessibilityRole="header">
-                    Recuperar senha
+                    Esqueci minha senha
                   </Text>
                   <Text style={styles.body}>
-                    Informe o e-mail da sua conta. Enviaremos um link para você criar uma nova
-                    senha.
+                    Informe seu e-mail para receber o link de redefinição.
                   </Text>
 
                   <PillInput
@@ -130,11 +117,20 @@ export default function EsqueciSenhaScreen() {
                   ) : null}
 
                   <PrimaryButton
-                    title="Enviar link"
+                    title="Enviar link de redefinição"
                     onPress={handleSubmit}
                     loading={submitting}
                     style={styles.button}
                   />
+
+                  <Pressable
+                    onPress={() => router.replace('/login')}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    accessibilityRole="link"
+                    style={styles.voltar}
+                  >
+                    <Text style={styles.voltarTexto}>Voltar para o login</Text>
+                  </Pressable>
                 </>
               )}
             </GlassCard>
@@ -152,24 +148,13 @@ const styles = StyleSheet.create({
   scroll: { flexGrow: 1 },
   screen: { flex: 1, backgroundColor: colors.sage },
   cardArea: { paddingHorizontal: spacing.xl },
-  back: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    marginBottom: spacing.md,
-  },
-  backLabel: {
-    ...typography.link,
-    color: colors.textPrimary,
-    marginLeft: spacing.xs,
-  },
   title: {
     ...typography.title,
     color: colors.textPrimary,
     textAlign: 'center',
   },
   body: {
-    ...typography.input,
+    ...typography.subtitle,
     color: colors.textSecondary,
     textAlign: 'center',
     marginTop: spacing.md,
@@ -183,4 +168,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
   },
   button: { marginTop: spacing.xl },
+  voltar: { alignSelf: 'center', marginTop: spacing.lg },
+  voltarTexto: {
+    ...typography.link,
+    color: colors.link,
+    textDecorationLine: 'underline',
+  },
 });

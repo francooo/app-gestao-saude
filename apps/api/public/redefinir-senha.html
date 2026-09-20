@@ -1,0 +1,80 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Redefinir senha — Gestão Saúde</title>
+<style>
+  :root { color-scheme: light; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    padding: 24px; box-sizing: border-box;
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: #7F8E5C; color: #39432C;
+  }
+  main {
+    background: rgba(245,243,230,.9); border-radius: 28px;
+    padding: 32px; max-width: 400px; width: 100%; text-align: center;
+    box-shadow: 0 8px 24px rgba(44,53,32,.18);
+  }
+  h1 { margin: 0 0 12px; font-size: 22px; }
+  p  { margin: 0 0 24px; color: #5A6449; font-size: 15px; }
+  a.botao {
+    display: block; background: #B78842; color: #fff; text-decoration: none;
+    padding: 16px 24px; border-radius: 999px; font-weight: 700; font-size: 17px;
+  }
+  a.botao:active { background: #9E7436; }
+  .aviso { margin: 20px 0 0; font-size: 13px; color: #5A6449; }
+  [hidden] { display: none !important; }
+</style>
+<main>
+  <div id="abrindo">
+    <h1>Abrindo o aplicativo…</h1>
+    <p>Se nada acontecer em alguns segundos, use o botão abaixo.</p>
+  </div>
+
+  <div id="acao" hidden>
+    <h1>Redefinir sua senha</h1>
+    <p>Toque no botão para criar sua nova senha no aplicativo.</p>
+    <a id="link" class="botao" href="#">Abrir no aplicativo</a>
+    <p class="aviso">
+      Não tem o aplicativo instalado? Instale primeiro e depois toque novamente no link que
+      você recebeu por e-mail. O link vale por 30 minutos e só pode ser usado uma vez.
+    </p>
+  </div>
+
+  <div id="invalido" hidden>
+    <h1>Link inválido</h1>
+    <p>
+      Este link de recuperação está incompleto ou foi alterado. Peça um novo na tela de login
+      do aplicativo.
+    </p>
+  </div>
+</main>
+
+<script>
+  (function () {
+    var token = new URLSearchParams(location.search).get('token') || '';
+
+    // O token e base64url de 32 bytes. Validar antes de monta-lo no deep link
+    // impede que uma URL forjada injete conteudo arbitrario no esquema.
+    if (!/^[A-Za-z0-9_-]{20,120}$/.test(token)) {
+      document.getElementById('abrindo').hidden = true;
+      document.getElementById('invalido').hidden = false;
+      return;
+    }
+
+    var deepLink = 'gestaosaude://redefinir-senha?token=' + encodeURIComponent(token);
+    document.getElementById('link').href = deepLink;
+
+    // Tenta abrir o app de imediato. Se o app nao estiver instalado nada
+    // acontece e a pagina continua visivel, entao mostramos a alternativa.
+    try { location.href = deepLink; } catch (e) {}
+
+    setTimeout(function () {
+      if (document.visibilityState === 'visible') {
+        document.getElementById('abrindo').hidden = true;
+        document.getElementById('acao').hidden = false;
+      }
+    }, 1500);
+  })();
+</script>

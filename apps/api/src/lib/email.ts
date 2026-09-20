@@ -30,11 +30,25 @@ export async function sendPasswordResetEmail(email: string, token: string): Prom
       to: [email],
       subject: 'Recuperação de senha — Gestão Saúde',
       html: `
-        <p>Olá,</p>
-        <p>Recebemos um pedido para criar uma nova senha na sua conta.</p>
-        <p><a href="${link}">Criar nova senha</a></p>
-        <p>Este link vale por 30 minutos e só pode ser usado uma vez.</p>
-        <p>Se não foi você quem pediu, ignore esta mensagem — sua senha continua a mesma.</p>
+        <div style="font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:16px;line-height:1.6;color:#39432C;max-width:480px">
+          <p>Olá,</p>
+          <p>Recebemos um pedido para criar uma nova senha na sua conta do Gestão Saúde.</p>
+          <p style="margin:28px 0">
+            <a href="${link}" style="background:#B78842;color:#fff;text-decoration:none;padding:14px 28px;border-radius:999px;font-weight:700;display:inline-block">
+              Criar nova senha
+            </a>
+          </p>
+          <p style="font-size:14px;color:#5A6449">
+            O link vale por <strong>30 minutos</strong> e só pode ser usado uma vez.
+            Ao trocar a senha, todos os aparelhos conectados serão desconectados.
+          </p>
+          <p style="font-size:14px;color:#5A6449">
+            Se não foi você quem pediu, ignore esta mensagem — sua senha continua a mesma.
+          </p>
+          <p style="font-size:12px;color:#878F78;word-break:break-all;margin-top:24px">
+            Se o botão não funcionar, copie este endereço no navegador:<br>${link}
+          </p>
+        </div>
       `,
     }),
   });

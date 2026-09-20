@@ -9,6 +9,7 @@ import {
   type LoginResponse,
   type RegisterRequest,
   type RegisterResponse,
+  type ResetPasswordRequest,
 } from '@gestao/shared';
 
 import { API_URL, API_URL_MAL_CONFIGURADA, REQUEST_TIMEOUT_MS } from '@/config';
@@ -171,6 +172,10 @@ export const authApi = {
 
   forgotPassword(payload: ForgotPasswordRequest): Promise<void> {
     return request('/api/auth/forgot-password', { method: 'POST', body: payload }, () => undefined);
+  },
+
+  resetPassword(payload: ResetPasswordRequest): Promise<void> {
+    return request('/api/auth/reset-password', { method: 'POST', body: payload }, () => undefined);
   },
 
   async logout(refreshToken: string): Promise<void> {

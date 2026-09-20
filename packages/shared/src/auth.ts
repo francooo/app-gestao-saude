@@ -68,6 +68,23 @@ export const resetPasswordRequestSchema = z.object({
 export type ResetPasswordRequest = z.infer<typeof resetPasswordRequestSchema>;
 
 /**
+ * Schema do FORMULARIO de nova senha, com a confirmacao.
+ *
+ * Separado do contrato da API de proposito: a confirmacao existe para pegar
+ * erro de digitacao na tela e nunca e enviada ao servidor.
+ */
+export const resetPasswordFormSchema = z
+  .object({
+    password: passwordSchema,
+    passwordConfirmation: z.string(),
+  })
+  .refine((data) => data.password === data.passwordConfirmation, {
+    message: 'As senhas não são iguais',
+    path: ['passwordConfirmation'],
+  });
+export type ResetPasswordForm = z.infer<typeof resetPasswordFormSchema>;
+
+/**
  * Codigos de erro da API. O app traduz o codigo para uma mensagem — o servidor
  * nunca manda texto pronto para o usuario final.
  */
