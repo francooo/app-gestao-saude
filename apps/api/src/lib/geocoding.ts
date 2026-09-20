@@ -19,6 +19,20 @@ export type Coordenadas = {
 const PAIS = 'br';
 const TIMEOUT_MS = 6000;
 
+/**
+ * Confianca minima para aceitar um resultado.
+ *
+ * O MapTiler nunca responde "nao achei": ele devolve o melhor palpite com um
+ * `relevance` de 0 a 1. Medido na pratica: endereco real de Sao Paulo da 0,99
+ * a 1,0, enquanto a string sem sentido "xkcd zzzz nao existe" deu 0,38 e
+ * apontou para o centro do Rio de Janeiro.
+ *
+ * Um alfinete na cidade errada e pior que alfinete nenhum — quem cadastrou
+ * confiaria numa localizacao falsa. Abaixo do limiar, tratamos como nao
+ * encontrado e o medico fica sem mapa.
+ */
+const RELEVANCIA_MINIMA = 0.8;
+
 export async function geocodificar(endereco: string): Promise<Coordenadas | null> {
   const chave = process.env.MAPTILER_PRIVATE_KEY;
   if (!chave) {
@@ -46,12 +60,23 @@ export async function geocodificar(endereco: string): Promise<Coordenadas | null
     }
 
     const data = (await response.json()) as {
-      features?: Array<{ center?: [number, number] }>;
+      features?: Array<{ center?: [number, number]; relevance?: number }>;
     };
+
+    const melhor = data.features?.[0];
+    if (!melhor) return null;
+
+    const relevancia = melhor.relevance ?? 0;
+    if (relevancia < RELEVANCIA_MINIMA) {
+      console.warn(
+        `[geocoding] descartado por baixa confianca (${relevancia.toFixed(2)}): "${texto}"`,
+      );
+      return null;
+    }
 
     // O GeoJSON do MapTiler devolve [longitude, latitude] — nesta ordem.
     // Invertida, a coordenada cai no oceano; vale conferir num teste.
-    const centro = data.features?.[0]?.center;
+    const centro = melhor.center;
     if (!centro || centro.length !== 2) return null;
 
     const [longitude, latitude] = centro;
