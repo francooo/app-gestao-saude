@@ -9,7 +9,6 @@ import {
   Text,
   View,
   useWindowDimensions,
-  type TextInput,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -19,7 +18,7 @@ import { ApiRequestError } from '@/api/client';
 import { useAuth } from '@/auth/AuthContext';
 import { GlassCard } from '@/components/GlassCard';
 import { IllustrationRegion } from '@/components/IllustrationRegion';
-import { PillInput } from '@/components/PillInput';
+import { PillInput, type PillInputHandle } from '@/components/PillInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { colors, spacing, typography } from '@/theme';
 
@@ -35,7 +34,7 @@ export default function LoginScreen() {
   // a ponto de cortar o rosto da mae.
   const compact = height < 720;
 
-  const passwordRef = useRef<TextInput>(null);
+  const passwordRef = useRef<PillInputHandle>(null);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

@@ -1,5 +1,10 @@
-import 'dotenv/config';
+import { config as loadEnv } from 'dotenv';
 import { defineConfig } from 'drizzle-kit';
+
+// .env.local e a convencao da Vercel para segredos locais; o dotenv, sozinho,
+// so leria .env.
+loadEnv({ path: '.env.local' });
+loadEnv({ path: '.env' });
 
 /**
  * Migrations usam a conexao DIRETA (sem "-pooler" no host).

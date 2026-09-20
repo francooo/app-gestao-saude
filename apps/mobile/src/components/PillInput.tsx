@@ -1,5 +1,5 @@
 import { Feather } from '@expo/vector-icons';
-import { forwardRef, useState } from 'react';
+import { forwardRef, useState, type ComponentRef } from 'react';
 import {
   Pressable,
   StyleSheet,
@@ -23,10 +23,17 @@ type Props = Omit<TextInputProps, 'style'> & {
 };
 
 /**
+ * A partir do React Native 0.87 o TextInput nao e mais uma classe, entao o
+ * tipo da instancia nao e mais `TextInput`. ComponentRef extrai o tipo certo
+ * sem depender do interno _TextInputInstance.
+ */
+export type PillInputHandle = ComponentRef<typeof TextInput>;
+
+/**
  * Campo em formato de pilula com icone a esquerda, como no mockup.
  * Usa forwardRef para a tela encadear o foco do usuario para a senha.
  */
-export const PillInput = forwardRef<TextInput, Props>(function PillInput(
+export const PillInput = forwardRef<PillInputHandle, Props>(function PillInput(
   { label, icon, secure = false, error, containerStyle, onFocus, onBlur, ...inputProps },
   ref,
 ) {

@@ -18,12 +18,6 @@ const config: ExpoConfig = {
   icon: './assets/images/icon.png',
   backgroundColor: SAGE,
 
-  splash: {
-    image: './assets/images/splash.png',
-    resizeMode: 'cover',
-    backgroundColor: SAGE,
-  },
-
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'br.com.gestaosaude.app',
@@ -44,7 +38,20 @@ const config: ExpoConfig = {
     output: 'single',
   },
 
-  plugins: ['expo-router', 'expo-secure-store'],
+  plugins: [
+    'expo-router',
+    'expo-secure-store',
+    // No SDK 57 o splash deixou de ser campo do ExpoConfig e passou a ser
+    // configuracao do proprio plugin.
+    [
+      'expo-splash-screen',
+      {
+        image: './assets/images/splash.png',
+        resizeMode: 'cover',
+        backgroundColor: SAGE,
+      },
+    ],
+  ],
 
   experiments: {
     typedRoutes: true,
