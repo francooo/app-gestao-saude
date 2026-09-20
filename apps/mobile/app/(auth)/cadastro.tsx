@@ -1,4 +1,3 @@
-import { Feather } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import {
@@ -21,7 +20,7 @@ import { GlassCard } from '@/components/GlassCard';
 import { IllustrationRegion } from '@/components/IllustrationRegion';
 import { PillInput, type PillInputHandle } from '@/components/PillInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { colors, sizes, spacing, typography } from '@/theme';
+import { colors, spacing, typography } from '@/theme';
 
 type Campo = 'fullName' | 'email' | 'password' | 'passwordConfirmation' | 'acceptedPolicy';
 type ErrosPorCampo = Partial<Record<Campo, string>>;
@@ -101,21 +100,11 @@ export default function CadastroScreen() {
       >
         <View style={styles.screen}>
           <View style={[styles.cardArea, { paddingTop: insets.top + spacing.md }]}>
-            <Pressable
-              onPress={() => router.back()}
-              hitSlop={12}
-              accessibilityRole="button"
-              accessibilityLabel="Voltar para o login"
-              style={styles.back}
-            >
-              <Feather name="arrow-left" size={sizes.iconSize + 2} color={colors.textPrimary} />
-              <Text style={styles.backLabel}>Voltar</Text>
-            </Pressable>
-
             <GlassCard>
               <Text style={styles.title} accessibilityRole="header">
-                Criar conta
+                Criar sua conta
               </Text>
+              <Text style={styles.subtitle}>Preencha os dados para começar.</Text>
 
               <PillInput
                 label="Nome completo"
@@ -134,11 +123,11 @@ export default function CadastroScreen() {
 
               <PillInput
                 ref={emailRef}
-                label="Usuário"
+                label="E-mail"
                 icon="mail"
                 value={email}
                 onChangeText={setEmail}
-                placeholder="Seu melhor e-mail"
+                placeholder="Digite seu e-mail"
                 error={erros.email}
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -156,7 +145,7 @@ export default function CadastroScreen() {
                 secure
                 value={password}
                 onChangeText={setPassword}
-                placeholder="Ao menos 8 caracteres"
+                placeholder="Crie uma senha"
                 error={erros.password}
                 autoCapitalize="none"
                 textContentType="newPassword"
@@ -173,7 +162,7 @@ export default function CadastroScreen() {
                 secure
                 value={passwordConfirmation}
                 onChangeText={setPasswordConfirmation}
-                placeholder="Digite a senha de novo"
+                placeholder="Repita sua senha"
                 error={erros.passwordConfirmation}
                 autoCapitalize="none"
                 textContentType="newPassword"
@@ -213,7 +202,7 @@ export default function CadastroScreen() {
                 accessibilityRole="link"
                 style={styles.jaTenhoConta}
               >
-                <Text style={styles.jaTenhoContaTexto}>Já tenho conta. Entrar</Text>
+                <Text style={styles.jaTenhoContaTexto}>Já tenho uma conta</Text>
               </Pressable>
             </GlassCard>
           </View>
@@ -230,21 +219,16 @@ const styles = StyleSheet.create({
   scroll: { flexGrow: 1 },
   screen: { flex: 1, backgroundColor: colors.sage },
   cardArea: { paddingHorizontal: spacing.xl, paddingBottom: spacing.lg },
-  back: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    marginBottom: spacing.sm,
-  },
-  backLabel: {
-    ...typography.link,
-    color: colors.textPrimary,
-    marginLeft: spacing.xs,
-  },
   title: {
     ...typography.title,
     color: colors.textPrimary,
     textAlign: 'center',
+  },
+  subtitle: {
+    ...typography.subtitle,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    marginTop: spacing.md,
     marginBottom: spacing.xl,
   },
   // O checkbox do consentimento ja tem respiro proprio acima.

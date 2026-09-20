@@ -104,11 +104,11 @@ export default function LoginScreen() {
               </Text>
 
               <PillInput
-                label="Usuário"
-                icon="user"
+                label="E-mail"
+                icon="mail"
                 value={email}
                 onChangeText={setEmail}
-                placeholder="Digite seu usuário"
+                placeholder="Digite seu e-mail"
                 error={fieldErrors.email}
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -116,7 +116,7 @@ export default function LoginScreen() {
                 autoComplete="email"
                 returnKeyType="next"
                 onSubmitEditing={() => passwordRef.current?.focus()}
-                accessibilityLabel="Usuário"
+                accessibilityLabel="E-mail"
                 editable={!submitting}
               />
 

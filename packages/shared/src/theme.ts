@@ -77,6 +77,8 @@ export const fonts = {
 
 export const typography = {
   title: { fontFamily: fonts.extrabold, fontSize: 30, letterSpacing: -0.3 },
+  /** Linha de apoio sob o titulo, como em "Preencha os dados para comecar." */
+  subtitle: { fontFamily: fonts.regular, fontSize: 15 },
   label: { fontFamily: fonts.bold, fontSize: 15 },
   /** Precisa ser >= 16: abaixo disso o iOS da zoom ao focar o campo. */
   input: { fontFamily: fonts.regular, fontSize: 16 },

@@ -110,11 +110,11 @@ export default function EsqueciSenhaScreen() {
                   </Text>
 
                   <PillInput
-                    label="Usuário"
+                    label="E-mail"
                     icon="mail"
                     value={email}
                     onChangeText={setEmail}
-                    placeholder="Digite seu usuário"
+                    placeholder="Digite seu e-mail"
                     error={fieldError}
                     keyboardType="email-address"
                     autoCapitalize="none"

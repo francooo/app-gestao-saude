@@ -95,7 +95,8 @@ export type ApiError = z.infer<typeof apiErrorSchema>;
 
 /** Mensagens em pt-BR exibidas ao usuario, indexadas pelo codigo de erro. */
 export const ERROR_MESSAGES_PT: Record<string, string> = {
-  [API_ERROR.INVALID_CREDENTIALS]: 'Usuário ou senha inválidos.',
+  // "E-mail" e nao "Usuario": as duas telas rotulam o campo assim.
+  [API_ERROR.INVALID_CREDENTIALS]: 'E-mail ou senha inválidos.',
   [API_ERROR.EMAIL_ALREADY_REGISTERED]: 'Já existe uma conta com este e-mail.',
   [API_ERROR.INVALID_REFRESH_TOKEN]: 'Sua sessão expirou. Entre novamente.',
   [API_ERROR.INVALID_RESET_TOKEN]: 'Este link de recuperação expirou ou já foi usado.',
