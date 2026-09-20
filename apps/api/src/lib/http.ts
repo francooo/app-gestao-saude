@@ -4,8 +4,10 @@ import type { ZodType } from 'zod';
 import { API_ERROR, type ApiErrorCode } from '../contracts';
 
 export function json(res: VercelResponse, status: number, body: unknown): void {
-  res.status(status).setHeader('Content-Type', 'application/json; charset=utf-8');
-  res.send(JSON.stringify(body));
+  // setHeader devolve o ServerResponse do Node, nao o VercelResponse, entao
+  // encadear .send() nele nao compila. Chamadas separadas.
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.status(status).send(JSON.stringify(body));
 }
 
 export function fail(

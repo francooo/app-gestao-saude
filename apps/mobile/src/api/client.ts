@@ -164,8 +164,8 @@ export const authApi = {
     try {
       await rawRequest('/api/auth/logout', { method: 'POST', body: { refreshToken } });
     } catch {
-      // Sair localmente e mais importante que revogar no servidor; o token
-      // expira sozinho em 30 dias de qualquer forma.
+      // Sair localmente e mais importante que revogar no servidor; o refresh
+      // token expira sozinho em 60 dias de qualquer forma.
     }
   },
 };

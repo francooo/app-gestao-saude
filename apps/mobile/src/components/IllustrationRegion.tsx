@@ -25,9 +25,9 @@ export function IllustrationRegion() {
         contentFit="cover"
         contentPosition="bottom center"
         style={StyleSheet.absoluteFill}
-        // A imagem e decorativa: o conteudo da tela ja esta nos rotulos.
-        accessibilityElementsHidden
-        importantForAccessibility="no-hide-descendants"
+        // A imagem e decorativa: o conteudo da tela ja esta nos rotulos, entao
+        // o leitor de tela deve ignora-la.
+        accessible={false}
         transition={200}
       />
       {/* Seguro contra banding do JPEG na transicao para o verde solido

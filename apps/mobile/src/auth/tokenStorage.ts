@@ -19,24 +19,35 @@ const USER_KEY = 'gs.user';
 
 const isWeb = Platform.OS === 'web';
 
+/** Tipado a mao para nao depender da lib DOM no tsconfig do app. */
+type WebStorage = {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+  removeItem(key: string): void;
+};
+
+const webStorage = (globalThis as { localStorage?: WebStorage }).localStorage;
+
 async function setItem(key: string, value: string): Promise<void> {
   if (isWeb) {
-    globalThis.localStorage?.setItem(key, value);
+    webStorage?.setItem(key, value);
     return;
   }
   await SecureStore.setItemAsync(key, value, {
+    // Nao sincroniza com o iCloud Keychain: credencial de app de saude nao
+    // deve atravessar dispositivos.
     keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
   });
 }
 
 async function getItem(key: string): Promise<string | null> {
-  if (isWeb) return globalThis.localStorage?.getItem(key) ?? null;
+  if (isWeb) return webStorage?.getItem(key) ?? null;
   return SecureStore.getItemAsync(key);
 }
 
 async function removeItem(key: string): Promise<void> {
   if (isWeb) {
-    globalThis.localStorage?.removeItem(key);
+    webStorage?.removeItem(key);
     return;
   }
   await SecureStore.deleteItemAsync(key);
