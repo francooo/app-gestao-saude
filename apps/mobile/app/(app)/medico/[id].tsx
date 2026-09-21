@@ -19,11 +19,13 @@ import { messageForError } from '@gestao/shared';
 
 import { ApiRequestError } from '@/api/client';
 import { healthApi, type Professional } from '@/api/health';
+import { Avatar } from '@/components/Avatar';
 import { FormField } from '@/components/FormField';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { StarRating } from '@/components/StarRating';
 import { SurfaceCard } from '@/components/SurfaceCard';
 import { buscarCep, formatarCep, montarEndereco, somenteDigitos } from '@/lib/cep';
+import { escolherFoto } from '@/lib/foto';
 import { colors, fonts, radii, spacing } from '@/theme';
 
 export default function MedicoFormScreen() {
@@ -43,6 +45,8 @@ export default function MedicoFormScreen() {
   const [modalidade, setModalidade] = useState<'presencial' | 'teleconsulta'>('presencial');
   const [nota, setNota] = useState<number | null>(null);
   const [observacoes, setObservacoes] = useState('');
+  const [foto, setFoto] = useState<string | null>(null);
+  const [processandoFoto, setProcessandoFoto] = useState(false);
 
   // Endereco em partes, para o CEP preencher o que der.
   const [cep, setCep] = useState('');
@@ -61,9 +65,8 @@ export default function MedicoFormScreen() {
     let cancelado = false;
     (async () => {
       try {
-        const lista = await healthApi.listProfessionals();
-        const m = lista.find((p) => p.id === id);
-        if (!m || cancelado) return;
+        const m = await healthApi.getProfessional(id!);
+        if (cancelado) return;
         preencher(m);
       } catch (e) {
         if (!cancelado) {
@@ -86,8 +89,46 @@ export default function MedicoFormScreen() {
     setModalidade(m.defaultModality ?? 'presencial');
     setNota(m.myRating);
     setObservacoes(m.notes ?? '');
+    // Sem esta linha, o estado comecaria nulo e QUALQUER salvamento apagaria
+    // a foto existente — editar o telefone perderia a foto.
+    setFoto(m.photo ?? null);
     // O endereco foi salvo como linha unica; mostramos nela mesma para edicao.
     setLogradouro(m.address ?? '');
+  }
+
+  function abrirEscolhaDeFoto() {
+    const opcoes: { text: string; onPress?: () => void; style?: 'cancel' | 'destructive' }[] = [
+      { text: 'Tirar foto', onPress: () => aplicarFoto('camera') },
+      { text: 'Escolher da galeria', onPress: () => aplicarFoto('galeria') },
+    ];
+
+    if (foto) {
+      opcoes.push({ text: 'Remover foto', style: 'destructive', onPress: () => setFoto(null) });
+    }
+    opcoes.push({ text: 'Cancelar', style: 'cancel' });
+
+    Alert.alert('Foto do médico', undefined, opcoes);
+  }
+
+  async function aplicarFoto(origem: 'camera' | 'galeria') {
+    setProcessandoFoto(true);
+    const r = await escolherFoto(origem);
+    setProcessandoFoto(false);
+
+    if (r.ok) {
+      setFoto(r.dataUri);
+      return;
+    }
+
+    // Desistir nao e erro: nao mexe na foto atual e nao avisa nada.
+    if (r.motivo === 'cancelado') return;
+
+    Alert.alert(
+      r.motivo === 'permissao' ? 'Sem acesso à câmera' : 'Não consegui usar essa imagem',
+      r.motivo === 'permissao'
+        ? 'Libere a câmera para este aplicativo nos ajustes do aparelho, ou escolha uma foto da galeria.'
+        : 'Tente outra foto.',
+    );
   }
 
   async function consultarCep(valor: string) {
@@ -169,6 +210,7 @@ export default function MedicoFormScreen() {
       defaultModality: modalidade,
       myRating: nota,
       notes: observacoes.trim() || null,
+      photo: foto,
     };
 
     setSalvando(true);
@@ -212,6 +254,33 @@ export default function MedicoFormScreen() {
           ) : (
             <>
               <SurfaceCard style={styles.bloco}>
+                <View style={styles.foto}>
+                  <Pressable
+                    onPress={abrirEscolhaDeFoto}
+                    disabled={salvando || processandoFoto}
+                    hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      foto ? `Alterar a foto de ${nome || 'do médico'}` : 'Adicionar foto do médico'
+                    }
+                    accessibilityHint="Abre a câmera ou a galeria"
+                  >
+                    <Avatar nome={nome || '?'} photo={foto} size={72} />
+
+                    <View style={styles.selo}>
+                      {processandoFoto ? (
+                        <ActivityIndicator size="small" color={colors.onAccent} />
+                      ) : (
+                        <Feather name="camera" size={14} color={colors.onAccent} />
+                      )}
+                    </View>
+                  </Pressable>
+
+                  <Text style={styles.fotoDica}>
+                    {foto ? 'Toque para trocar ou remover' : 'Toque para adicionar uma foto'}
+                  </Text>
+                </View>
+
                 <FormField
                   label="Nome"
                   value={nome}
@@ -405,6 +474,30 @@ const styles = StyleSheet.create({
   conteudo: { paddingHorizontal: spacing.xl },
   carregando: { marginTop: spacing.xxl * 2 },
   bloco: { marginTop: spacing.xl },
+  foto: {
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  selo: {
+    position: 'absolute',
+    right: -2,
+    bottom: -2,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: colors.accentGreen,
+    alignItems: 'center',
+    justifyContent: 'center',
+    // O anel na cor do card separa o selo do avatar escuro por baixo.
+    borderWidth: 2,
+    borderColor: colors.surface,
+  },
+  fotoDica: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginTop: spacing.sm,
+  },
   blocoTitulo: {
     fontFamily: fonts.bold,
     fontSize: 17,

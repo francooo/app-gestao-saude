@@ -16,6 +16,8 @@ export type Doctor = {
   longitude: number | null;
   defaultModality: 'presencial' | 'teleconsulta' | null;
   myRating: number | null;
+  /** Data URI da foto. Opcional para o tipo aceitar Professional direto. */
+  photo?: string | null;
 };
 
 type Props = {
@@ -52,7 +54,7 @@ export function DoctorCard({ doctor, distanceKm, onPress, onAction }: Props) {
     >
       <SurfaceCard style={styles.card}>
         <View style={styles.linha}>
-          <Avatar nome={doctor.name} size={58} />
+          <Avatar nome={doctor.name} photo={doctor.photo} recyclingKey={doctor.id} size={58} />
 
           <View style={styles.meio}>
             <Text style={styles.nome} numberOfLines={1}>

@@ -85,7 +85,12 @@ export default function MapaScreen() {
         <View style={[styles.cartao, { bottom: insets.bottom + spacing.xl }]}>
           <SurfaceCard style={styles.cartaoInterno}>
             <View style={styles.cartaoLinha}>
-              <Avatar nome={selecionado.name} size={48} />
+              <Avatar
+                nome={selecionado.name}
+                photo={selecionado.photo}
+                recyclingKey={selecionado.id}
+                size={48}
+              />
               <View style={styles.cartaoTextos}>
                 <Text style={styles.cartaoNome} numberOfLines={1}>
                   {selecionado.name}

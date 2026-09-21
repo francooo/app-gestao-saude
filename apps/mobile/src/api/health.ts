@@ -35,6 +35,15 @@ export const professionalSchema = z.object({
   myRating: z.number().nullable(),
   ratingNote: z.string().nullable(),
   notes: z.string().nullable(),
+  /**
+   * Foto como data URI JPEG, ja reduzida para 200x200 pelo app.
+   *
+   * nullish() e nao nullable(): se este aplicativo rodar contra uma API que
+   * ainda nao tem a coluna, o campo chega ausente. Com nullable() o parse
+   * lancaria e a tela de Medicos inteira morreria — lista vazia e erro
+   * generico. Com nullish() ela apenas degrada: todos sem foto.
+   */
+  photo: z.string().nullish(),
 });
 export type Professional = z.infer<typeof professionalSchema>;
 
@@ -47,6 +56,8 @@ export type ProfessionalInput = {
   defaultModality?: 'presencial' | 'teleconsulta' | null;
   myRating?: number | null;
   notes?: string | null;
+  /** Data URI JPEG. null remove a foto; ausente preserva a atual. */
+  photo?: string | null;
 };
 
 export const appointmentSchema = z.object({
@@ -127,6 +138,19 @@ export const healthApi = {
       `/api/professionals${query ? `?${query}` : ''}`,
       { authenticated: true },
       (data) => z.object({ professionals: z.array(professionalSchema) }).parse(data).professionals,
+    );
+  },
+
+  /**
+   * Um medico so.
+   *
+   * A tela de edicao baixava a lista inteira e filtrava em memoria. Era
+   * desperdicio mesmo antes; com a foto embutida em cada item, seria baixar
+   * as fotos de todos os medicos para editar um.
+   */
+  getProfessional(id: string): Promise<Professional> {
+    return request(`/api/professionals/${id}`, { authenticated: true }, (data) =>
+      z.object({ professional: professionalSchema }).parse(data).professional,
     );
   },
 

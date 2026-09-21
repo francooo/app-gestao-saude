@@ -76,6 +76,18 @@ const config: ExpoConfig = {
         isAndroidBackgroundLocationEnabled: false,
       },
     ],
+    [
+      'expo-image-picker',
+      {
+        // Foto do medico no cadastro. Como a de localizacao, e opcional: sem
+        // ela o avatar continua sendo as iniciais coloridas. O texto diz para
+        // que serve, senao a pessoa nega por falta de contexto.
+        photosPermission:
+          'O aplicativo acessa suas fotos apenas para você escolher a foto de um médico que cadastrar.',
+        cameraPermission:
+          'O aplicativo usa a câmera apenas para você fotografar um médico que cadastrar.',
+      },
+    ],
   ],
 
   experiments: {
@@ -97,8 +109,22 @@ const config: ExpoConfig = {
     url: 'https://u.expo.dev/5aac8cc3-be3d-45d3-a69d-f2c699e78cea',
   },
 
+  /**
+   * `fingerprint` e nao `appVersion`.
+   *
+   * Com `appVersion`, todo build carregava a versao 0.1.0 e portanto o mesmo
+   * runtime — um `eas update` com um modulo nativo novo chegava a um binario
+   * que nao o tinha, e o aplicativo travava na abertura. Nao existe rollback
+   * de OTA que conserte rapido um app que nao abre.
+   *
+   * Com `fingerprint`, a identidade vem das dependencias nativas de verdade:
+   * uma atualizacao incompativel simplesmente nao e entregue.
+   *
+   * Consequencia conhecida: os APKs gerados antes desta mudanca tem outra
+   * impressao digital e param de receber atualizacoes.
+   */
   runtimeVersion: {
-    policy: 'appVersion',
+    policy: 'fingerprint',
   },
 };
 
