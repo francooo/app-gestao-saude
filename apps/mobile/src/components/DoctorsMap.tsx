@@ -1,7 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { Camera, Map, Marker, type LngLat } from '@maplibre/maplibre-react-native';
 import { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import type { Doctor } from '@/components/DoctorCard';
 import { MAPTILER_KEY } from '@/config';
@@ -21,9 +21,11 @@ type Props = {
   doctors: Doctor[];
   onSelectDoctor?: (id: string) => void;
   height?: number;
+  /** Ocupa a tela toda, sem cantos arredondados. */
+  fullScreen?: boolean;
 };
 
-export function DoctorsMap({ doctors, onSelectDoctor, height = 220 }: Props) {
+export function DoctorsMap({ doctors, onSelectDoctor, height = 220, fullScreen }: Props) {
   // So entram no mapa os que foram geocodificados com confianca suficiente.
   const comCoordenada = useMemo(
     () =>
@@ -43,21 +45,23 @@ export function DoctorsMap({ doctors, onSelectDoctor, height = 220 }: Props) {
     return [soma.lng / comCoordenada.length, soma.lat / comCoordenada.length];
   }, [comCoordenada]);
 
+  const molde = fullScreen ? styles.wrapperCheio : [styles.wrapper, { height }];
+
   if (!MAPTILER_KEY) {
-    return <Aviso height={height} texto="Mapa indisponível nesta versão do aplicativo." />;
+    return <Aviso molde={molde} texto="Mapa indisponível nesta versão do aplicativo." />;
   }
 
   if (!centro) {
     return (
       <Aviso
-        height={height}
+        molde={molde}
         texto="Nenhum endereço reconhecido ainda. Adicione o endereço do consultório para vê-lo no mapa."
       />
     );
   }
 
   return (
-    <View style={[styles.wrapper, { height }]}>
+    <View style={molde}>
       <Map style={StyleSheet.absoluteFill} mapStyle={ESTILO} logo={false}>
         <Camera
           // Zoom mais aberto quando ha varios pontos espalhados.
@@ -81,9 +85,9 @@ export function DoctorsMap({ doctors, onSelectDoctor, height = 220 }: Props) {
   );
 }
 
-function Aviso({ height, texto }: { height: number; texto: string }) {
+function Aviso({ molde, texto }: { molde: StyleProp<ViewStyle>; texto: string }) {
   return (
-    <View style={[styles.wrapper, styles.aviso, { height }]}>
+    <View style={[molde, styles.aviso]}>
       <Feather name="map" size={26} color={colors.textSecondary} />
       <Text style={styles.avisoTexto}>{texto}</Text>
     </View>
@@ -94,6 +98,10 @@ const styles = StyleSheet.create({
   wrapper: {
     borderRadius: radii.card,
     overflow: 'hidden',
+    backgroundColor: colors.surface,
+  },
+  wrapperCheio: {
+    flex: 1,
     backgroundColor: colors.surface,
   },
   aviso: {

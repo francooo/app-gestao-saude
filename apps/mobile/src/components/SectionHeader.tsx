@@ -7,9 +7,13 @@ type Props = {
   title: string;
   /** Sem onVerTodos, o link nao aparece — util quando a lista esta vazia. */
   onVerTodos?: () => void;
+  /** Texto do link. Padrao "Ver todos"; a tela de medicos usa "Mapa". */
+  verTodosLabel?: string;
+  /** Icone antes do texto do link. */
+  verTodosIcon?: keyof typeof Feather.glyphMap;
 };
 
-export function SectionHeader({ title, onVerTodos }: Props) {
+export function SectionHeader({ title, onVerTodos, verTodosLabel, verTodosIcon }: Props) {
   return (
     <View style={styles.row}>
       <Text style={styles.title} accessibilityRole="header">
@@ -21,10 +25,18 @@ export function SectionHeader({ title, onVerTodos }: Props) {
           onPress={onVerTodos}
           hitSlop={{ top: 12, bottom: 12, left: 12, right: 8 }}
           accessibilityRole="button"
-          accessibilityLabel={`Ver todos: ${title}`}
+          accessibilityLabel={`${verTodosLabel ?? 'Ver todos'}: ${title}`}
           style={styles.link}
         >
-          <Text style={styles.linkTexto}>Ver todos</Text>
+          {verTodosIcon ? (
+            <Feather
+              name={verTodosIcon}
+              size={17}
+              color={colors.accentGreen}
+              style={styles.linkIcone}
+            />
+          ) : null}
+          <Text style={styles.linkTexto}>{verTodosLabel ?? 'Ver todos'}</Text>
           <Feather name="chevron-right" size={18} color={colors.accentGreen} />
         </Pressable>
       ) : null}
@@ -50,6 +62,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingLeft: spacing.sm,
   },
+  linkIcone: { marginRight: spacing.xs },
   linkTexto: {
     fontFamily: fonts.bold,
     fontSize: 14,

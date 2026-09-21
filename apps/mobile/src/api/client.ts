@@ -31,7 +31,7 @@ export class ApiRequestError extends Error {
 }
 
 type RequestOptions = {
-  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
   /** Anexa o access token e tenta refresh em caso de 401. */
   authenticated?: boolean;

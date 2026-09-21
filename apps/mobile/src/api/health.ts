@@ -80,7 +80,37 @@ export type AppointmentInput = {
   notes?: string | null;
 };
 
+export const referenceLocationSchema = z.object({
+  label: z.string().nullable(),
+  address: z.string().nullable(),
+  latitude: z.number().nullable(),
+  longitude: z.number().nullable(),
+});
+export type ReferenceLocation = z.infer<typeof referenceLocationSchema>;
+
 export const healthApi = {
+  getLocation(): Promise<ReferenceLocation | null> {
+    return request('/api/me/location', { authenticated: true }, (data) =>
+      z.object({ location: referenceLocationSchema.nullable() }).parse(data).location,
+    );
+  },
+
+  setLocationByAddress(address: string): Promise<ReferenceLocation | null> {
+    return request(
+      '/api/me/location',
+      { method: 'PUT', body: { address }, authenticated: true },
+      (data) => z.object({ location: referenceLocationSchema.nullable() }).parse(data).location,
+    );
+  },
+
+  setLocationByCoords(latitude: number, longitude: number): Promise<ReferenceLocation | null> {
+    return request(
+      '/api/me/location',
+      { method: 'PUT', body: { latitude, longitude }, authenticated: true },
+      (data) => z.object({ location: referenceLocationSchema.nullable() }).parse(data).location,
+    );
+  },
+
   listProfiles(): Promise<Profile[]> {
     return request('/api/profiles', { authenticated: true }, (data) =>
       z.object({ profiles: z.array(profileSchema) }).parse(data).profiles,

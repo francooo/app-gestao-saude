@@ -18,14 +18,21 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { messageForError } from '@gestao/shared';
 
 import { ApiRequestError } from '@/api/client';
-import { healthApi, type Profile, type Professional } from '@/api/health';
+import {
+  healthApi,
+  type Profile,
+  type Professional,
+  type ReferenceLocation,
+} from '@/api/health';
 import { DoctorCard } from '@/components/DoctorCard';
 import { DoctorsMap } from '@/components/DoctorsMap';
 import { FilterChips, type Chip } from '@/components/FilterChips';
+import { LocationBar } from '@/components/LocationBar';
 import { ProfileSelector } from '@/components/ProfileSelector';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SurfaceCard } from '@/components/SurfaceCard';
+import { distanciaKm, ordenarPorDistancia } from '@/lib/geo';
 import { abrirRotaPara } from '@/lib/maps';
 import { colors, fonts, spacing } from '@/theme';
 
@@ -38,23 +45,29 @@ export default function MedicosScreen() {
 
   const [perfis, setPerfis] = useState<Profile[]>([]);
   const [medicos, setMedicos] = useState<Professional[]>([]);
+  const [referencia, setReferencia] = useState<ReferenceLocation | null>(null);
   const [perfilId, setPerfilId] = useState<string | null>(null);
   const [especialidade, setEspecialidade] = useState<string | null>(null);
 
   const [carregando, setCarregando] = useState(true);
   const [atualizando, setAtualizando] = useState(false);
+  const [salvandoLocal, setSalvandoLocal] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
-  const [minhaPosicao, setMinhaPosicao] = useState<Location.LocationObjectCoords | null>(null);
+  const [posicaoGps, setPosicaoGps] = useState<{ latitude: number; longitude: number } | null>(
+    null,
+  );
 
   const carregar = useCallback(async () => {
     setErro(null);
     try {
-      const [listaPerfis, listaMedicos] = await Promise.all([
+      const [listaPerfis, listaMedicos, local] = await Promise.all([
         healthApi.listProfiles(),
         healthApi.listProfessionals({ profileId: perfilId }),
+        healthApi.getLocation(),
       ]);
       setPerfis(listaPerfis);
       setMedicos(listaMedicos);
+      setReferencia(local);
     } catch (e) {
       setErro(messageForError(e instanceof ApiRequestError ? e.code : undefined));
     } finally {
@@ -70,9 +83,8 @@ export default function MedicosScreen() {
   );
 
   /**
-   * Localizacao e opcional de verdade: se a permissao for negada, a tela
-   * funciona igual, apenas sem a distancia nos cards. Nao insistimos nem
-   * bloqueamos nada.
+   * Localizacao e opcional de verdade: negada a permissao, a tela funciona
+   * igual — sem distancia e com a lista em ordem alfabetica.
    */
   useEffect(() => {
     let cancelado = false;
@@ -80,9 +92,12 @@ export default function MedicosScreen() {
       try {
         const { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted' || cancelado) return;
-        const pos = await Location.getLastKnownPositionAsync();
-        const atual = pos ?? (await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }));
-        if (!cancelado && atual) setMinhaPosicao(atual.coords);
+        const pos =
+          (await Location.getLastKnownPositionAsync()) ??
+          (await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }));
+        if (!cancelado && pos) {
+          setPosicaoGps({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+        }
       } catch {
         // Sem localizacao seguimos sem distancia.
       }
@@ -92,6 +107,18 @@ export default function MedicosScreen() {
     };
   }, []);
 
+  /**
+   * De onde as distancias sao medidas: a referencia fixada tem prioridade
+   * sobre o GPS. Quem escolheu "minha casa" quer distancia de casa mesmo
+   * estando na rua.
+   */
+  const pontoDeReferencia = useMemo(() => {
+    if (referencia?.latitude != null && referencia.longitude != null) {
+      return { latitude: referencia.latitude, longitude: referencia.longitude };
+    }
+    return posicaoGps;
+  }, [referencia, posicaoGps]);
+
   // As especialidades saem dos medicos que voce tem — nao ha lista fixa.
   const chips = useMemo<Chip[]>(() => {
     const unicas = [...new Set(medicos.map((m) => m.specialty).filter(Boolean))] as string[];
@@ -99,14 +126,59 @@ export default function MedicosScreen() {
     return [{ value: null, label: 'Todas' }, ...unicas.map((e) => ({ value: e, label: e }))];
   }, [medicos]);
 
-  const visiveis = useMemo(
-    () => (especialidade ? medicos.filter((m) => m.specialty === especialidade) : medicos),
-    [medicos, especialidade],
-  );
+  /**
+   * Ordena uma vez por carregamento, e nao continuamente: uma lista que se
+   * reordena enquanto a pessoa anda seria desorientadora.
+   */
+  const visiveis = useMemo(() => {
+    const filtrados = especialidade
+      ? medicos.filter((m) => m.specialty === especialidade)
+      : medicos;
+    return ordenarPorDistancia(filtrados, pontoDeReferencia);
+  }, [medicos, especialidade, pontoDeReferencia]);
 
   function distanciaAte(m: Professional): number | null {
-    if (!minhaPosicao || m.latitude == null || m.longitude == null) return null;
-    return distanciaKm(minhaPosicao.latitude, minhaPosicao.longitude, m.latitude, m.longitude);
+    if (!pontoDeReferencia || m.latitude == null || m.longitude == null) return null;
+    return distanciaKm(
+      pontoDeReferencia.latitude,
+      pontoDeReferencia.longitude,
+      m.latitude,
+      m.longitude,
+    );
+  }
+
+  async function definirEndereco(address: string) {
+    setSalvandoLocal(true);
+    try {
+      setReferencia(await healthApi.setLocationByAddress(address));
+    } finally {
+      setSalvandoLocal(false);
+    }
+  }
+
+  async function usarPosicaoAtual() {
+    setSalvandoLocal(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert(
+          'Localização desativada',
+          'Autorize o acesso à localização nas configurações do aparelho, ou fixe um endereço.',
+        );
+        return;
+      }
+      const pos = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.Balanced,
+      });
+      setPosicaoGps({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
+      setReferencia(
+        await healthApi.setLocationByCoords(pos.coords.latitude, pos.coords.longitude),
+      );
+    } catch {
+      Alert.alert('Não consegui obter sua localização', 'Tente novamente ou fixe um endereço.');
+    } finally {
+      setSalvandoLocal(false);
+    }
   }
 
   function emBreve(titulo: string) {
@@ -161,6 +233,15 @@ export default function MedicosScreen() {
           <ProfileSelector profiles={perfis} selectedId={perfilId} onSelect={setPerfilId} />
         </View>
 
+        <View style={styles.localizacao}>
+          <LocationBar
+            location={referencia}
+            onSetAddress={definirEndereco}
+            onUseCurrent={usarPosicaoAtual}
+            saving={salvandoLocal}
+          />
+        </View>
+
         <View style={styles.chips}>
           <FilterChips chips={chips} selected={especialidade} onSelect={setEspecialidade} />
         </View>
@@ -178,7 +259,13 @@ export default function MedicosScreen() {
         ) : (
           <>
             <View style={styles.secao}>
-              <SectionHeader title="Onde eles atendem" />
+              {/* O titulo so promete proximidade quando ha de onde medir. */}
+              <SectionHeader
+                title={pontoDeReferencia ? 'Médicos próximos' : 'Meus médicos'}
+                onVerTodos={() => router.push('/mapa')}
+                verTodosLabel="Mapa"
+                verTodosIcon="map"
+              />
               <DoctorsMap doctors={visiveis} onSelectDoctor={irAte} />
             </View>
 
@@ -223,9 +310,6 @@ export default function MedicosScreen() {
             <Text style={styles.adicionarTexto}>Cadastrar médico</Text>
           </Pressable>
 
-          {/* Entrada para nova consulta que nao depende de ter um card de
-              medico na tela — antes o unico caminho era pelo card, e com a
-              lista vazia nao havia como marcar nada. */}
           <Pressable
             onPress={() => router.push('/consulta/nova')}
             accessibilityRole="button"
@@ -240,30 +324,15 @@ export default function MedicosScreen() {
   );
 }
 
-/**
- * Distancia em linha reta pela formula de Haversine.
- *
- * E a distancia "de passaro", nao a de trajeto: serve para dar nocao de perto
- * ou longe, e nao para navegar ate o consultorio.
- */
-function distanciaKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371;
-  const rad = (g: number) => (g * Math.PI) / 180;
-  const dLat = rad(lat2 - lat1);
-  const dLon = rad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
 const styles = StyleSheet.create({
   tela: { flex: 1, backgroundColor: colors.homeBackgroundTop },
   conteudo: { paddingHorizontal: spacing.xl },
   seletor: { marginTop: spacing.xl },
+  localizacao: { marginTop: spacing.md },
   chips: { marginTop: spacing.lg },
   carregando: { marginTop: spacing.xxl * 2 },
   secao: { marginTop: spacing.xxl },
-  card: { marginBottom: spacing.lg },
+  card: { marginBottom: spacing.md },
   aviso: { alignItems: 'center', paddingVertical: spacing.xxl },
   avisoTexto: {
     fontFamily: fonts.regular,
