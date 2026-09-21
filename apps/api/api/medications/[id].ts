@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { and, asc, desc, eq } from 'drizzle-orm';
+import { and, asc, desc, eq, sql } from 'drizzle-orm';
 
 import { API_ERROR, doseInputSchema, medicationPatchSchema } from '../../src/contracts';
 import { db } from '../../src/db/client';
@@ -202,6 +202,11 @@ async function registrarDose(
     .values(valores)
     .onConflictDoUpdate({
       target: [medicationDoses.medicationId, medicationDoses.scheduledFor],
+      // O indice e PARCIAL, e o ON CONFLICT precisa repetir o mesmo predicado
+      // — senao o Postgres nao casa o indice e devolve 42P10 ("no unique or
+      // exclusion constraint matching the ON CONFLICT specification"), que
+      // chega na tela como 500.
+      targetWhere: sql`${medicationDoses.scheduledFor} IS NOT NULL`,
       set: {
         takenAt: valores.takenAt,
         status: valores.status,
