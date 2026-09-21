@@ -20,12 +20,13 @@ const ESTILO = `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTIL
 type Props = {
   doctors: Doctor[];
   onSelectDoctor?: (id: string) => void;
+  /** Medido do mockup: o card do mapa ocupa 10,5% da altura da tela. */
   height?: number;
   /** Ocupa a tela toda, sem cantos arredondados. */
   fullScreen?: boolean;
 };
 
-export function DoctorsMap({ doctors, onSelectDoctor, height = 220, fullScreen }: Props) {
+export function DoctorsMap({ doctors, onSelectDoctor, height = 140, fullScreen }: Props) {
   // So entram no mapa os que foram geocodificados com confianca suficiente.
   const comCoordenada = useMemo(
     () =>
