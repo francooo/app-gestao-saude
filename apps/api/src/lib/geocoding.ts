@@ -1,3 +1,5 @@
+import { rotuloDeLugar } from './uf';
+
 /**
  * Converte endereco em coordenadas usando a API do MapTiler.
  *
@@ -85,6 +87,54 @@ export async function geocodificar(endereco: string): Promise<Coordenadas | null
     return { latitude, longitude };
   } catch (error) {
     console.warn('[geocoding] falhou:', error instanceof Error ? error.message : error);
+    return null;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+/**
+ * Geocodificacao REVERSA: coordenada -> rotulo de lugar.
+ *
+ * Usada para mostrar "Sao Paulo, SP" quando a referencia e a posicao atual.
+ *
+ * Nao existe limiar de confianca aqui, ao contrario do caminho direto: uma
+ * coordenada sempre cai em algum lugar real, e o risco de apontar para a
+ * cidade errada nao se aplica.
+ */
+export async function geocodificarReverso(
+  latitude: number,
+  longitude: number,
+): Promise<string | null> {
+  const chave = process.env.MAPTILER_PRIVATE_KEY;
+  if (!chave) return null;
+
+  const url =
+    `https://api.maptiler.com/geocoding/${longitude},${latitude}.json` +
+    `?key=${encodeURIComponent(chave)}&limit=1`;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+  try {
+    const response = await fetch(url, { signal: controller.signal });
+    if (!response.ok) return null;
+
+    const data = (await response.json()) as {
+      features?: Array<{ context?: Array<{ id?: string; text?: string }> }>;
+    };
+
+    const contexto = data.features?.[0]?.context ?? [];
+    const achar = (prefixo: string) =>
+      contexto.find((c) => c.id?.startsWith(prefixo))?.text ?? null;
+
+    // `municipality` e a cidade e `subregion` e o estado por extenso.
+    // `region` NAO serve: devolve "Regiao Sudeste".
+    const cidade = achar('municipality') ?? achar('municipal_district') ?? achar('place');
+    const estado = achar('subregion');
+
+    return rotuloDeLugar(cidade, estado);
+  } catch {
     return null;
   } finally {
     clearTimeout(timeout);

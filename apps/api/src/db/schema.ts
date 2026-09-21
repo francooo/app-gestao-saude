@@ -38,6 +38,16 @@ export const users = pgTable('users', {
   passwordChangedAt: timestamp('password_changed_at', { withTimezone: true })
     .notNull()
     .defaultNow(),
+  /**
+   * Ponto de referencia para as distancias ate os consultorios.
+   *
+   * Fica na conta, e nao no aparelho: "minha casa" e da pessoa, e trocar de
+   * celular nao deveria zerar a referencia. Nulo = usar a posicao atual.
+   */
+  referenceLabel: text('reference_label'),
+  referenceAddress: text('reference_address'),
+  referenceLatitude: numeric('reference_latitude'),
+  referenceLongitude: numeric('reference_longitude'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
