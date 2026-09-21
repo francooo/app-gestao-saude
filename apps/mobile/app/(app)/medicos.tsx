@@ -1,5 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import * as Location from 'expo-location';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -25,6 +26,7 @@ import { ProfileSelector } from '@/components/ProfileSelector';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SurfaceCard } from '@/components/SurfaceCard';
+import { abrirRotaPara } from '@/lib/maps';
 import { colors, fonts, spacing } from '@/theme';
 
 /** Altura da barra de abas flutuante. */
@@ -32,6 +34,7 @@ const ESPACO_BARRA = 96;
 
 export default function MedicosScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
 
   const [perfis, setPerfis] = useState<Profile[]>([]);
   const [medicos, setMedicos] = useState<Professional[]>([]);
@@ -60,9 +63,11 @@ export default function MedicosScreen() {
     }
   }, [perfilId]);
 
-  useEffect(() => {
-    void carregar();
-  }, [carregar]);
+  useFocusEffect(
+    useCallback(() => {
+      void carregar();
+    }, [carregar]),
+  );
 
   /**
    * Localizacao e opcional de verdade: se a permissao for negada, a tela
@@ -106,6 +111,20 @@ export default function MedicosScreen() {
 
   function emBreve(titulo: string) {
     Alert.alert(titulo, 'Esta parte do aplicativo ainda está sendo construída.');
+  }
+
+  /** Toque no alfinete: abre o app de mapas do celular com a rota pronta. */
+  async function irAte(medicoId: string) {
+    const m = medicos.find((x) => x.id === medicoId);
+    if (!m || m.latitude == null || m.longitude == null) return;
+
+    const ok = await abrirRotaPara(m.latitude, m.longitude, m.clinicName ?? m.name);
+    if (!ok) {
+      Alert.alert(
+        'Não consegui abrir o mapa',
+        'Nenhum aplicativo de mapas respondeu neste aparelho.',
+      );
+    }
   }
 
   return (
@@ -160,7 +179,7 @@ export default function MedicosScreen() {
           <>
             <View style={styles.secao}>
               <SectionHeader title="Onde eles atendem" />
-              <DoctorsMap doctors={visiveis} />
+              <DoctorsMap doctors={visiveis} onSelectDoctor={irAte} />
             </View>
 
             <View style={styles.secao}>
@@ -179,8 +198,13 @@ export default function MedicosScreen() {
                     <DoctorCard
                       doctor={m}
                       distanceKm={distanciaAte(m)}
-                      onPress={() => emBreve(m.name)}
-                      onAction={() => emBreve('Nova consulta')}
+                      onPress={() => router.push(`/medico/${m.id}`)}
+                      onAction={() =>
+                        router.push({
+                          pathname: '/consulta/nova',
+                          params: { professionalId: m.id },
+                        })
+                      }
                     />
                   </View>
                 ))
@@ -190,7 +214,7 @@ export default function MedicosScreen() {
         )}
 
         <Pressable
-          onPress={() => emBreve('Cadastrar médico')}
+          onPress={() => router.push('/medico/novo')}
           accessibilityRole="button"
           style={styles.adicionar}
         >

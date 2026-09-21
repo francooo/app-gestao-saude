@@ -55,6 +55,15 @@ const config: ExpoConfig = {
     // dependencia de servicos do Google — as imagens vem do MapTiler.
     '@maplibre/maplibre-react-native',
     [
+      'expo-notifications',
+      {
+        // Icone e cor da notificacao no Android. Sem isto o sistema usa um
+        // quadrado branco generico.
+        icon: './assets/images/icon.png',
+        color: SAGE,
+      },
+    ],
+    [
       'expo-location',
       {
         // A permissao e OPCIONAL: sem ela a tela de medicos funciona igual,

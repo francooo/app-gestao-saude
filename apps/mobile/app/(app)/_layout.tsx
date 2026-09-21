@@ -67,6 +67,21 @@ export default function AppLayout() {
           tabBarIcon: ({ color, size }) => <Feather name="sliders" size={size} color={color} />,
         }}
       />
+
+      {/*
+        Formularios: ficam dentro de (app) para herdar o guard de sessao, mas
+        href: null os tira da barra. A barra tambem some na tela, porque abas
+        embaixo de um formulario longo dividem a atencao e convidam a sair no
+        meio do preenchimento.
+      */}
+      <Tabs.Screen
+        name="medico/[id]"
+        options={{ href: null, tabBarStyle: { display: 'none' } }}
+      />
+      <Tabs.Screen
+        name="consulta/nova"
+        options={{ href: null, tabBarStyle: { display: 'none' } }}
+      />
     </Tabs>
   );
 }

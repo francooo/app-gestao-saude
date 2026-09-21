@@ -1,5 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -16,6 +17,8 @@ import {
   MEMBROS_EXEMPLO,
   USANDO_DADOS_DE_EXEMPLO,
 } from '@/mocks/home';
+import { healthApi } from '@/api/health';
+import { reconciliarLembretes } from '@/lib/reminders';
 import { colors, fonts, radii, spacing } from '@/theme';
 
 /** Altura da barra de abas flutuante, para o conteudo nao terminar embaixo dela. */
@@ -23,6 +26,42 @@ const ESPACO_BARRA = 96;
 
 export default function InicioScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
+
+  /**
+   * Reconcilia os lembretes deste aparelho a cada vez que a tela inicial
+   * ganha foco.
+   *
+   * O banco guarda a intencao (reminderMinutesBefore); o agendamento vive
+   * aqui. Sem esta reconciliacao, uma consulta criada em outro aparelho nunca
+   * viraria notificacao neste — e uma consulta apagada deixaria o aviso orfao
+   * tocando.
+   */
+  useFocusEffect(
+    useCallback(() => {
+      let cancelado = false;
+      (async () => {
+        try {
+          const consultas = await healthApi.listAppointments({ upcoming: true });
+          if (cancelado) return;
+          await reconciliarLembretes(
+            consultas.map((c) => ({
+              id: c.id,
+              scheduledAt: c.scheduledAt,
+              reminderMinutesBefore: c.reminderMinutesBefore,
+              profileName: c.profileName,
+              professionalName: c.professionalName,
+            })),
+          );
+        } catch {
+          // Lembrete e conveniencia: falhar aqui nao pode atrapalhar a tela.
+        }
+      })();
+      return () => {
+        cancelado = true;
+      };
+    }, []),
+  );
 
   // A selecao ainda nao filtra nada: sem dominio de dados, nao ha o que
   // filtrar. O estado existe para o strip ter comportamento real ao toque.
@@ -84,7 +123,10 @@ export default function InicioScreen() {
         </View>
 
         <View style={styles.secao}>
-          <SectionHeader title="Próximas consultas" onVerTodos={() => emBreve('Consultas')} />
+          <SectionHeader
+            title="Próximas consultas"
+            onVerTodos={() => router.push('/medicos')}
+          />
           {CONSULTAS_EXEMPLO.map((c) => (
             <AppointmentCard
               key={c.id}

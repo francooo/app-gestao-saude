@@ -49,6 +49,37 @@ export type ProfessionalInput = {
   notes?: string | null;
 };
 
+export const appointmentSchema = z.object({
+  id: z.uuid(),
+  profileId: z.uuid(),
+  professionalId: z.uuid().nullable(),
+  title: z.string().nullable(),
+  scheduledAt: z.string(),
+  durationMinutes: z.number().nullable(),
+  modality: modalitySchema,
+  location: z.string().nullable(),
+  address: z.string().nullable(),
+  status: z.enum(['agendada', 'realizada', 'cancelada', 'faltou']),
+  reminderMinutesBefore: z.number().nullable(),
+  notes: z.string().nullable(),
+  // Vem do join na listagem; ausentes na resposta de criacao.
+  profileName: z.string().nullish(),
+  professionalName: z.string().nullish(),
+  professionalSpecialty: z.string().nullish(),
+});
+export type Appointment = z.infer<typeof appointmentSchema>;
+
+export type AppointmentInput = {
+  profileId: string;
+  professionalId?: string | null;
+  scheduledAt: string;
+  modality: 'presencial' | 'teleconsulta';
+  location?: string | null;
+  address?: string | null;
+  reminderMinutesBefore?: number | null;
+  notes?: string | null;
+};
+
 export const healthApi = {
   listProfiles(): Promise<Profile[]> {
     return request('/api/profiles', { authenticated: true }, (data) =>
@@ -82,6 +113,27 @@ export const healthApi = {
       `/api/professionals/${id}`,
       { method: 'PATCH', body: input, authenticated: true },
       (data) => z.object({ professional: professionalSchema }).parse(data).professional,
+    );
+  },
+
+  listAppointments(filtros?: { profileId?: string | null; upcoming?: boolean }) {
+    const params = new URLSearchParams();
+    if (filtros?.profileId) params.set('profileId', filtros.profileId);
+    if (filtros?.upcoming) params.set('upcoming', 'true');
+    const query = params.toString();
+
+    return request<Appointment[]>(
+      `/api/appointments${query ? `?${query}` : ''}`,
+      { authenticated: true },
+      (data) => z.object({ appointments: z.array(appointmentSchema) }).parse(data).appointments,
+    );
+  },
+
+  createAppointment(input: AppointmentInput): Promise<Appointment> {
+    return request(
+      '/api/appointments',
+      { method: 'POST', body: input, authenticated: true },
+      (data) => z.object({ appointment: appointmentSchema }).parse(data).appointment,
     );
   },
 };
