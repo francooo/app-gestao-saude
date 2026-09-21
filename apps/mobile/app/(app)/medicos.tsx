@@ -213,14 +213,28 @@ export default function MedicosScreen() {
           </>
         )}
 
-        <Pressable
-          onPress={() => router.push('/medico/novo')}
-          accessibilityRole="button"
-          style={styles.adicionar}
-        >
-          <Feather name="plus" size={20} color={colors.accentGreen} />
-          <Text style={styles.adicionarTexto}>Cadastrar médico</Text>
-        </Pressable>
+        <View style={styles.acoes}>
+          <Pressable
+            onPress={() => router.push('/medico/novo')}
+            accessibilityRole="button"
+            style={styles.adicionar}
+          >
+            <Feather name="plus" size={20} color={colors.accentGreen} />
+            <Text style={styles.adicionarTexto}>Cadastrar médico</Text>
+          </Pressable>
+
+          {/* Entrada para nova consulta que nao depende de ter um card de
+              medico na tela — antes o unico caminho era pelo card, e com a
+              lista vazia nao havia como marcar nada. */}
+          <Pressable
+            onPress={() => router.push('/consulta/nova')}
+            accessibilityRole="button"
+            style={styles.adicionar}
+          >
+            <Feather name="calendar" size={20} color={colors.accentGreen} />
+            <Text style={styles.adicionarTexto}>Nova consulta</Text>
+          </Pressable>
+        </View>
       </ScrollView>
     </View>
   );
@@ -266,12 +280,12 @@ const styles = StyleSheet.create({
     color: colors.accentGreen,
     textDecorationLine: 'underline',
   },
+  acoes: { marginTop: spacing.lg },
   adicionar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    marginTop: spacing.xl,
     paddingVertical: spacing.lg,
   },
   adicionarTexto: {

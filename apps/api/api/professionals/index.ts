@@ -28,9 +28,15 @@ async function listar(req: VercelRequest, res: VercelResponse, userId: string) {
   if (specialty) filtros.push(eq(professionals.specialty, specialty));
 
   /**
-   * Filtro por perfil: como `professionals` pertence a conta e nao ao perfil,
-   * a associacao e DERIVADA das consultas — os medicos que ja atenderam
-   * aquela pessoa. Evita obrigar o usuario a marcar cada medico a mao.
+   * Filtro por perfil.
+   *
+   * `professionals` pertence a conta, nao ao perfil, entao a associacao e
+   * derivada das consultas: os medicos que ja atenderam aquela pessoa.
+   *
+   * IMPORTANTE: medicos SEM nenhuma consulta aparecem sempre, para qualquer
+   * perfil. Sem essa regra, um medico recem-cadastrado sumiria da tela ate
+   * alguem marcar a primeira consulta com ele — foi exatamente o que
+   * aconteceu em producao e deixou a lista vazia com dois medicos no banco.
    */
   if (profileId) {
     // O perfil precisa ser da propria conta, senao o profileId viraria uma
@@ -43,15 +49,37 @@ async function listar(req: VercelRequest, res: VercelResponse, userId: string) {
 
     if (!perfil) return json(res, 200, { professionals: [] });
 
-    const vinculos = await db
+    // Medicos que ja atenderam este perfil.
+    const desteP = await db
       .selectDistinct({ id: appointments.professionalId })
       .from(appointments)
       .where(eq(appointments.profileId, perfil.id));
 
-    const ids = vinculos.map((v) => v.id).filter((id): id is string => Boolean(id));
-    if (ids.length === 0) return json(res, 200, { professionals: [] });
+    // Medicos que ainda nao atenderam ninguem da conta.
+    const comAlgumaConsulta = await db
+      .selectDistinct({ id: appointments.professionalId })
+      .from(appointments)
+      .innerJoin(profiles, eq(profiles.id, appointments.profileId))
+      .where(eq(profiles.userId, userId));
 
-    filtros.push(inArray(professionals.id, ids));
+    const vinculados = new Set(
+      desteP.map((v) => v.id).filter((id): id is string => Boolean(id)),
+    );
+    const jaUsados = new Set(
+      comAlgumaConsulta.map((v) => v.id).filter((id): id is string => Boolean(id)),
+    );
+
+    const todos = await db
+      .select({ id: professionals.id })
+      .from(professionals)
+      .where(eq(professionals.userId, userId));
+
+    const visiveis = todos
+      .map((t) => t.id)
+      .filter((id) => vinculados.has(id) || !jaUsados.has(id));
+
+    if (visiveis.length === 0) return json(res, 200, { professionals: [] });
+    filtros.push(inArray(professionals.id, visiveis));
   }
 
   const lista = await db

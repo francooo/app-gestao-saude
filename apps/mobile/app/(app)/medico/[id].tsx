@@ -116,6 +116,30 @@ export default function MedicoFormScreen() {
     );
   }
 
+  function confirmarRemocao() {
+    // Confirmacao explicita: remover um medico apaga junto o vinculo com as
+    // consultas ja registradas, e nao ha como desfazer.
+    Alert.alert(
+      'Remover médico',
+      `Remover ${nome}? As consultas já registradas com ele deixam de mostrar o nome.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Remover',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await healthApi.deleteProfessional(id!);
+              router.back();
+            } catch (e) {
+              setErroGeral(messageForError(e instanceof ApiRequestError ? e.code : undefined));
+            }
+          },
+        },
+      ],
+    );
+  }
+
   async function salvar() {
     if (salvando) return;
     setErroGeral(null);
@@ -363,12 +387,7 @@ export default function MedicoFormScreen() {
               </Pressable>
 
               {!novo ? (
-                <Pressable
-                  onPress={() =>
-                    Alert.alert('Remover médico', 'Esta parte ainda está sendo construída.')
-                  }
-                  style={styles.remover}
-                >
+                <Pressable onPress={confirmarRemocao} style={styles.remover}>
                   <Text style={styles.removerTexto}>Remover médico</Text>
                 </Pressable>
               ) : null}

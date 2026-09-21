@@ -116,6 +116,14 @@ export const healthApi = {
     );
   },
 
+  deleteProfessional(id: string): Promise<void> {
+    return request(
+      `/api/professionals/${id}`,
+      { method: 'DELETE', authenticated: true },
+      () => undefined,
+    );
+  },
+
   listAppointments(filtros?: { profileId?: string | null; upcoming?: boolean }) {
     const params = new URLSearchParams();
     if (filtros?.profileId) params.set('profileId', filtros.profileId);

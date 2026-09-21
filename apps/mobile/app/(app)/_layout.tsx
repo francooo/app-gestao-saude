@@ -1,6 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
-import { Platform, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/auth/AuthContext';
 import { colors, fonts, radii } from '@/theme';
@@ -11,6 +12,7 @@ import { colors, fonts, radii } from '@/theme';
  */
 export default function AppLayout() {
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
 
   if (!user) return <Redirect href="/login" />;
 
@@ -20,7 +22,16 @@ export default function AppLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.accentGreen,
         tabBarInactiveTintColor: colors.textSecondary,
-        tabBarStyle: styles.barra,
+        /**
+         * A margem inferior precisa somar a area do sistema.
+         *
+         * Antes eu usava um valor fixo (12 no Android), e a barra flutuante
+         * ficava POR CIMA dos botoes de voltar/home/recentes — atrapalhando
+         * tanto a navegacao do app quanto a do celular. insets.bottom e a
+         * altura real reservada pelo sistema, que varia entre aparelhos com
+         * botoes e aparelhos com gestos.
+         */
+        tabBarStyle: [styles.barra, { bottom: insets.bottom + 12 }],
         tabBarLabelStyle: styles.rotulo,
         tabBarItemStyle: styles.item,
         sceneStyle: { backgroundColor: colors.homeBackgroundTop },
@@ -94,7 +105,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 12,
     right: 12,
-    bottom: Platform.OS === 'ios' ? 24 : 12,
     height: 68,
     borderRadius: radii.card,
     paddingTop: 8,
