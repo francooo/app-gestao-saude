@@ -11,9 +11,17 @@ import { z } from 'zod';
  * atravessa o monorepo — um ponto de falha remoto e chato de depurar logo no
  * primeiro deploy.
  *
- * Ao mudar qualquer schema aqui, mude tambem em packages/shared/src/auth.ts.
- * Quando este arquivo passar de ~200 linhas, promova para o workspace e
- * resolva a configuracao da Vercel de uma vez.
+ * ATENCAO ao escopo dessa duplicacao: so o bloco de AUTENTICACAO tem copia em
+ * packages/shared/src/auth.ts. Profissionais, consultas e medicamentos existem
+ * so aqui — o espelho deles no aplicativo e apps/mobile/src/api/health.ts, que
+ * valida RESPOSTA, nao entrada. Crescer a metade de baixo deste arquivo nao
+ * aumenta duplicacao nenhuma.
+ *
+ * Por isso a regra antiga ("promova ao passar de 200 linhas") foi revista: a
+ * promocao continua valendo a pena, mas como commit ISOLADO, cujo diff inteiro
+ * seja o limite de modulo e cujo criterio de aceite seja "deploy verde, zero
+ * mudanca de comportamento". Junto de outra coisa, um deploy quebrado nao diz
+ * qual das duas causou.
  */
 
 export const emailSchema = z
@@ -177,3 +185,93 @@ export const appointmentPatchSchema = appointmentInputSchema
   .omit({ profileId: true })
   .partial()
   .extend({ status: z.enum(appointmentStatusValues).optional() });
+
+// ---------------------------------------------------------------------------
+// Medicamentos
+//
+// Como as consultas, um medicamento pertence a um PERFIL, nao a conta: a
+// verificacao de dono passa por um join com profiles.
+//
+// O servidor NAO TEM OPINIAO SOBRE FUSO HORARIO, e isso e deliberado. Ele roda
+// em UTC; um CURRENT_DATE aqui viraria o dia as 21h de Brasilia, e em silencio.
+// Alem disso medication_times.time_of_day e hora de parede ("08:00"), sem fuso,
+// entao o servidor nem teria como transformar aquilo num instante.
+//
+// Portanto: o aplicativo calcula "hoje", calcula os horarios e manda o
+// scheduledFor de cada dose ja resolvido em ISO com offset. Aqui so se guarda e
+// se filtra instante absoluto.
+// ---------------------------------------------------------------------------
+
+export const scheduleTypeValues = ['interval', 'fixed_times', 'as_needed'] as const;
+
+/**
+ * Formas oferecidas na tela.
+ *
+ * A coluna no banco e texto livre, e o seed gravou 'cápsula' e 'gotas' COM
+ * acento — o aplicativo normaliza antes de escolher o icone.
+ */
+export const medicationFormValues = ['cápsula', 'comprimido', 'ml', 'gotas', 'outro'] as const;
+
+/** Horario de parede, HH:MM. O Postgres completa os segundos. */
+export const horarioSchema = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, { message: 'Horário inválido' });
+
+/**
+ * Objeto PLANO, sem refine, de proposito: em zod, .superRefine() devolve um
+ * ZodEffects, que nao tem .partial() — e o PATCH precisa de .partial(). A
+ * consistencia entre scheduleType, intervalHours e times fica em
+ * validarPosologia(), no handler, que e onde da para mesclar o corpo do PATCH
+ * com a linha que ja esta no banco.
+ */
+export const medicationBaseSchema = z.object({
+  name: z.string().trim().min(2, { message: 'Informe o nome do remédio' }).max(120),
+  /** "500mg" */
+  strength: z.string().trim().max(40).optional().nullable(),
+  form: z.enum(medicationFormValues).optional().nullable(),
+  doseAmount: z.number().positive().max(9999).optional().nullable(),
+  doseUnit: z.string().trim().max(20).optional().nullable(),
+  scheduleType: z.enum(scheduleTypeValues),
+  intervalHours: z.number().int().min(1).max(72).optional().nullable(),
+  times: z.array(horarioSchema).max(8).default([]),
+  startsAt: z.iso.datetime({ offset: true }).optional().nullable(),
+  endsAt: z.iso.datetime({ offset: true }).optional().nullable(),
+  instructions: z.string().trim().max(1000).optional().nullable(),
+  prescriberId: z.uuid().optional().nullable(),
+});
+
+export const medicationInputSchema = medicationBaseSchema.extend({
+  profileId: z.uuid({ message: 'Escolha para quem é o remédio' }),
+});
+
+/**
+ * profileId esta ausente de proposito, e o motivo aqui e mais forte que nas
+ * consultas: medication_doses.profile_id e desnormalizado. Mover o remedio de
+ * perfil deixaria todo o historico de doses apontando para a pessoa errada, e
+ * nada no banco detecta isso.
+ */
+export const medicationPatchSchema = medicationBaseSchema
+  .partial()
+  .extend({ isActive: z.boolean().optional() });
+
+/** Janela de busca das doses. O aplicativo manda o dia dele, com offset. */
+export const medicationQuerySchema = z.object({
+  profileId: z.uuid().optional(),
+  from: z.iso.datetime({ offset: true }),
+  to: z.iso.datetime({ offset: true }),
+  includeInactive: z.enum(['true', 'false']).optional(),
+});
+
+export const doseInputSchema = z.object({
+  /** Nulo para 'as_needed'. E a chave da idempotencia: uma dose por horario. */
+  scheduledFor: z.iso.datetime({ offset: true }).optional().nullable(),
+  /** Ausente = agora. */
+  takenAt: z.iso.datetime({ offset: true }).optional().nullable(),
+  /**
+   * 'atrasada' nao entra: e estado DERIVADO (horario vencido sem dose), nao
+   * fato registrado. Quem deriva e a tela.
+   */
+  status: z.enum(['tomada', 'pulada']).default('tomada'),
+  amount: z.number().positive().max(9999).optional().nullable(),
+  notes: z.string().trim().max(500).optional().nullable(),
+});

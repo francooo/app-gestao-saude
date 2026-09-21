@@ -23,7 +23,7 @@ export function fail(
 export function requireMethod(
   req: VercelRequest,
   res: VercelResponse,
-  method: 'GET' | 'POST' | 'DELETE',
+  method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
 ): boolean {
   if (req.method === method) return true;
   res.setHeader('Allow', method);
@@ -34,6 +34,38 @@ export function requireMethod(
 /** Valida o corpo com um schema zod. Retorna null quando ja respondeu com 400. */
 export function parseBody<T>(res: VercelResponse, schema: ZodType<T>, body: unknown): T | null {
   const result = schema.safeParse(body);
+  if (result.success) return result.data;
+
+  const fields: Record<string, string> = {};
+  for (const issue of result.error.issues) {
+    const key = issue.path[0];
+    if (typeof key === 'string' && !fields[key]) fields[key] = issue.message;
+  }
+  fail(res, 400, API_ERROR.VALIDATION_ERROR, fields);
+  return null;
+}
+
+/**
+ * Valida a querystring com um schema zod.
+ *
+ * Existe porque `parseBody` so olha o corpo, e a listagem de medicamentos
+ * recebe a janela de datas na URL. O erro sai no mesmo formato de sempre, com
+ * `fields`, em vez de virar um 500 quando alguem manda `from` invalido.
+ */
+export function parseQuery<T>(
+  res: VercelResponse,
+  schema: ZodType<T>,
+  query: VercelRequest['query'],
+): T | null {
+  // Um parametro repetido chega como array; ficamos com o primeiro, que e o
+  // que qualquer cliente sensato quis dizer.
+  const plano: Record<string, string> = {};
+  for (const [chave, valor] of Object.entries(query)) {
+    const primeiro = Array.isArray(valor) ? valor[0] : valor;
+    if (typeof primeiro === 'string') plano[chave] = primeiro;
+  }
+
+  const result = schema.safeParse(plano);
   if (result.success) return result.data;
 
   const fields: Record<string, string> = {};

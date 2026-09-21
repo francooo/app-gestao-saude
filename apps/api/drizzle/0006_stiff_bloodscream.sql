@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "medication_doses_slot_unique_idx" ON "medication_doses" USING btree ("medication_id","scheduled_for") WHERE "medication_doses"."scheduled_for" IS NOT NULL;

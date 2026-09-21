@@ -417,6 +417,20 @@ export const medicationDoses = pgTable(
   (t) => [
     index('medication_doses_medication_taken_idx').on(t.medicationId, t.takenAt),
     index('medication_doses_profile_taken_idx').on(t.profileId, t.takenAt),
+    /**
+     * Uma dose por horario agendado.
+     *
+     * Precisa ser do BANCO, nao do handler: dois toques em "tomei" sao duas
+     * invocacoes concorrentes, e "consulta se existe, senao insere" perde a
+     * corrida. E o caso nao e hipotetico aqui — mae e pai marcando a dose das
+     * 14h nos dois celulares e o uso esperado deste aplicativo.
+     *
+     * O WHERE deixa 'as_needed' de fora de proposito: duas dipironas no mesmo
+     * dia sao duas doses reais, nao duplicata.
+     */
+    uniqueIndex('medication_doses_slot_unique_idx')
+      .on(t.medicationId, t.scheduledFor)
+      .where(sql`${t.scheduledFor} IS NOT NULL`),
   ],
 );
 

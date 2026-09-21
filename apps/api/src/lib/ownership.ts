@@ -1,7 +1,7 @@
 import { and, eq } from 'drizzle-orm';
 
 import { db } from '../db/client';
-import { appointments, profiles } from '../db/schema';
+import { appointments, medicationDoses, medications, profiles } from '../db/schema';
 
 /**
  * Verificacoes de dono para o dominio de saude.
@@ -36,4 +36,33 @@ export async function consultaDaConta(appointmentId: string, userId: string) {
     .limit(1);
 
   return linha?.consulta ?? null;
+}
+
+/** Confirma que o medicamento pertence a um perfil da conta. */
+export async function medicamentoDaConta(medicationId: string, userId: string) {
+  const [linha] = await db
+    .select({ medicamento: medications })
+    .from(medications)
+    .innerJoin(profiles, eq(profiles.id, medications.profileId))
+    .where(and(eq(medications.id, medicationId), eq(profiles.userId, userId)))
+    .limit(1);
+
+  return linha?.medicamento ?? null;
+}
+
+/**
+ * Confirma que a dose pertence a um perfil da conta.
+ *
+ * O join e direto com profiles, sem passar por medications: a coluna
+ * profile_id de medication_doses e desnormalizada justamente para isso.
+ */
+export async function doseDaConta(doseId: string, userId: string) {
+  const [linha] = await db
+    .select({ dose: medicationDoses })
+    .from(medicationDoses)
+    .innerJoin(profiles, eq(profiles.id, medicationDoses.profileId))
+    .where(and(eq(medicationDoses.id, doseId), eq(profiles.userId, userId)))
+    .limit(1);
+
+  return linha?.dose ?? null;
 }
