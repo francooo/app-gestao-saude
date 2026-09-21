@@ -96,18 +96,17 @@ export default function MedicoFormScreen() {
     setLogradouro(m.address ?? '');
   }
 
+  /**
+   * Exatamente tres opcoes: o Alert do Android so mostra tres botoes, e com
+   * um quarto ele descarta algum sem avisar. Por isso remover a foto e um
+   * toque proprio, abaixo do avatar, em vez de mais um item aqui.
+   */
   function abrirEscolhaDeFoto() {
-    const opcoes: { text: string; onPress?: () => void; style?: 'cancel' | 'destructive' }[] = [
+    Alert.alert('Foto do médico', undefined, [
       { text: 'Tirar foto', onPress: () => aplicarFoto('camera') },
       { text: 'Escolher da galeria', onPress: () => aplicarFoto('galeria') },
-    ];
-
-    if (foto) {
-      opcoes.push({ text: 'Remover foto', style: 'destructive', onPress: () => setFoto(null) });
-    }
-    opcoes.push({ text: 'Cancelar', style: 'cancel' });
-
-    Alert.alert('Foto do médico', undefined, opcoes);
+      { text: 'Cancelar', style: 'cancel' },
+    ]);
   }
 
   async function aplicarFoto(origem: 'camera' | 'galeria') {
@@ -261,7 +260,9 @@ export default function MedicoFormScreen() {
                     hitSlop={8}
                     accessibilityRole="button"
                     accessibilityLabel={
-                      foto ? `Alterar a foto de ${nome || 'do médico'}` : 'Adicionar foto do médico'
+                      foto
+                        ? `Alterar a foto${nome ? ` de ${nome}` : ' do médico'}`
+                        : 'Adicionar foto do médico'
                     }
                     accessibilityHint="Abre a câmera ou a galeria"
                   >
@@ -276,9 +277,19 @@ export default function MedicoFormScreen() {
                     </View>
                   </Pressable>
 
-                  <Text style={styles.fotoDica}>
-                    {foto ? 'Toque para trocar ou remover' : 'Toque para adicionar uma foto'}
-                  </Text>
+                  {foto ? (
+                    <Pressable
+                      onPress={() => setFoto(null)}
+                      disabled={salvando || processandoFoto}
+                      hitSlop={8}
+                      accessibilityRole="button"
+                      accessibilityLabel="Remover a foto do médico"
+                    >
+                      <Text style={styles.fotoRemover}>Remover foto</Text>
+                    </Pressable>
+                  ) : (
+                    <Text style={styles.fotoDica}>Toque para adicionar uma foto</Text>
+                  )}
                 </View>
 
                 <FormField
@@ -496,6 +507,12 @@ const styles = StyleSheet.create({
     fontFamily: fonts.regular,
     fontSize: 13,
     color: colors.textSecondary,
+    marginTop: spacing.sm,
+  },
+  fotoRemover: {
+    fontFamily: fonts.semibold,
+    fontSize: 13,
+    color: colors.textError,
     marginTop: spacing.sm,
   },
   blocoTitulo: {
