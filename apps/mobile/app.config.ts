@@ -11,7 +11,15 @@ const SAGE = '#7F8E5C';
 const config: ExpoConfig = {
   name: 'Gestao Saude',
   slug: 'app-gestao-saude',
-  version: '0.1.0',
+  /**
+   * A versao E a identidade do runtime (ver runtimeVersion, no fim). Subir
+   * para 0.2.0 e o que impede este pacote, que traz modulos nativos novos,
+   * de ser entregue por OTA aos APKs 0.1.0 que nao os tem.
+   *
+   * REGRA: toda vez que uma dependencia NATIVA entrar ou sair, suba a versao
+   * no mesmo commit em que ela muda.
+   */
+  version: '0.2.0',
   orientation: 'portrait',
   scheme: 'gestaosaude',
   userInterfaceStyle: 'light',
@@ -110,21 +118,27 @@ const config: ExpoConfig = {
   },
 
   /**
-   * `fingerprint` e nao `appVersion`.
+   * Continua em `appVersion`, com a versao subindo a cada mudanca nativa.
    *
-   * Com `appVersion`, todo build carregava a versao 0.1.0 e portanto o mesmo
-   * runtime — um `eas update` com um modulo nativo novo chegava a um binario
-   * que nao o tinha, e o aplicativo travava na abertura. Nao existe rollback
-   * de OTA que conserte rapido um app que nao abre.
+   * O problema que isto resolve e real: antes, todo build se identificava
+   * como 0.1.0, entao um `eas update` com um modulo nativo novo chegava a um
+   * binario que nao o tinha e travava o aplicativo na abertura — sem rollback
+   * que conserte rapido um app que nao abre.
    *
-   * Com `fingerprint`, a identidade vem das dependencias nativas de verdade:
-   * uma atualizacao incompativel simplesmente nao e entregue.
+   * A politica `fingerprint` resolveria isso automaticamente, e foi tentada.
+   * Ela NAO funciona neste projeto: a EAS recusa o build quando a impressao
+   * digital calculada aqui difere da calculada la, e elas divergem sempre,
+   * por duas razoes estruturais:
    *
-   * Consequencia conhecida: os APKs gerados antes desta mudanca tem outra
-   * impressao digital e param de receber atualizacoes.
+   *  1. A EAS roda `prebuild` e gera a pasta `android/`, que entra na conta.
+   *     Aqui ela nao existe, porque a configuracao nativa e gerada.
+   *  2. Os arquivos de @expo/config-plugins e da arvore dele tem hashes
+   *     diferentes entre a instalacao local (Windows, pnpm) e a do servidor.
+   *
+   * Ver o build 6ab3daa6, fase CONFIGURE_EXPO_UPDATES: 207 diferencas.
    */
   runtimeVersion: {
-    policy: 'fingerprint',
+    policy: 'appVersion',
   },
 };
 
