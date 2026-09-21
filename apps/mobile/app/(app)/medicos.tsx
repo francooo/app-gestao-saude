@@ -230,7 +230,12 @@ export default function MedicosScreen() {
         />
 
         <View style={styles.seletor}>
-          <ProfileSelector profiles={perfis} selectedId={perfilId} onSelect={setPerfilId} />
+          <ProfileSelector
+                profiles={perfis}
+                selectedId={perfilId}
+                onSelect={setPerfilId}
+                tituloDoPainel="Ver médicos de"
+              />
         </View>
 
         <View style={styles.localizacao}>

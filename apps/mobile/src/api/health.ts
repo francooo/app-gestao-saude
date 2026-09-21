@@ -60,6 +60,90 @@ export type ProfessionalInput = {
   photo?: string | null;
 };
 
+// ---------------------------------------------------------------------------
+// Medicamentos
+//
+// O servidor nao tem opiniao sobre fuso: ele guarda instante absoluto e
+// devolve os horarios fixos como hora de parede ("08:00"). Todo o calculo de
+// "hoje", "proxima dose" e "tomado as" e do aplicativo — ver lib/posologia.ts.
+// ---------------------------------------------------------------------------
+
+export const scheduleTypeSchema = z.enum(['interval', 'fixed_times', 'as_needed']);
+export type ScheduleType = z.infer<typeof scheduleTypeSchema>;
+
+export const doseSchema = z.object({
+  id: z.uuid(),
+  medicationId: z.uuid(),
+  /** Nulo em 'se necessario'. E a chave da idempotencia no servidor. */
+  scheduledFor: z.string().nullish(),
+  takenAt: z.string().nullish(),
+  status: z.enum(['tomada', 'pulada', 'atrasada']),
+  amount: z.number().nullish(),
+  notes: z.string().nullish(),
+  recordedBy: z.uuid().nullish(),
+});
+export type Dose = z.infer<typeof doseSchema>;
+
+export const medicationSchema = z.object({
+  id: z.uuid(),
+  profileId: z.uuid(),
+  name: z.string(),
+  strength: z.string().nullish(),
+  form: z.string().nullish(),
+  doseAmount: z.number().nullish(),
+  doseUnit: z.string().nullish(),
+  scheduleType: scheduleTypeSchema,
+  intervalHours: z.number().nullish(),
+  startsAt: z.string().nullish(),
+  endsAt: z.string().nullish(),
+  instructions: z.string().nullish(),
+  prescriberId: z.uuid().nullish(),
+  prescriberName: z.string().nullish(),
+  isActive: z.boolean(),
+  createdAt: z.string(),
+  /** Do perfil dono, para o mini avatar no modo "todos da familia". */
+  profileName: z.string().nullish(),
+  profileColor: z.string().nullish(),
+  /** default([]) e melhor que nullish: a tela nunca precisa checar nulo. */
+  times: z.array(z.string()).default([]),
+  doses: z.array(doseSchema).default([]),
+  /**
+   * max(takenAt), ignorando a janela. A ancora do proximo horario de um
+   * remedio "a cada N horas" pode estar fora dela.
+   */
+  lastDoseAt: z.string().nullish(),
+});
+export type Medication = z.infer<typeof medicationSchema>;
+
+export type MedicationInput = {
+  profileId: string;
+  name: string;
+  strength?: string | null;
+  form?: string | null;
+  doseAmount?: number | null;
+  doseUnit?: string | null;
+  scheduleType: ScheduleType;
+  intervalHours?: number | null;
+  times?: string[];
+  startsAt?: string | null;
+  endsAt?: string | null;
+  instructions?: string | null;
+  prescriberId?: string | null;
+};
+
+/** profileId ausente: o servidor ignora, e mover de perfil orfanaria o historico. */
+export type MedicationPatch = Partial<Omit<MedicationInput, 'profileId'>> & {
+  isActive?: boolean;
+};
+
+export type DoseInput = {
+  scheduledFor?: string | null;
+  takenAt?: string | null;
+  status?: 'tomada' | 'pulada';
+  amount?: number | null;
+  notes?: string | null;
+};
+
 export const appointmentSchema = z.object({
   id: z.uuid(),
   profileId: z.uuid(),
@@ -173,6 +257,85 @@ export const healthApi = {
   deleteProfessional(id: string): Promise<void> {
     return request(
       `/api/professionals/${id}`,
+      { method: 'DELETE', authenticated: true },
+      () => undefined,
+    );
+  },
+
+  /**
+   * Os remedios com horarios e doses da janela, numa resposta so.
+   *
+   * `from`/`to` saem do fuso do APARELHO: so ele sabe que dia e hoje. Ver o
+   * comentario no topo do bloco de medicamentos.
+   */
+  listMedications(filtros: {
+    from: Date;
+    to: Date;
+    profileId?: string | null;
+    includeInactive?: boolean;
+  }) {
+    const params = new URLSearchParams({
+      from: filtros.from.toISOString(),
+      to: filtros.to.toISOString(),
+    });
+    if (filtros.profileId) params.set('profileId', filtros.profileId);
+    if (filtros.includeInactive) params.set('includeInactive', 'true');
+
+    return request<Medication[]>(
+      `/api/medications?${params.toString()}`,
+      { authenticated: true },
+      (data) => z.object({ medications: z.array(medicationSchema) }).parse(data).medications,
+    );
+  },
+
+  getMedication(id: string): Promise<Medication> {
+    return request(`/api/medications/${id}`, { authenticated: true }, (data) =>
+      z.object({ medication: medicationSchema }).parse(data).medication,
+    );
+  },
+
+  createMedication(input: MedicationInput): Promise<Medication> {
+    return request(
+      '/api/medications',
+      { method: 'POST', body: input, authenticated: true },
+      (data) => z.object({ medication: medicationSchema }).parse(data).medication,
+    );
+  },
+
+  updateMedication(id: string, input: MedicationPatch): Promise<Medication> {
+    return request(
+      `/api/medications/${id}`,
+      { method: 'PATCH', body: input, authenticated: true },
+      (data) => z.object({ medication: medicationSchema }).parse(data).medication,
+    );
+  },
+
+  deleteMedication(id: string): Promise<void> {
+    return request(
+      `/api/medications/${id}`,
+      { method: 'DELETE', authenticated: true },
+      () => undefined,
+    );
+  },
+
+  /**
+   * Registra uma dose. POST no MEDICAMENTO, e nao numa rota /doses: o plano
+   * Hobby da Vercel limita as funcoes e uma rota separada nao compraria nada.
+   *
+   * Com `scheduledFor`, e idempotente no servidor (indice unico por horario),
+   * entao reenviar por falha de rede nao duplica.
+   */
+  registerDose(medicationId: string, input: DoseInput): Promise<Dose> {
+    return request(
+      `/api/medications/${medicationId}`,
+      { method: 'POST', body: input, authenticated: true },
+      (data) => z.object({ dose: doseSchema }).parse(data).dose,
+    );
+  },
+
+  deleteDose(medicationId: string, doseId: string): Promise<void> {
+    return request(
+      `/api/medications/${medicationId}?doseId=${doseId}`,
       { method: 'DELETE', authenticated: true },
       () => undefined,
     );

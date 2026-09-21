@@ -80,6 +80,25 @@ export const colors = {
   tabActive: '#E5E6C8',
   /** Chip "Ver mais", mais claro que os demais. */
   chipMore: '#EFEBD6',
+
+  // --- Tela de Remedios (medications-screen-family-health.png) ---
+  // O ladrilho de capsula e o `surfaceWarm` acima (a medicao deu #F2E2BC,
+  // diferenca imperceptivel), e o botao "Adicionar" e o `accent`. Nao vale um
+  // token quase-duplicado para cada um.
+  /** Ladrilho do comprimido, e do sino no card de lembretes. */
+  pillTablet: '#D8DCBE',
+  /** Traco do icone sobre o ladrilho do comprimido. */
+  pillTabletIcon: '#7B8F63',
+  /** Ladrilho do resumo "Hoje". */
+  tileSun: '#CF9E31',
+  /** Ladrilho do resumo "Proxima dose". */
+  tileClock: '#768658',
+  /** Circulo preenchido da dose ja tomada. */
+  doseTaken: '#3E8F64',
+  /** Anel da dose ainda pendente. */
+  doseRing: '#40996B',
+  /** Trilho do interruptor de lembretes, ligado. */
+  switchOn: '#4D8D60',
 } as const;
 
 /**
@@ -93,6 +112,7 @@ export const colors = {
 export const backgrounds = {
   doctors: ['#B3B87B', '#DAD9AE', '#E1DEB8'] as const,
   home: ['#96A06A', '#ABAE78', '#E2DDB9'] as const,
+  medications: ['#A6B078', '#D3D3AA', '#E3DDB9'] as const,
 } as const;
 
 /**

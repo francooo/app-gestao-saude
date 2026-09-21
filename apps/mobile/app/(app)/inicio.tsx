@@ -1,6 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { addDays, endOfDay, startOfDay } from 'date-fns';
+import { useCallback, useMemo, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -11,13 +12,9 @@ import { HomeHeaderCard } from '@/components/HomeHeaderCard';
 import { MedicationCard } from '@/components/MedicationCard';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SurfaceCard } from '@/components/SurfaceCard';
-import {
-  CONSULTAS_EXEMPLO,
-  MEDICAMENTOS_EXEMPLO,
-  MEMBROS_EXEMPLO,
-  USANDO_DADOS_DE_EXEMPLO,
-} from '@/mocks/home';
-import { healthApi } from '@/api/health';
+import { CONSULTAS_EXEMPLO, MEMBROS_EXEMPLO, USANDO_DADOS_DE_EXEMPLO } from '@/mocks/home';
+import { healthApi, type Medication } from '@/api/health';
+import { vigenteHoje } from '@/lib/posologia';
 import { reconciliarLembretes } from '@/lib/reminders';
 import { colors, fonts, radii, spacing } from '@/theme';
 
@@ -27,6 +24,13 @@ const ESPACO_BARRA = 96;
 export default function InicioScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+
+  const [medicamentos, setMedicamentos] = useState<Medication[]>([]);
+  /**
+   * Fixado a cada carga, e nao lido a toda renderizacao: sem isso, "proxima
+   * dose" poderia mudar no meio de um quadro e a tela discordaria de si mesma.
+   */
+  const [agora, setAgora] = useState(() => new Date());
 
   /**
    * Reconcilia os lembretes deste aparelho a cada vez que a tela inicial
@@ -42,8 +46,21 @@ export default function InicioScreen() {
       let cancelado = false;
       (async () => {
         try {
-          const consultas = await healthApi.listAppointments({ upcoming: true });
+          const referencia = new Date();
+          const [consultas, remedios] = await Promise.all([
+            healthApi.listAppointments({ upcoming: true }),
+            // Ate amanha: um remedio de 12 em 12 horas tomado a noite tem a
+            // proxima dose depois da meia-noite.
+            healthApi.listMedications({
+              from: startOfDay(referencia),
+              to: endOfDay(addDays(referencia, 1)),
+            }),
+          ]);
           if (cancelado) return;
+
+          setAgora(referencia);
+          setMedicamentos(remedios);
+
           await reconciliarLembretes(
             consultas.map((c) => ({
               id: c.id,
@@ -66,6 +83,12 @@ export default function InicioScreen() {
   // A selecao ainda nao filtra nada: sem dominio de dados, nao ha o que
   // filtrar. O estado existe para o strip ter comportamento real ao toque.
   const [selecionadoId, setSelecionadoId] = useState(MEMBROS_EXEMPLO[0]?.id);
+
+  // A home e um resumo: mostra no maximo tres. A lista completa e a aba.
+  const deHoje = useMemo(
+    () => medicamentos.filter((m) => vigenteHoje(m, agora)).slice(0, 3),
+    [medicamentos, agora],
+  );
 
   function emBreve(recurso: string) {
     Alert.alert(recurso, 'Esta parte do aplicativo ainda está sendo construída.');
@@ -111,15 +134,25 @@ export default function InicioScreen() {
         <View style={styles.secao}>
           <SectionHeader
             title="Medicamentos de hoje"
-            onVerTodos={() => emBreve('Medicamentos')}
+            onVerTodos={() => router.push('/remedios')}
           />
-          {MEDICAMENTOS_EXEMPLO.map((m) => (
-            <MedicationCard
-              key={m.id}
-              medicamento={m}
-              onPress={() => emBreve('Detalhe do medicamento')}
-            />
-          ))}
+          {deHoje.length === 0 ? (
+            <SurfaceCard style={styles.vazio}>
+              <Text style={styles.vazioTexto}>
+                Nenhum remédio para hoje. Toque em Ver todos para cadastrar.
+              </Text>
+            </SurfaceCard>
+          ) : (
+            deHoje.map((m) => (
+              <MedicationCard
+                key={m.id}
+                medicamento={m}
+                agora={agora}
+                mostrarPerfil
+                onPress={() => router.push(`/medicamento/${m.id}`)}
+              />
+            ))
+          )}
         </View>
 
         <View style={styles.secao}>
@@ -157,6 +190,13 @@ const styles = StyleSheet.create({
     fontFamily: fonts.semibold,
     fontSize: 12,
     color: colors.onAccent,
+  },
+  vazio: { padding: spacing.xl, alignItems: 'center' },
+  vazioTexto: {
+    fontFamily: fonts.regular,
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
   secao: {
     marginTop: spacing.xxl,

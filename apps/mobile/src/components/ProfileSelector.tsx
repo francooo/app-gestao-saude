@@ -17,11 +17,18 @@ type Props = {
   /** null = todos da família. */
   selectedId: string | null;
   onSelect: (id: string | null) => void;
+  /**
+   * Titulo do painel de escolha: "Ver médicos de", "Ver remédios de".
+   *
+   * Obrigatorio de proposito. Com um valor padrao, uma tela nova herdaria a
+   * frase de outra e ninguem perceberia; assim o TypeScript cobra.
+   */
+  tituloDoPainel: string;
 };
 
 const TODOS = 'Todos da família';
 
-export function ProfileSelector({ profiles, selectedId, onSelect }: Props) {
+export function ProfileSelector({ profiles, selectedId, onSelect, tituloDoPainel }: Props) {
   const [aberto, setAberto] = useState(false);
   const selecionado = profiles.find((p) => p.id === selectedId) ?? null;
   const rotulo = selecionado?.fullName ?? TODOS;
@@ -69,7 +76,7 @@ export function ProfileSelector({ profiles, selectedId, onSelect }: Props) {
             iOS sem esta area nao haveria saida. */}
         <Pressable style={styles.fundo} onPress={() => setAberto(false)}>
           <Pressable style={styles.painel} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.painelTitulo}>Ver médicos de</Text>
+            <Text style={styles.painelTitulo}>{tituloDoPainel}</Text>
 
             <ScrollView bounces={false}>
               <Opcao
