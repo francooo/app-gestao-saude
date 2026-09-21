@@ -51,6 +51,9 @@ export default withErrorHandling(async (req: VercelRequest, res: VercelResponse)
     if (body.myRating !== undefined) mudancas.myRating = body.myRating;
     if (body.ratingNote !== undefined) mudancas.ratingNote = body.ratingNote;
     if (body.notes !== undefined) mudancas.notes = body.notes;
+    // null aqui e intencional: e assim que o app remove a foto. Ausente
+    // preserva a foto atual, que e o que acontece ao editar so o telefone.
+    if (body.photo !== undefined) mudancas.photo = body.photo;
 
     // So re-geocodifica se o endereco mudou de fato: cada chamada consome
     // cota do MapTiler, e salvar a nota nao deveria gastar uma.

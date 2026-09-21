@@ -257,6 +257,18 @@ export const professionals = pgTable(
     /** Modalidade habitual; cada consulta pode sobrescrever. */
     defaultModality: appointmentModalityEnum('default_modality'),
     notes: text('notes'),
+    /**
+     * Foto do medico, como data URI JPEG em base64.
+     *
+     * Mora AQUI, e nao num servico de arquivos, por tres motivos:
+     * o cliente HTTP do app so fala JSON (ver client.ts), entao base64
+     * atravessa a pilha existente sem parser multipart; a exclusao em cascata
+     * a partir de users ja apaga a foto junto, que e o direito ao apagamento
+     * da LGPD sem codigo novo; e nao nasce URL publica de um terceiro.
+     *
+     * O app reduz para 200x200 antes de enviar, o que da ~10 KB.
+     */
+    photo: text('photo'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -266,6 +278,12 @@ export const professionals = pgTable(
       'professionals_rating_range',
       sql`${t.myRating} IS NULL OR (${t.myRating} >= 1 AND ${t.myRating} <= 5)`,
     ),
+    /**
+     * Ultima linha de defesa do tamanho da foto. O teto real e o do contrato
+     * (30 000 caracteres), que devolve erro de validacao legivel; se esta
+     * checagem chegar a disparar, alguem escreveu no banco por fora da API.
+     */
+    check('professionals_photo_size', sql`${t.photo} IS NULL OR length(${t.photo}) <= 40000`),
   ],
 );
 

@@ -114,6 +114,28 @@ export const professionalInputSchema = z.object({
   myRating: z.number().int().min(1).max(5).optional().nullable(),
   ratingNote: z.string().trim().max(500).optional().nullable(),
   notes: z.string().trim().max(1000).optional().nullable(),
+  /**
+   * Foto como data URI JPEG. So JPEG porque o unico produtor e o
+   * ImageManipulator do app, que sempre salva JPEG — aceitar PNG abriria um
+   * caminho nunca exercitado e com armadilha propria (transparencia virando
+   * fundo preto na conversao).
+   *
+   * O teto de 30 000 caracteres (~22 KB binarios) e o dobro do que uma foto
+   * 200x200 costuma ocupar. Ele define o pior caso da listagem, que devolve a
+   * foto de cada medico embutida. O app ja comprime em laco ate caber, entao
+   * na pratica isto aqui e rede de seguranca.
+   *
+   * O .regex vem ANTES do .nullable: invertido, o null seria testado contra a
+   * expressao e a remocao da foto quebraria.
+   */
+  photo: z
+    .string()
+    .regex(/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/, {
+      message: 'Formato de imagem inválido',
+    })
+    .max(30_000, { message: 'A foto ficou grande demais' })
+    .optional()
+    .nullable(),
 });
 
 /** No PATCH todos os campos sao opcionais, inclusive o nome. */

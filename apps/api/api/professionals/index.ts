@@ -115,6 +115,7 @@ async function criar(req: VercelRequest, res: VercelResponse, userId: string) {
       myRating: body.myRating ?? null,
       ratingNote: body.ratingNote ?? null,
       notes: body.notes ?? null,
+      photo: body.photo ?? null,
     })
     .returning();
 
