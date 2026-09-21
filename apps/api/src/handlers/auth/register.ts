@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { eq, gte, sql, and } from 'drizzle-orm';
 
-import { createSession } from '../../src/auth/session';
-import { API_ERROR, POLICY_VERSION, registerRequestSchema } from '../../src/contracts';
-import { db } from '../../src/db/client';
-import { consents, loginAttempts, profiles, users } from '../../src/db/schema';
+import { createSession } from '../../auth/session';
+import { API_ERROR, POLICY_VERSION, registerRequestSchema } from '../../contracts';
+import { db } from '../../db/client';
+import { consents, loginAttempts, profiles, users } from '../../db/schema';
 import {
   clientIp,
   fail,
@@ -13,8 +13,8 @@ import {
   requireMethod,
   userAgent,
   withErrorHandling,
-} from '../../src/lib/http';
-import { hashPassword } from '../../src/lib/password';
+} from '../../lib/http';
+import { hashPassword } from '../../lib/password';
 
 /** Limite de contas criadas por IP, para conter criacao em massa. */
 const MAX_SIGNUPS_PER_IP = 5;

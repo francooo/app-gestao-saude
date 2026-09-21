@@ -1,13 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { eq } from 'drizzle-orm';
 
-import { revokeAllSessions } from '../../src/auth/session';
-import { API_ERROR, resetPasswordRequestSchema } from '../../src/contracts';
-import { db } from '../../src/db/client';
-import { passwordResetTokens, users } from '../../src/db/schema';
-import { fail, json, parseBody, requireMethod, withErrorHandling } from '../../src/lib/http';
-import { hashPassword } from '../../src/lib/password';
-import { hashToken } from '../../src/lib/tokens';
+import { revokeAllSessions } from '../../auth/session';
+import { API_ERROR, resetPasswordRequestSchema } from '../../contracts';
+import { db } from '../../db/client';
+import { passwordResetTokens, users } from '../../db/schema';
+import { fail, json, parseBody, requireMethod, withErrorHandling } from '../../lib/http';
+import { hashPassword } from '../../lib/password';
+import { hashToken } from '../../lib/tokens';
 
 export default withErrorHandling(async (req: VercelRequest, res: VercelResponse) => {
   if (!requireMethod(req, res, 'POST')) return;

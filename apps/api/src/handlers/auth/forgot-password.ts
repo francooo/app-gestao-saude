@@ -1,12 +1,12 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { eq } from 'drizzle-orm';
 
-import { forgotPasswordRequestSchema } from '../../src/contracts';
-import { db } from '../../src/db/client';
-import { passwordResetTokens, users } from '../../src/db/schema';
-import { clientIp, json, parseBody, requireMethod, withErrorHandling } from '../../src/lib/http';
-import { sendPasswordResetEmail } from '../../src/lib/email';
-import { generateRefreshToken, hashToken } from '../../src/lib/tokens';
+import { forgotPasswordRequestSchema } from '../../contracts';
+import { db } from '../../db/client';
+import { passwordResetTokens, users } from '../../db/schema';
+import { clientIp, json, parseBody, requireMethod, withErrorHandling } from '../../lib/http';
+import { sendPasswordResetEmail } from '../../lib/email';
+import { generateRefreshToken, hashToken } from '../../lib/tokens';
 
 /** 30 minutos. Curto o bastante para um link que vai por e-mail. */
 const RESET_TTL_MS = 30 * 60 * 1000;

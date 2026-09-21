@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-import { rotateRefreshToken } from '../../src/auth/session';
-import { API_ERROR, refreshRequestSchema } from '../../src/contracts';
+import { rotateRefreshToken } from '../../auth/session';
+import { API_ERROR, refreshRequestSchema } from '../../contracts';
 import {
   clientIp,
   fail,
@@ -10,7 +10,7 @@ import {
   requireMethod,
   userAgent,
   withErrorHandling,
-} from '../../src/lib/http';
+} from '../../lib/http';
 
 export default withErrorHandling(async (req: VercelRequest, res: VercelResponse) => {
   if (!requireMethod(req, res, 'POST')) return;

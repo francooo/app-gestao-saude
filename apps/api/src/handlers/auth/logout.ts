@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-import { revokeSessionByRefreshToken } from '../../src/auth/session';
-import { refreshRequestSchema } from '../../src/contracts';
-import { parseBody, requireMethod, withErrorHandling } from '../../src/lib/http';
+import { revokeSessionByRefreshToken } from '../../auth/session';
+import { refreshRequestSchema } from '../../contracts';
+import { parseBody, requireMethod, withErrorHandling } from '../../lib/http';
 
 export default withErrorHandling(async (req: VercelRequest, res: VercelResponse) => {
   if (!requireMethod(req, res, 'POST')) return;

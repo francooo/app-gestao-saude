@@ -1,13 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { eq } from 'drizzle-orm';
 
-import { createSession } from '../../src/auth/session';
-import { API_ERROR, loginRequestSchema } from '../../src/contracts';
-import { db } from '../../src/db/client';
-import { users } from '../../src/db/schema';
-import { clientIp, fail, json, parseBody, requireMethod, userAgent, withErrorHandling } from '../../src/lib/http';
-import { burnTimeAgainstDummyHash, verifyPassword } from '../../src/lib/password';
-import { isRateLimited, recordLoginAttempt } from '../../src/lib/rateLimit';
+import { createSession } from '../../auth/session';
+import { API_ERROR, loginRequestSchema } from '../../contracts';
+import { db } from '../../db/client';
+import { users } from '../../db/schema';
+import { clientIp, fail, json, parseBody, requireMethod, userAgent, withErrorHandling } from '../../lib/http';
+import { burnTimeAgainstDummyHash, verifyPassword } from '../../lib/password';
+import { isRateLimited, recordLoginAttempt } from '../../lib/rateLimit';
 
 export default withErrorHandling(async (req: VercelRequest, res: VercelResponse) => {
   if (!requireMethod(req, res, 'POST')) return;
