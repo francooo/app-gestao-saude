@@ -4,6 +4,7 @@ import { useAuth } from '@/auth/AuthContext';
 import { PlaceholderScreen } from '@/components/PlaceholderScreen';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SurfaceCard } from '@/components/SurfaceCard';
+import { UpdateCard } from '@/components/UpdateCard';
 import { colors, fonts, spacing } from '@/theme';
 
 export default function AjustesScreen() {
@@ -28,6 +29,8 @@ export default function AjustesScreen() {
 
         <PrimaryButton title="Sair" onPress={signOut} />
       </SurfaceCard>
+
+      <UpdateCard />
     </PlaceholderScreen>
   );
 }

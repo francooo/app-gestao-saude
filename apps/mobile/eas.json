@@ -17,6 +17,8 @@
       "distribution": "internal",
       "channel": "preview",
       "environment": "preview",
+      "_comentario": "autoIncrement e o que faz o Android distinguir um APK do outro. Sem ele todo build saia com versionCode 1, e instalar um por cima do outro podia nao substituir nada — sem aviso.",
+      "autoIncrement": true,
       "android": {
         "buildType": "apk"
       }
