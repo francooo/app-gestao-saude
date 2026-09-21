@@ -34,6 +34,8 @@ export default function AppLayout() {
         tabBarStyle: [styles.barra, { bottom: insets.bottom + 12 }],
         tabBarLabelStyle: styles.rotulo,
         tabBarItemStyle: styles.item,
+        // Retangulo claro atras do icone da aba ativa, como na referencia.
+        tabBarActiveBackgroundColor: colors.tabActive,
         sceneStyle: { backgroundColor: colors.homeBackgroundTop },
       }}
     >
@@ -125,5 +127,8 @@ const styles = StyleSheet.create({
   },
   item: {
     paddingVertical: 4,
+    marginHorizontal: 4,
+    marginVertical: 6,
+    borderRadius: 18,
   },
 });

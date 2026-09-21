@@ -11,6 +11,7 @@ export {
   typography,
   fonts,
   avatarColors,
+  backgrounds,
   pickAvatarColor,
   initialsFor,
   BG_FLAT_TOP_RATIO,

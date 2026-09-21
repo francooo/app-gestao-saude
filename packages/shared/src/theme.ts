@@ -75,6 +75,24 @@ export const colors = {
   /** Estrelas da sua nota privada. */
   star: '#E8A62A',
   starEmpty: '#CBC9B2',
+
+  /** Fundo da aba ativa na barra inferior. */
+  tabActive: '#E5E6C8',
+  /** Chip "Ver mais", mais claro que os demais. */
+  chipMore: '#EFEBD6',
+} as const;
+
+/**
+ * Paradas do gradiente de fundo, medidas na coluna x=8 de cada mockup —
+ * longe de cards e de folhas.
+ *
+ * O fundo importa mais do que parece: uma tela com todos os componentes
+ * certos sobre o gradiente errado nao se parece com a referencia. O da
+ * home e bem mais escuro e clareia mais tarde que o de medicos.
+ */
+export const backgrounds = {
+  doctors: ['#B3B87B', '#DAD9AE', '#E1DEB8'] as const,
+  home: ['#96A06A', '#ABAE78', '#E2DDB9'] as const,
 } as const;
 
 /**

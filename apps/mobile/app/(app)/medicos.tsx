@@ -1,7 +1,6 @@
 import { Feather } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -30,11 +29,12 @@ import { FilterChips, type Chip } from '@/components/FilterChips';
 import { LocationBar } from '@/components/LocationBar';
 import { ProfileSelector } from '@/components/ProfileSelector';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { ScreenBackground } from '@/components/ScreenBackground';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SurfaceCard } from '@/components/SurfaceCard';
 import { distanciaKm, ordenarPorDistancia } from '@/lib/geo';
 import { abrirRotaPara } from '@/lib/maps';
-import { colors, fonts, spacing } from '@/theme';
+import { backgrounds, colors, fonts, spacing } from '@/theme';
 
 /** Altura da barra de abas flutuante. */
 const ESPACO_BARRA = 96;
@@ -201,10 +201,7 @@ export default function MedicosScreen() {
 
   return (
     <View style={styles.tela}>
-      <LinearGradient
-        colors={[colors.homeBackgroundTop, colors.homeBackgroundBottom]}
-        style={StyleSheet.absoluteFill}
-      />
+      <ScreenBackground colors={backgrounds.doctors} />
 
       <ScrollView
         contentContainerStyle={[
@@ -225,6 +222,9 @@ export default function MedicosScreen() {
       >
         <ScreenHeader
           title="Médicos"
+          // Medicos e uma aba, entao nao ha historico. A seta leva para
+          // Inicio, que e o que se espera dela numa aba secundaria.
+          onBack={() => router.replace('/inicio')}
           onNotifications={() => emBreve('Notificações')}
           hasNotifications
         />
@@ -262,6 +262,7 @@ export default function MedicosScreen() {
               {/* O titulo so promete proximidade quando ha de onde medir. */}
               <SectionHeader
                 title={pontoDeReferencia ? 'Médicos próximos' : 'Meus médicos'}
+                icon="leaf"
                 onVerTodos={() => router.push('/mapa')}
                 verTodosLabel="Mapa"
                 verTodosIcon="map"
@@ -325,7 +326,7 @@ export default function MedicosScreen() {
 }
 
 const styles = StyleSheet.create({
-  tela: { flex: 1, backgroundColor: colors.homeBackgroundTop },
+  tela: { flex: 1, backgroundColor: backgrounds.doctors[0] },
   conteudo: { paddingHorizontal: spacing.xl },
   seletor: { marginTop: spacing.xl },
   localizacao: { marginTop: spacing.md },

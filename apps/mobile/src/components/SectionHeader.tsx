@@ -1,4 +1,5 @@
 import { Feather } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, fonts, spacing } from '@/theme';
@@ -11,14 +12,32 @@ type Props = {
   verTodosLabel?: string;
   /** Icone antes do texto do link. */
   verTodosIcon?: keyof typeof Feather.glyphMap;
+  /**
+   * Enfeite antes do titulo. "leaf" usa a folha recortada do mockup — o
+   * Feather nao tem folha, entao a arte vem da propria referencia.
+   */
+  icon?: 'leaf';
 };
 
-export function SectionHeader({ title, onVerTodos, verTodosLabel, verTodosIcon }: Props) {
+const folha = require('../../assets/images/leaf-icon.png');
+
+export function SectionHeader({
+  title,
+  onVerTodos,
+  verTodosLabel,
+  verTodosIcon,
+  icon,
+}: Props) {
   return (
     <View style={styles.row}>
-      <Text style={styles.title} accessibilityRole="header">
-        {title}
-      </Text>
+      <View style={styles.tituloLinha}>
+        {icon === 'leaf' ? (
+          <Image source={folha} style={styles.folha} contentFit="contain" />
+        ) : null}
+        <Text style={styles.title} accessibilityRole="header">
+          {title}
+        </Text>
+      </View>
 
       {onVerTodos ? (
         <Pressable
@@ -51,6 +70,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: spacing.md,
   },
+  tituloLinha: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  folha: { width: 26, height: 26 },
   title: {
     flexShrink: 1,
     fontFamily: fonts.extrabold,
