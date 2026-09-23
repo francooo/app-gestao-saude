@@ -12,8 +12,8 @@ import { HomeHeaderCard } from '@/components/HomeHeaderCard';
 import { MedicationCard } from '@/components/MedicationCard';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SurfaceCard } from '@/components/SurfaceCard';
-import { CONSULTAS_EXEMPLO, MEMBROS_EXEMPLO, USANDO_DADOS_DE_EXEMPLO } from '@/mocks/home';
-import { healthApi, type Medication } from '@/api/health';
+import { CONSULTAS_EXEMPLO, USANDO_DADOS_DE_EXEMPLO } from '@/mocks/home';
+import { healthApi, type Medication, type Profile } from '@/api/health';
 import { vigenteHoje } from '@/lib/posologia';
 import { reconciliarLembretes } from '@/lib/reminders';
 import { colors, fonts, radii, spacing } from '@/theme';
@@ -26,6 +26,9 @@ export default function InicioScreen() {
   const router = useRouter();
 
   const [medicamentos, setMedicamentos] = useState<Medication[]>([]);
+  const [perfis, setPerfis] = useState<Profile[]>([]);
+  const [carregandoPerfis, setCarregandoPerfis] = useState(true);
+  const [erroPerfis, setErroPerfis] = useState(false);
   /**
    * Fixado a cada carga, e nao lido a toda renderizacao: sem isso, "proxima
    * dose" poderia mudar no meio de um quadro e a tela discordaria de si mesma.
@@ -80,9 +83,34 @@ export default function InicioScreen() {
     }, []),
   );
 
-  // A selecao ainda nao filtra nada: sem dominio de dados, nao ha o que
-  // filtrar. O estado existe para o strip ter comportamento real ao toque.
-  const [selecionadoId, setSelecionadoId] = useState(MEMBROS_EXEMPLO[0]?.id);
+  /**
+   * Os perfis tem carga e erro PROPRIOS, fora do bloco acima.
+   *
+   * Aquele engole todo erro de proposito ("lembrete e conveniencia"), e se os
+   * perfis entrassem nele uma falha de rede deixaria a faixa so com o botao
+   * Adicionar. Quem ve isso conclui que a familia sumiu e recadastra todo
+   * mundo. Em falha, a lista anterior e PRESERVADA — nunca setPerfis([]).
+   */
+  useFocusEffect(
+    useCallback(() => {
+      let cancelado = false;
+      (async () => {
+        try {
+          const lista = await healthApi.listProfiles();
+          if (cancelado) return;
+          setPerfis(lista);
+          setErroPerfis(false);
+        } catch {
+          if (!cancelado) setErroPerfis(true);
+        } finally {
+          if (!cancelado) setCarregandoPerfis(false);
+        }
+      })();
+      return () => {
+        cancelado = true;
+      };
+    }, []),
+  );
 
   // A home e um resumo: mostra no maximo tres. A lista completa e a aba.
   const deHoje = useMemo(
@@ -119,12 +147,23 @@ export default function InicioScreen() {
         {/* Cabecalho e lista de membros formam um card so, como no mockup. */}
         <SurfaceCard flush>
           <HomeHeaderCard titulo="Bem-vinda de volta" subtitulo="Cuidando de quem você ama" />
-          <FamilyMemberStrip
-            membros={MEMBROS_EXEMPLO}
-            selecionadoId={selecionadoId}
-            onSelecionar={setSelecionadoId}
-            onAdicionar={() => emBreve('Adicionar membro')}
-          />
+          {erroPerfis && perfis.length === 0 ? (
+            <Text style={styles.erroFamilia}>
+              Não consegui carregar sua família. Puxe para baixo ou tente de novo em instantes.
+            </Text>
+          ) : (
+            <FamilyMemberStrip
+              membros={perfis.map((p) => ({
+                id: p.id,
+                nome: p.fullName,
+                cor: p.avatarColor,
+                foto: p.photo,
+              }))}
+              carregando={carregandoPerfis && perfis.length === 0}
+              onAbrir={(idPerfil) => router.push(`/membro/${idPerfil}`)}
+              onAdicionar={() => router.push('/membro/novo')}
+            />
+          )}
         </SurfaceCard>
 
         <View style={styles.secao}>
@@ -197,6 +236,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: colors.textSecondary,
     textAlign: 'center',
+  },
+  erroFamilia: {
+    fontFamily: fonts.regular,
+    fontSize: 14,
+    color: colors.textSecondary,
+    textAlign: 'center',
+    paddingHorizontal: spacing.xl,
+    paddingBottom: spacing.xl,
   },
   secao: {
     marginTop: spacing.xxl,

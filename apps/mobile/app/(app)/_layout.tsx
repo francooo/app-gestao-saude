@@ -107,6 +107,10 @@ export default function AppLayout() {
         name="medicamento/form/[id]"
         options={{ href: null, tabBarStyle: { display: 'none' } }}
       />
+      <Tabs.Screen
+        name="membro/[id]"
+        options={{ href: null, tabBarStyle: { display: 'none' } }}
+      />
     </Tabs>
   );
 }

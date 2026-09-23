@@ -18,8 +18,67 @@ export const profileSchema = z.object({
   relationship: z.string().nullable(),
   avatarColor: z.string().nullable(),
   isAccountHolder: z.boolean(),
+  // nullish() nos campos novos: contra uma API mais antiga eles chegam
+  // ausentes, e com nullable() o parse lancaria e a tela inteira morreria.
+  notes: z.string().nullish(),
+  photo: z.string().nullish(),
+  /** Quilos. O servidor ja converte de numeric para numero. */
+  weightKg: z.number().nullish(),
+  /** Centimetros inteiros. A tela converte para metros na borda. */
+  heightCm: z.number().nullish(),
+  /**
+   * default(true) e nao nullish(): evita checar nulo em toda tela e ainda
+   * tolera uma API que nao devolva o campo.
+   */
+  isActive: z.boolean().default(true),
 });
 export type Profile = z.infer<typeof profileSchema>;
+
+/**
+ * Parentescos aceitos pelo servidor.
+ *
+ * Espelha relationshipValues de apps/api/src/contracts.ts — aquele arquivo e
+ * autocontido de proposito (apps/api nao depende do workspace), entao a copia
+ * mora aqui, junto do resto do espelho. Mudar la, mudar aqui.
+ *
+ * 'titular' fica de fora nos dois lados: quem grava essa string e o cadastro
+ * da conta, e aceita-la deixaria rotular um dependente como titular sem ele
+ * ser o dono.
+ */
+export const relationshipValues = [
+  'cônjuge',
+  'filho',
+  'filha',
+  'mãe',
+  'pai',
+  'avó',
+  'avô',
+  'outro',
+] as const;
+
+export type ProfileInput = {
+  fullName: string;
+  birthDate?: string | null;
+  relationship?: string | null;
+  avatarColor?: string | null;
+  notes?: string | null;
+  photo?: string | null;
+  weightKg?: number | null;
+  heightCm?: number | null;
+};
+
+/** isActive so no PATCH: e ele que remove e restaura. */
+export type ProfilePatch = Partial<ProfileInput> & { isActive?: boolean };
+
+/** Quanto se perde ao apagar a pessoa de vez. So o GET por id devolve. */
+export const profileCountsSchema = z.object({
+  medications: z.number(),
+  doses: z.number(),
+  appointments: z.number(),
+  upcomingAppointments: z.number(),
+  assistantConversations: z.number(),
+});
+export type ProfileCounts = z.infer<typeof profileCountsSchema>;
 
 export const professionalSchema = z.object({
   id: z.uuid(),
@@ -206,9 +265,40 @@ export const healthApi = {
     );
   },
 
-  listProfiles(): Promise<Profile[]> {
-    return request('/api/profiles', { authenticated: true }, (data) =>
+  /** O argumento e opcional para os chamadores antigos seguirem compilando. */
+  listProfiles(opts?: { includeInactive?: boolean }): Promise<Profile[]> {
+    const query = opts?.includeInactive ? '?includeInactive=true' : '';
+    return request(`/api/profiles${query}`, { authenticated: true }, (data) =>
       z.object({ profiles: z.array(profileSchema) }).parse(data).profiles,
+    );
+  },
+
+  getProfile(id: string): Promise<{ profile: Profile; counts: ProfileCounts }> {
+    return request(`/api/profiles/${id}`, { authenticated: true }, (data) =>
+      z.object({ profile: profileSchema, counts: profileCountsSchema }).parse(data),
+    );
+  },
+
+  createProfile(input: ProfileInput): Promise<Profile> {
+    return request('/api/profiles', { method: 'POST', body: input, authenticated: true }, (data) =>
+      z.object({ profile: profileSchema }).parse(data).profile,
+    );
+  },
+
+  updateProfile(id: string, input: ProfilePatch): Promise<Profile> {
+    return request(
+      `/api/profiles/${id}`,
+      { method: 'PATCH', body: input, authenticated: true },
+      (data) => z.object({ profile: profileSchema }).parse(data).profile,
+    );
+  },
+
+  /** Apaga de vez, com o historico de saude junto. Ver o aviso da tela. */
+  deleteProfile(id: string): Promise<void> {
+    return request(
+      `/api/profiles/${id}`,
+      { method: 'DELETE', authenticated: true },
+      () => undefined,
     );
   },
 

@@ -24,24 +24,14 @@
  */
 
 import type { Appointment } from '@/components/AppointmentCard';
-import type { FamilyMember } from '@/components/FamilyMemberStrip';
 
 /**
  * true enquanto a tela usar este modulo. Controla a faixa de aviso.
  *
- * Os MEDICAMENTOS ja sairam daqui: a tela inicial le os de verdade desde que
- * a aba de Remedios ganhou API. Faltam os membros da familia e as consultas.
+ * Medicamentos e MEMBROS DA FAMILIA ja sairam daqui — as duas telas leem
+ * dados de verdade. Falta so as consultas.
  */
 export const USANDO_DADOS_DE_EXEMPLO = true;
-
-// As cores sao fixadas aqui so para reproduzir o mockup. Com dados reais,
-// omita o campo: o Avatar deriva a cor do nome e ela fica estavel sozinha.
-export const MEMBROS_EXEMPLO: FamilyMember[] = [
-  { id: 'm1', nome: 'Ana Clara', cor: '#1E603E' },
-  { id: 'm2', nome: 'Lucas Silva', cor: '#D19628' },
-  { id: 'm3', nome: 'Roberta Bueno', cor: '#6A774B' },
-  { id: 'm4', nome: 'Sofia Castro', cor: '#BF6A4F' },
-];
 
 export const CONSULTAS_EXEMPLO: Appointment[] = [
   {

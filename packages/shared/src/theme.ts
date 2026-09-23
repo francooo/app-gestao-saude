@@ -99,6 +99,10 @@ export const colors = {
   doseRing: '#40996B',
   /** Trilho do interruptor de lembretes, ligado. */
   switchOn: '#4D8D60',
+
+  // --- Cadastro de membro (member-registration-screen-family-health.png) ---
+  /** Circulo do avatar quando ainda nao ha foto. */
+  avatarEmpty: '#A9B287',
 } as const;
 
 /**
@@ -113,6 +117,11 @@ export const backgrounds = {
   doctors: ['#B3B87B', '#DAD9AE', '#E1DEB8'] as const,
   home: ['#96A06A', '#ABAE78', '#E2DDB9'] as const,
   medications: ['#A6B078', '#D3D3AA', '#E3DDB9'] as const,
+  /**
+   * Bem mais PLANO que os outros: escurece de leve em vez de clarear. Medido
+   * do mockup de cadastro de membro, coluna x=12.
+   */
+  family: ['#A7B081', '#A2AD7B', '#909D6A'] as const,
 } as const;
 
 /**

@@ -7,24 +7,47 @@ import { colors, fonts, spacing } from '@/theme';
 export type FamilyMember = {
   id: string;
   nome: string;
-  /** Opcional: com dados reais a cor sai do nome. Ver Avatar. */
-  cor?: string;
+  /** Opcional: sem ela o Avatar deriva a cor do nome. */
+  cor?: string | null;
+  foto?: string | null;
 };
 
 type Props = {
   membros: FamilyMember[];
-  selecionadoId?: string;
-  onSelecionar: (id: string) => void;
+  /** Abre a ficha da pessoa. */
+  onAbrir: (id: string) => void;
   onAdicionar: () => void;
+  /** Primeira carga: mostra circulos cinzas em vez de familia vazia. */
+  carregando?: boolean;
 };
+
+/**
+ * Primeiro nome, desambiguado quando repete.
+ *
+ * Dois "Lucas" na familia virariam dois circulos identicos. Nesse caso o
+ * rotulo passa a "Lucas S." — o leitor de tela continua anunciando o nome
+ * completo, que e o rotulo de acessibilidade.
+ */
+function rotuloCurto(membro: FamilyMember, todos: FamilyMember[]): string {
+  const partes = membro.nome.trim().split(/\s+/);
+  const primeiro = partes[0] ?? membro.nome;
+
+  const repete = todos.some(
+    (o) => o.id !== membro.id && (o.nome.trim().split(/\s+/)[0] ?? '') === primeiro,
+  );
+  if (!repete) return primeiro;
+
+  const inicial = partes[1]?.charAt(0);
+  return inicial ? `${primeiro} ${inicial}.` : primeiro;
+}
 
 const AVATAR = 52;
 
 export function FamilyMemberStrip({
   membros,
-  selecionadoId,
-  onSelecionar,
+  onAbrir,
   onAdicionar,
+  carregando = false,
 }: Props) {
   return (
     <View style={styles.wrapper}>
@@ -37,33 +60,36 @@ export function FamilyMemberStrip({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.lista}
       >
-        {membros.map((membro) => {
-          const selecionado = membro.id === selecionadoId;
-          return (
-            <Pressable
-              key={membro.id}
-              onPress={() => onSelecionar(membro.id)}
-              style={styles.item}
-              accessibilityRole="button"
-              accessibilityState={{ selected: selecionado }}
-              accessibilityLabel={membro.nome}
-            >
-              <Avatar
-                nome={membro.nome}
-                color={membro.cor}
-                size={AVATAR}
-                selected={selecionado}
-              />
-              <Text
-                style={[styles.nome, selecionado && styles.nomeSelecionado]}
-                numberOfLines={1}
+        {carregando
+          ? // Esqueleto. Nunca renderizar "familia vazia": uma conta sempre tem
+            // ao menos o titular, entao lista vazia e sempre erro de carga — e
+            // quem ve a faixa so com o botao Adicionar conclui que a familia
+            // sumiu e recadastra todo mundo.
+            [0, 1, 2].map((i) => (
+              <View key={i} style={styles.item}>
+                <View style={styles.esqueleto} />
+              </View>
+            ))
+          : membros.map((membro) => (
+              <Pressable
+                key={membro.id}
+                onPress={() => onAbrir(membro.id)}
+                style={styles.item}
+                accessibilityRole="button"
+                accessibilityLabel={`Abrir ficha de ${membro.nome}`}
               >
-                {/* So o primeiro nome cabe sob o avatar. */}
-                {membro.nome.split(' ')[0]}
-              </Text>
-            </Pressable>
-          );
-        })}
+                <Avatar
+                  nome={membro.nome}
+                  color={membro.cor ?? undefined}
+                  photo={membro.foto}
+                  recyclingKey={membro.id}
+                  size={AVATAR}
+                />
+                <Text style={styles.nome} numberOfLines={1}>
+                  {rotuloCurto(membro, membros)}
+                </Text>
+              </Pressable>
+            ))}
 
         <Pressable
           onPress={onAdicionar}
@@ -119,8 +145,11 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: spacing.sm,
   },
-  nomeSelecionado: {
-    fontFamily: fonts.bold,
-    color: colors.accentGreen,
+  esqueleto: {
+    width: AVATAR,
+    height: AVATAR,
+    borderRadius: AVATAR / 2,
+    backgroundColor: colors.starEmpty,
+    opacity: 0.5,
   },
 });
