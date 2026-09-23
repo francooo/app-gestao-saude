@@ -275,3 +275,98 @@ export const doseInputSchema = z.object({
   amount: z.number().positive().max(9999).optional().nullable(),
   notes: z.string().trim().max(500).optional().nullable(),
 });
+
+// ---------------------------------------------------------------------------
+// Perfis da familia
+//
+// Um perfil e uma PESSOA da familia, e e a raiz do dominio de saude: remedios,
+// consultas e doses apontam para ele, TODOS em cascata. Apagar um perfil
+// destroi todo o historico clinico daquela pessoa — por isso a tela oferece
+// remover (isActive: false) como acao primaria, e o apagar de vez fica atras
+// de segunda confirmacao com os numeros reais.
+// ---------------------------------------------------------------------------
+
+/**
+ * Parentescos oferecidos na tela.
+ *
+ * 'titular' fica DE FORA de proposito: quem escreve essa string e o cadastro
+ * da conta, que insere direto sem passar por schema. Aceita-la aqui deixaria
+ * rotular um dependente como "titular" sem ele ser o isAccountHolder — duas
+ * verdades divergentes sobre quem e o dono da conta.
+ */
+export const relationshipValues = [
+  'cônjuge',
+  'filho',
+  'filha',
+  'mãe',
+  'pai',
+  'avó',
+  'avô',
+  'outro',
+] as const;
+
+/** Teto de pessoas ativas por conta. Ver o comentario em profiles/index.ts. */
+export const MAXIMO_DE_PERFIS = 20;
+
+export const profileInputSchema = z.object({
+  /**
+   * NAO reusa o fullNameSchema do cadastro: aquele exige sobrenome, e um
+   * filho chamado so "Lucas" e um perfil perfeitamente legitimo. Cobrar
+   * sobrenome de uma crianca seria uma mensagem sem sentido.
+   */
+  fullName: z.string().trim().min(2, { message: 'Informe o nome' }).max(120),
+  /**
+   * O refine vai no CAMPO, e nao no objeto: refine de objeto devolve um
+   * ZodEffects, que nao tem .partial() — e o PATCH precisa de .partial().
+   * Mesma armadilha ja documentada em medicationBaseSchema.
+   *
+   * O servidor roda em UTC, a frente de Brasilia, entao "hoje" aqui nunca e
+   * anterior ao "hoje" do usuario: uma data valida no Brasil jamais e
+   * recusada por este limite.
+   */
+  birthDate: z.iso
+    .date({ message: 'Data inválida' })
+    .refine((v) => v <= new Date().toISOString().slice(0, 10), {
+      message: 'A data de nascimento não pode estar no futuro',
+    })
+    .optional()
+    .nullable(),
+  relationship: z.enum(relationshipValues).optional().nullable(),
+  /**
+   * Regex e nao z.enum da paleta: copiar as cores de packages/shared para ca
+   * criaria uma segunda fonte de verdade que ninguem lembraria de atualizar,
+   * e o comentario do topo deste arquivo proibe depender do workspace. Cor e
+   * dado de exibicao, nao fronteira de seguranca.
+   */
+  avatarColor: z
+    .string()
+    .regex(/^#[0-9A-Fa-f]{6}$/, { message: 'Cor inválida' })
+    .optional()
+    .nullable(),
+  notes: z.string().trim().max(1000).optional().nullable(),
+  /** Mesmos termos da foto do medico — ver professionalInputSchema. */
+  photo: z
+    .string()
+    .regex(/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/, {
+      message: 'Formato de imagem inválido',
+    })
+    .max(30_000, { message: 'A foto ficou grande demais' })
+    .optional()
+    .nullable(),
+});
+
+/**
+ * isActive so no PATCH: e ele que remove e restaura.
+ *
+ * isAccountHolder nao entra em lugar nenhum. O indice unico parcial
+ * profiles_one_holder_per_user_idx garante um titular por conta; um PATCH que
+ * marcasse um segundo bateria em violacao de unicidade e sairia como 500.
+ * Trocar de titular e outra funcionalidade, com transacao de dois passos.
+ */
+export const profilePatchSchema = profileInputSchema
+  .partial()
+  .extend({ isActive: z.boolean().optional() });
+
+export const profileQuerySchema = z.object({
+  includeInactive: z.enum(['true', 'false']).optional(),
+});

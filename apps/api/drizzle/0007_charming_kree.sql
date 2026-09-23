@@ -1,0 +1,2 @@
+ALTER TABLE "profiles" ADD COLUMN "photo" text;--> statement-breakpoint
+ALTER TABLE "profiles" ADD CONSTRAINT "profiles_photo_size" CHECK ("profiles"."photo" IS NULL OR length("profiles"."photo") <= 40000);

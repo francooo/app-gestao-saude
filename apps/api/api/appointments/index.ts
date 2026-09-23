@@ -24,7 +24,12 @@ async function listar(req: VercelRequest, res: VercelResponse, userId: string) {
   const somenteFuturas = req.query.upcoming === 'true';
 
   // O join com profiles e o que garante que so venham consultas da conta.
-  const filtros = [eq(profiles.userId, userId)];
+  // isActive: sem ele, as consultas de uma pessoa removida continuariam
+  // alimentando a reconciliacao de lembretes na tela inicial — e o celular
+  // seguiria tocando "Consulta da Roberta as 9h" depois de remove-la. A
+  // reconciliacao so cancela orfaos, e ela nao seria orfa: a API insistiria
+  // em devolve-la.
+  const filtros = [eq(profiles.userId, userId), eq(profiles.isActive, true)];
 
   if (profileId) {
     const perfil = await perfilDaConta(profileId, userId);

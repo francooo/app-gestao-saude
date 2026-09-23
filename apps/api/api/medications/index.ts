@@ -51,7 +51,12 @@ async function listar(req: VercelRequest, res: VercelResponse, userId: string) {
   }
 
   // O join com profiles e o que garante que so venham remedios da conta.
-  const filtros = [eq(profiles.userId, userId)];
+  //
+  // O filtro de isActive nao e detalhe: sem ele, remover alguem da familia
+  // deixaria os remedios dessa pessoa continuarem listados — com o nome e a
+  // cor dela, vindos deste mesmo join. O aplicativo diria que removeu, e a
+  // tela provaria o contrario.
+  const filtros = [eq(profiles.userId, userId), eq(profiles.isActive, true)];
 
   if (q.profileId) {
     const perfil = await perfilDaConta(q.profileId, userId);

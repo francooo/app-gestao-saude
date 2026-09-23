@@ -201,9 +201,18 @@ export const profiles = pgTable(
     birthDate: date('birth_date'),
     /** titular | filho(a) | conjuge | mae | pai | outro */
     relationship: text('relationship'),
-    /** Nulo = derivar do nome no app (ver pickAvatarColor). */
+    /**
+     * Nulo = derivar do nome no app (ver pickAvatarColor).
+     *
+     * O cadastro grava a cor JA RESOLVIDA, em vez de deixar nulo: derivar do
+     * nome faz a pessoa mudar de cor quando alguem corrige o nome dela, e o
+     * circulo colorido e justamente como se reconhece quem e quem na tela.
+     * Os perfis antigos com nulo seguem derivando.
+     */
     avatarColor: text('avatar_color'),
     notes: text('notes'),
+    /** Foto como data URI JPEG, nos mesmos termos de professionals.photo. */
+    photo: text('photo'),
     isAccountHolder: boolean('is_account_holder').notNull().default(false),
     isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -216,6 +225,7 @@ export const profiles = pgTable(
     uniqueIndex('profiles_one_holder_per_user_idx')
       .on(t.userId)
       .where(sql`${t.isAccountHolder}`),
+    check('profiles_photo_size', sql`${t.photo} IS NULL OR length(${t.photo}) <= 40000`),
   ],
 );
 
