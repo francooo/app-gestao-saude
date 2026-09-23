@@ -57,6 +57,13 @@
       "when": 1790079523938,
       "tag": "0007_charming_kree",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790190018725,
+      "tag": "0008_naive_paladin",
+      "breakpoints": true
     }
   ]
 }

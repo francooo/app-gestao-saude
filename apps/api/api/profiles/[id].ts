@@ -12,6 +12,7 @@ import {
 } from '../../src/db/schema';
 import { requireAuth } from '../../src/lib/auth';
 import { fail, json, parseBody, withErrorHandling } from '../../src/lib/http';
+import { serializarPerfil } from '../../src/lib/serialize';
 
 /**
  * Uma pessoa da familia.
@@ -84,7 +85,7 @@ async function contagens(profileId: string) {
 }
 
 async function detalhar(res: VercelResponse, atual: typeof profiles.$inferSelect) {
-  return json(res, 200, { profile: atual, counts: await contagens(atual.id) });
+  return json(res, 200, { profile: serializarPerfil(atual), counts: await contagens(atual.id) });
 }
 
 async function atualizar(
@@ -110,6 +111,10 @@ async function atualizar(
   if (body.avatarColor !== undefined) mudancas.avatarColor = body.avatarColor;
   if (body.notes !== undefined) mudancas.notes = body.notes;
   if (body.photo !== undefined) mudancas.photo = body.photo;
+  if (body.weightKg !== undefined) {
+    mudancas.weightKg = body.weightKg == null ? null : String(body.weightKg);
+  }
+  if (body.heightCm !== undefined) mudancas.heightCm = body.heightCm;
   if (body.isActive !== undefined) mudancas.isActive = body.isActive;
 
   const [atualizado] = await db
@@ -118,7 +123,7 @@ async function atualizar(
     .where(eq(profiles.id, atual.id))
     .returning();
 
-  return json(res, 200, { profile: atualizado });
+  return json(res, 200, { profile: serializarPerfil(atualizado!) });
 }
 
 async function remover(res: VercelResponse, atual: typeof profiles.$inferSelect) {

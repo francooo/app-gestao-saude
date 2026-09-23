@@ -1,4 +1,4 @@
-import type { medicationDoses, medications } from '../db/schema';
+import type { medicationDoses, medications, profiles } from '../db/schema';
 
 /**
  * Conversoes entre o que o driver do Postgres entrega e o que o aplicativo
@@ -26,4 +26,16 @@ export function serializarDose(d: typeof medicationDoses.$inferSelect) {
 
 export function serializarMedicamento(m: typeof medications.$inferSelect) {
   return { ...m, doseAmount: numero(m.doseAmount) };
+}
+
+/**
+ * Perfis passaram a precisar disto quando ganharam weight_kg: ate entao a
+ * tabela nao tinha nenhuma coluna numeric e o select saia pronto.
+ *
+ * Precisa ser aplicado nos DOIS handlers de perfil. Com so um deles, a
+ * listagem devolveria numero e o detalhe texto (ou o contrario), e o
+ * typecheck nao pega — o servidor responde unknown.
+ */
+export function serializarPerfil(p: typeof profiles.$inferSelect) {
+  return { ...p, weightKg: numero(p.weightKg) };
 }

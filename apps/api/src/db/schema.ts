@@ -213,6 +213,22 @@ export const profiles = pgTable(
     notes: text('notes'),
     /** Foto como data URI JPEG, nos mesmos termos de professionals.photo. */
     photo: text('photo'),
+    /**
+     * Peso ATUAL em quilos. Substitui a medicao anterior; nao ha historico.
+     *
+     * Existe porque dose pediatrica se calcula por peso. A curva de
+     * crescimento, que e o que o pediatra acompanha, exigiria uma tabela de
+     * medicoes — fica para depois, apoiada nesta coluna.
+     */
+    weightKg: numeric('weight_kg'),
+    /**
+     * Altura ATUAL em CENTIMETROS inteiros: 170, ou 52 num bebe.
+     *
+     * Centimetro inteiro e nao metro decimal: ninguem registra altura com mais
+     * precisao que isso, e inteiro evita ponto flutuante. A tela converte para
+     * metros na borda, porque e como as pessoas escrevem.
+     */
+    heightCm: integer('height_cm'),
     isAccountHolder: boolean('is_account_holder').notNull().default(false),
     isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -226,6 +242,16 @@ export const profiles = pgTable(
       .on(t.userId)
       .where(sql`${t.isAccountHolder}`),
     check('profiles_photo_size', sql`${t.photo} IS NULL OR length(${t.photo}) <= 40000`),
+    // Fora destas faixas e erro de digitacao, e o banco recusando e melhor que
+    // a tela exibindo "0,5 kg" para um adulto.
+    check(
+      'profiles_weight_range',
+      sql`${t.weightKg} IS NULL OR (${t.weightKg} >= 0.5 AND ${t.weightKg} <= 500)`,
+    ),
+    check(
+      'profiles_height_range',
+      sql`${t.heightCm} IS NULL OR (${t.heightCm} >= 20 AND ${t.heightCm} <= 250)`,
+    ),
   ],
 );
 

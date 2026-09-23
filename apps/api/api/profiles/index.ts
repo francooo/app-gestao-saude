@@ -11,6 +11,7 @@ import { db } from '../../src/db/client';
 import { profiles } from '../../src/db/schema';
 import { requireAuth } from '../../src/lib/auth';
 import { fail, json, parseBody, parseQuery, withErrorHandling } from '../../src/lib/http';
+import { serializarPerfil } from '../../src/lib/serialize';
 
 export default withErrorHandling(async (req: VercelRequest, res: VercelResponse) => {
   const auth = await requireAuth(req, res);
@@ -42,7 +43,7 @@ async function listar(req: VercelRequest, res: VercelResponse, userId: string) {
     // encontrar as pessoas.
     .orderBy(desc(profiles.isAccountHolder), desc(profiles.isActive), asc(profiles.fullName));
 
-  json(res, 200, { profiles: lista });
+  json(res, 200, { profiles: lista.map(serializarPerfil) });
 }
 
 async function criar(req: VercelRequest, res: VercelResponse, userId: string) {
@@ -73,10 +74,13 @@ async function criar(req: VercelRequest, res: VercelResponse, userId: string) {
       avatarColor: body.avatarColor ?? null,
       notes: body.notes ?? null,
       photo: body.photo ?? null,
+      // numeric exige string na escrita.
+      weightKg: body.weightKg == null ? null : String(body.weightKg),
+      heightCm: body.heightCm ?? null,
       // isAccountHolder fica de fora do contrato E daqui: so o cadastro da
       // conta cria titular, e o indice unico parcial recusaria um segundo.
     })
     .returning();
 
-  json(res, 201, { profile: criado });
+  json(res, 201, { profile: serializarPerfil(criado!) });
 }

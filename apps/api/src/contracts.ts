@@ -344,6 +344,20 @@ export const profileInputSchema = z.object({
     .optional()
     .nullable(),
   notes: z.string().trim().max(1000).optional().nullable(),
+  /**
+   * Peso em quilos e altura em CENTIMETROS inteiros.
+   *
+   * As faixas espelham os checks do banco, para o erro sair 400 com o campo
+   * em vez de 500 vindo do Postgres. Altura em centimetro inteiro porque
+   * ninguem mede com mais precisao, e inteiro evita ponto flutuante — a tela
+   * converte para metros na borda.
+   */
+  weightKg: z.number().min(0.5, { message: 'Peso fora do esperado' }).max(500, {
+    message: 'Peso fora do esperado',
+  }).optional().nullable(),
+  heightCm: z.number().int().min(20, { message: 'Altura fora do esperado' }).max(250, {
+    message: 'Altura fora do esperado',
+  }).optional().nullable(),
   /** Mesmos termos da foto do medico — ver professionalInputSchema. */
   photo: z
     .string()
