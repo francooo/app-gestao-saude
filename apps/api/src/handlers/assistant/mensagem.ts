@@ -41,6 +41,9 @@ export default withErrorHandling(async (req: VercelRequest, res: VercelResponse)
     { role: 'user', content: body.question },
   ];
 
+  // Marcado ANTES da chamada: e quando a pessoa perguntou, de verdade.
+  const perguntadoEm = new Date();
+
   const resposta = await perguntarAoGroq(mensagens);
 
   if (!resposta.ok) {
@@ -55,7 +58,12 @@ export default withErrorHandling(async (req: VercelRequest, res: VercelResponse)
     const linhas = await tx
       .insert(assistantMessages)
       .values([
-        { conversationId: conversa, role: 'user', content: body.question },
+        {
+          conversationId: conversa,
+          role: 'user',
+          content: body.question,
+          createdAt: perguntadoEm,
+        },
         {
           conversationId: conversa,
           role: 'assistant',
@@ -63,6 +71,16 @@ export default withErrorHandling(async (req: VercelRequest, res: VercelResponse)
           // Guardar o modelo e o minimo para investigar depois uma resposta
           // problematica — o comentario do schema pede isso.
           model: resposta.modelo,
+          /**
+           * O horario e EXPLICITO nos dois, e nao o defaultNow().
+           *
+           * O default do Postgres resolve para o horario da TRANSACAO, que e
+           * constante dentro dela: as duas mensagens gravavam no mesmo
+           * instante e a ordem do par ficava indefinida. Na pratica saiu
+           * invertida — a resposta antes da pergunta, tanto na tela quanto no
+           * historico que alimenta o proximo prompt.
+           */
+          createdAt: new Date(),
         },
       ])
       .returning();
