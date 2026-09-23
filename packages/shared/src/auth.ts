@@ -97,6 +97,13 @@ export const API_ERROR = {
   ACCOUNT_DISABLED: 'ACCOUNT_DISABLED',
   TOO_MANY_ATTEMPTS: 'TOO_MANY_ATTEMPTS',
   METHOD_NOT_ALLOWED: 'METHOD_NOT_ALLOWED',
+  /**
+   * Teto diario de perguntas ao assistente.
+   *
+   * Nao reusa TOO_MANY_ATTEMPTS: a mensagem daquele fala em "aguarde alguns
+   * minutos", o que mentiria sobre um limite que so vira no dia seguinte.
+   */
+  ASSISTANT_LIMIT_REACHED: 'ASSISTANT_LIMIT_REACHED',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   /** Erros do lado do cliente, nunca vindos da API. */
   NETWORK_ERROR: 'NETWORK_ERROR',
@@ -124,6 +131,8 @@ export const ERROR_MESSAGES_PT: Record<string, string> = {
   [API_ERROR.ACCOUNT_DISABLED]: 'Esta conta está desativada. Fale com o suporte.',
   [API_ERROR.TOO_MANY_ATTEMPTS]: 'Muitas tentativas. Aguarde alguns minutos e tente de novo.',
   [API_ERROR.METHOD_NOT_ALLOWED]: 'Requisição inválida.',
+  [API_ERROR.ASSISTANT_LIMIT_REACHED]:
+    'Você já usou as perguntas do assistente de hoje. Amanhã libera de novo.',
   [API_ERROR.INTERNAL_ERROR]: 'Algo deu errado do nosso lado. Tente novamente.',
   [API_ERROR.NETWORK_ERROR]: 'Sem conexão com o servidor. Verifique sua internet.',
   // Nao e problema da pessoa: o app foi publicado sem a URL da API.

@@ -62,6 +62,13 @@ export const API_ERROR = {
   ACCOUNT_DISABLED: 'ACCOUNT_DISABLED',
   TOO_MANY_ATTEMPTS: 'TOO_MANY_ATTEMPTS',
   METHOD_NOT_ALLOWED: 'METHOD_NOT_ALLOWED',
+  /**
+   * Teto diario de perguntas ao assistente.
+   *
+   * Nao reusa TOO_MANY_ATTEMPTS: a mensagem daquele fala em "aguarde alguns
+   * minutos", o que mentiria sobre um limite que so vira no dia seguinte.
+   */
+  ASSISTANT_LIMIT_REACHED: 'ASSISTANT_LIMIT_REACHED',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
 } as const;
 
@@ -383,4 +390,40 @@ export const profilePatchSchema = profileInputSchema
 
 export const profileQuerySchema = z.object({
   includeInactive: z.enum(['true', 'false']).optional(),
+});
+
+// ---------------------------------------------------------------------------
+// Assistente de saude
+//
+// O escopo e deliberado e estreito: o assistente responde sobre os dados que a
+// PROPRIA familia cadastrou — quais remedios, que horas e a proxima dose,
+// quando e a proxima consulta. Ele nao indica remedio, nao diz dose e nao
+// interpreta sintoma. Ver src/lib/assistente-prompt.ts, onde a regra vive e
+// esta comentada.
+//
+// O CONTEXTO vem pronto do aplicativo, e nao e montado aqui: o servidor roda
+// em UTC e nao tem opiniao sobre fuso, enquanto "proxima dose" depende do
+// relogio do aparelho. Calcular isso no servidor seria uma segunda
+// implementacao do mesmo calculo, divergindo com o tempo.
+// ---------------------------------------------------------------------------
+
+/** Teto do bloco de contexto. Uma familia grande nao pode estourar a janela. */
+export const CONTEXTO_MAXIMO = 8_000;
+
+/** Perguntas por dia, por conta. Guarda contra laco com defeito, nao custo. */
+export const PERGUNTAS_POR_DIA = 50;
+
+export const assistantAskSchema = z.object({
+  profileId: z.uuid().optional().nullable(),
+  question: z
+    .string()
+    .trim()
+    .min(2, { message: 'Escreva sua dúvida' })
+    .max(1000, { message: 'Pergunta muito longa' }),
+  /** Bloco de texto com os dados da pessoa, montado pelo aplicativo. */
+  context: z.string().max(CONTEXTO_MAXIMO).optional().nullable(),
+});
+
+export const assistantHistorySchema = z.object({
+  profileId: z.uuid().optional(),
 });
