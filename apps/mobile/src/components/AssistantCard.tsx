@@ -9,23 +9,25 @@ type Props = {
 };
 
 /**
- * Entrada do Assistente de Saude.
+ * Entrada do Assistente de Saude, na tela inicial.
  *
- * DELIBERADAMENTE NAO FUNCIONAL nesta versao. O campo e um botao disfarcado:
- * nao aceita digitacao e o toque em qualquer parte do card leva ao mesmo
- * aviso de "em breve".
+ * O bloqueio que este comentario registrava foi RESOLVIDO: a decisao de
+ * produto que faltava era o escopo, e ele ficou estreito de proposito — o
+ * assistente responde sobre os dados que a familia cadastrou (quais remedios,
+ * que horas e a proxima dose, quando e a consulta) e recusa indicar remedio,
+ * dose ou diagnostico. O texto de sistema esta em
+ * apps/api/src/lib/assistente-prompt.ts, com o comportamento medido.
  *
- * O motivo e de produto, nao de prazo. O placeholder do mockup ("qual remedio
- * posso dar para febre?") pede indicacao de medicamento e dose a um leigo —
- * a decisao de maior risco do aplicativo. Ela precisa ser tomada de proposito,
- * com as protecoes definidas, e nao herdada de uma tela de layout.
+ * O campo aqui continua ILUSTRATIVO: quem toca vai para a aba, onde ha um
+ * campo de verdade. Dois campos que aceitam digitacao, um dentro do outro,
+ * seria pior que um so.
  */
 export function AssistantCard({ onPress }: Props) {
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel="Assistente de Saúde. Em breve."
+      accessibilityLabel="Assistente de Saúde. Abre a conversa."
       style={({ pressed }) => [styles.wrapper, pressed && styles.pressionado]}
     >
       <LinearGradient
@@ -40,14 +42,14 @@ export function AssistantCard({ onPress }: Props) {
           </View>
           <View style={styles.textos}>
             <Text style={styles.titulo}>Assistente de Saúde</Text>
-            <Text style={styles.subtitulo}>Em breve neste aplicativo</Text>
+            <Text style={styles.subtitulo}>Tire dúvidas sobre remédios e consultas</Text>
           </View>
         </View>
 
         {/* Campo apenas ilustrativo — nao e um TextInput de proposito. */}
         <View style={styles.campo}>
           <Text style={styles.placeholder} numberOfLines={1}>
-            Ex.: qual remédio posso dar para febre?
+            Ex.: quando é a próxima dose do Lucas?
           </Text>
           <View style={styles.enviar}>
             <Feather name="send" size={18} color={colors.onAccent} />

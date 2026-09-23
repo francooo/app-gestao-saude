@@ -234,6 +234,24 @@ export type AppointmentInput = {
   notes?: string | null;
 };
 
+// ---------------------------------------------------------------------------
+// Assistente
+//
+// O escopo e estreito de proposito: o assistente responde sobre os dados que a
+// familia cadastrou. O contexto vai PRONTO daqui (ver lib/contextoDeSaude.ts)
+// porque so este aparelho sabe que horas sao.
+// ---------------------------------------------------------------------------
+
+export const assistantMessageSchema = z.object({
+  id: z.uuid(),
+  conversationId: z.uuid(),
+  role: z.enum(['user', 'assistant']),
+  content: z.string(),
+  model: z.string().nullish(),
+  createdAt: z.string(),
+});
+export type AssistantMessage = z.infer<typeof assistantMessageSchema>;
+
 export const referenceLocationSchema = z.object({
   label: z.string().nullable(),
   address: z.string().nullable(),
@@ -428,6 +446,31 @@ export const healthApi = {
       `/api/medications/${medicationId}?doseId=${doseId}`,
       { method: 'DELETE', authenticated: true },
       () => undefined,
+    );
+  },
+
+  /**
+   * Manda a pergunta e devolve as DUAS mensagens gravadas.
+   *
+   * Sem streaming: a latencia medida do Groq e de 0,5 a 0,6 s, entao o
+   * request() comum serve e nao ha SSE nem expo/fetch no caminho.
+   */
+  perguntarAoAssistente(input: {
+    question: string;
+    profileId?: string | null;
+    context?: string | null;
+  }): Promise<AssistantMessage[]> {
+    return request(
+      '/api/assistant/mensagem',
+      { method: 'POST', body: input, authenticated: true },
+      (data) => z.object({ messages: z.array(assistantMessageSchema) }).parse(data).messages,
+    );
+  },
+
+  historicoDoAssistente(profileId?: string | null): Promise<AssistantMessage[]> {
+    const query = profileId ? `?profileId=${profileId}` : '';
+    return request(`/api/assistant/historico${query}`, { authenticated: true }, (data) =>
+      z.object({ messages: z.array(assistantMessageSchema) }).parse(data).messages,
     );
   },
 

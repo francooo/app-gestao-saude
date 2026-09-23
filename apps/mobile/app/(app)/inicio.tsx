@@ -167,7 +167,7 @@ export default function InicioScreen() {
         </SurfaceCard>
 
         <View style={styles.secao}>
-          <AssistantCard onPress={() => emBreve('Assistente de Saúde')} />
+          <AssistantCard onPress={() => router.push('/assistente')} />
         </View>
 
         <View style={styles.secao}>

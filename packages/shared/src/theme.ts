@@ -103,6 +103,20 @@ export const colors = {
   // --- Cadastro de membro (member-registration-screen-family-health.png) ---
   /** Circulo do avatar quando ainda nao ha foto. */
   avatarEmpty: '#A9B287',
+
+  // --- Assistente (assistant-screen-family-health.png) ---
+  /** Painel creme que envolve a conversa. */
+  assistantPanel: '#F6F2E3',
+  /** Bolha de mensagem. */
+  assistantBubble: '#EFECDA',
+  /** Botao de enviar. */
+  assistantSend: '#598B54',
+  // Circulos das quatro acoes rapidas.
+  quickMeds: '#CED29F',
+  quickSymptoms: '#D8AF4F',
+  quickAppointments: '#96A263',
+  /** Emergencia. Unica que nao passa pelo modelo — ver QuickActions. */
+  quickEmergency: '#C97550',
 } as const;
 
 /**
@@ -122,6 +136,8 @@ export const backgrounds = {
    * do mockup de cadastro de membro, coluna x=12.
    */
   family: ['#A7B081', '#A2AD7B', '#909D6A'] as const,
+  /** Bem mais claro que os outros. Medido do mockup do assistente, x=10. */
+  assistant: ['#D0D0A8', '#EAE6CA', '#DEDDB9', '#ECE8CA'] as const,
 } as const;
 
 /**
