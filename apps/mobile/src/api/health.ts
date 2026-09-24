@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { request } from '@/api/client';
-import { ASSISTANT_TIMEOUT_MS } from '@/config';
+import { ANEXO_TIMEOUT_MS, ASSISTANT_TIMEOUT_MS } from '@/config';
 import { agoraLocalISO, fusoDoAparelho } from '@/lib/horaLocal';
 
 /**
@@ -166,6 +166,15 @@ export const medicationSchema = z.object({
   profileName: z.string().nullish(),
   profileColor: z.string().nullish(),
   /** default([]) e melhor que nullish: a tela nunca precisa checar nulo. */
+  /**
+   * Data URI JPEG da receita.
+   *
+   * `nullish` porque o campo tem TRES situacoes: vem com valor no detalhe,
+   * vem `null` no detalhe sem receita, e NAO VEM na listagem — de proposito,
+   * senao a tela inicial baixaria a receita de todos os remedios da familia a
+   * cada abertura.
+   */
+  prescriptionPhoto: z.string().nullish(),
   times: z.array(z.string()).default([]),
   doses: z.array(doseSchema).default([]),
   /**
@@ -195,6 +204,8 @@ export type MedicationInput = {
 /** profileId ausente: o servidor ignora, e mover de perfil orfanaria o historico. */
 export type MedicationPatch = Partial<Omit<MedicationInput, 'profileId'>> & {
   isActive?: boolean;
+  /** null remove a receita; ausente preserva a que estiver la. */
+  prescriptionPhoto?: string | null;
 };
 
 export type DoseInput = {
@@ -415,7 +426,15 @@ export const healthApi = {
   updateMedication(id: string, input: MedicationPatch): Promise<Medication> {
     return request(
       `/api/medications/${id}`,
-      { method: 'PATCH', body: input, authenticated: true },
+      {
+        method: 'PATCH',
+        body: input,
+        authenticated: true,
+        // O prazo maior SO quando ha foto no corpo. Dar 45 s a todo PATCH
+        // faria um "encerrar tratamento" sem rede ficar quase um minuto
+        // parecendo que vai dar certo.
+        ...(input.prescriptionPhoto ? { timeoutMs: ANEXO_TIMEOUT_MS } : {}),
+      },
       (data) => z.object({ medication: medicationSchema }).parse(data).medication,
     );
   },

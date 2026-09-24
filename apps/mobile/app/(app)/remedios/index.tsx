@@ -26,15 +26,9 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SummaryTile } from '@/components/SummaryTile';
 import { SurfaceCard } from '@/components/SurfaceCard';
+import { alternarDose, comDose, semDose } from '@/lib/marcarDose';
 import { definirLembretesDeDose, lembretesDeDoseLigados } from '@/lib/prefs';
-import {
-  hora,
-  resumoDoDia,
-  slotAlvo,
-  tituloDoMedicamento,
-  vigenteHoje,
-  estadoHoje,
-} from '@/lib/posologia';
+import { hora, resumoDoDia, tituloDoMedicamento, vigenteHoje } from '@/lib/posologia';
 import { reconciliarLembretesDeDose } from '@/lib/reminders';
 import { backgrounds, colors, fonts, radii, spacing } from '@/theme';
 
@@ -125,52 +119,20 @@ export default function RemediosScreen() {
   /**
    * Marca ou desfaz a dose.
    *
-   * O estado vira na hora e volta se a requisicao falhar. Nunca o contrario:
-   * num aplicativo de remedio, um "tomado" falso e o pior resultado possivel
-   * — por isso tambem nao existe fila para uso offline. Se falhou, tem que
-   * parecer que falhou.
+   * A regra mora em lib/marcarDose.ts porque o detalhe do medicamento tambem
+   * marca dose. Aqui fica so o que e desta tela: o bloqueio por id e a
+   * atualizacao da lista.
    */
   async function marcar(m: Medication) {
     if (emVoo.has(m.id)) return;
 
-    const estado = estadoHoje(m, agora);
-    const repetivel = m.scheduleType === 'as_needed';
-
-    if (estado.tipo === 'tomado' && !repetivel) {
-      // Desfazer pede confirmacao: e registro clinico, e um toque no bolso nao
-      // pode apaga-lo.
-      Alert.alert(
-        'Desfazer registro?',
-        `A dose de ${tituloDoMedicamento(m)} das ${hora(estado.quando)} deixa de constar como tomada.`,
-        [
-          { text: 'Cancelar', style: 'cancel' },
-          { text: 'Desfazer', style: 'destructive', onPress: () => void desfazer(m, estado.dose.id) },
-        ],
-      );
-      return;
-    }
-
-    const slot = repetivel ? null : slotAlvo(m, agora);
-    if (!repetivel && !slot) return;
-
     await comBloqueio(m.id, async () => {
-      const dose = await healthApi.registerDose(m.id, {
-        scheduledFor: slot ? slot.toISOString() : null,
-        takenAt: new Date().toISOString(),
-        status: 'tomada',
-      });
-      aplicarDose(m.id, dose);
-    });
-  }
-
-  async function desfazer(m: Medication, doseId: string) {
-    await comBloqueio(m.id, async () => {
-      await healthApi.deleteDose(m.id, doseId);
-      setMedicamentos((atual) =>
-        atual.map((x) =>
-          x.id === m.id ? { ...x, doses: x.doses.filter((d) => d.id !== doseId) } : x,
-        ),
-      );
+      const r = await alternarDose(m, agora);
+      if (r.tipo === 'registrada') {
+        setMedicamentos((atual) => atual.map((x) => (x.id === m.id ? comDose(x, r.dose) : x)));
+      } else if (r.tipo === 'desfeita') {
+        setMedicamentos((atual) => atual.map((x) => (x.id === m.id ? semDose(x, r.doseId) : x)));
+      }
     });
   }
 
@@ -199,20 +161,6 @@ export default function RemediosScreen() {
     }
   }
 
-  /** Substitui a dose do mesmo horario, em vez de somar: o POST e idempotente. */
-  function aplicarDose(medicationId: string, dose: Medication['doses'][number]) {
-    setMedicamentos((atual) =>
-      atual.map((m) =>
-        m.id === medicationId
-          ? {
-              ...m,
-              doses: [...m.doses.filter((d) => d.id !== dose.id), dose],
-              lastDoseAt: dose.takenAt ?? m.lastDoseAt,
-            }
-          : m,
-      ),
-    );
-  }
 
   const proxima = resumo.proxima;
   const detalheDaProxima = proxima
@@ -320,7 +268,7 @@ export default function RemediosScreen() {
                     agora={agora}
                     mostrarPerfil={perfilId === null}
                     enviando={emVoo.has(m.id)}
-                    onPress={() => router.push(`/medicamento/${m.id}`)}
+                    onPress={() => router.push(`/remedios/${m.id}`)}
                     onMarcar={() => void marcar(m)}
                   />
                 ))

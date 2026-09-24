@@ -188,7 +188,7 @@ export default function InicioScreen() {
                 medicamento={m}
                 agora={agora}
                 mostrarPerfil
-                onPress={() => router.push(`/medicamento/${m.id}`)}
+                onPress={() => router.push(`/remedios/${m.id}`)}
               />
             ))
           )}

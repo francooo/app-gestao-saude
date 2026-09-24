@@ -70,3 +70,13 @@ export const REQUEST_TIMEOUT_MS = 15_000;
  * chega e real e nada foi gravado.
  */
 export const ASSISTANT_TIMEOUT_MS = 75_000;
+
+/**
+ * Tempo limite do envio da foto da receita.
+ *
+ * Existe porque o prazo padrao de 15 s e a falha mais provavel em campo e a
+ * menos obvia de diagnosticar: 300 KB numa subida de 100 kbps — 3G ruim,
+ * elevador, interior — levam uns 24 s. O AbortController corta, e a pessoa ve
+ * "sem conexao" com a rede funcionando perfeitamente.
+ */
+export const ANEXO_TIMEOUT_MS = 45_000;

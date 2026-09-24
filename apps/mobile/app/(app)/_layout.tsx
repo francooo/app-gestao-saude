@@ -86,6 +86,11 @@ export default function AppLayout() {
         href: null os tira da barra. A barra tambem some na tela, porque abas
         embaixo de um formulario longo dividem a atencao e convidam a sair no
         meio do preenchimento.
+
+        O DETALHE DO MEDICAMENTO SAIU DESTA LISTA. Ele virou uma pilha dentro
+        da propria aba Remedios (ver remedios/_layout.tsx), que e a unica forma
+        de a barra aparecer com "Remedios" aceso, como o mockup pede. Aqui,
+        como rota irma, nenhuma aba acenderia.
       */}
       <Tabs.Screen
         name="medico/[id]"
@@ -97,10 +102,6 @@ export default function AppLayout() {
       />
       <Tabs.Screen
         name="mapa"
-        options={{ href: null, tabBarStyle: { display: 'none' } }}
-      />
-      <Tabs.Screen
-        name="medicamento/[id]"
         options={{ href: null, tabBarStyle: { display: 'none' } }}
       />
       <Tabs.Screen

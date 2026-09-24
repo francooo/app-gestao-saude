@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Avatar } from '@/components/Avatar';
 import { DoseButton } from '@/components/DoseButton';
+import { IconTile, LADRILHO_POR_FORMA } from '@/components/IconTile';
 import { SurfaceCard } from '@/components/SurfaceCard';
 import type { Medication } from '@/api/health';
 import {
@@ -12,9 +13,8 @@ import {
   hora,
   posologia,
   tituloDoMedicamento,
-  type FormaVisual,
 } from '@/lib/posologia';
-import { colors, fonts, radii, spacing } from '@/theme';
+import { colors, fonts, spacing } from '@/theme';
 
 type Props = {
   medicamento: Medication;
@@ -27,14 +27,6 @@ type Props = {
   enviando?: boolean;
 };
 
-/** Ladrilho e traco por forma farmaceutica. */
-const LADRILHO: Record<FormaVisual, { fundo: string; traco: string; icone: keyof typeof Feather.glyphMap }> = {
-  capsula: { fundo: colors.surfaceWarm, traco: colors.accent, icone: 'aperture' },
-  comprimido: { fundo: colors.pillTablet, traco: colors.pillTabletIcon, icone: 'circle' },
-  gotas: { fundo: colors.surfaceWarm, traco: colors.accent, icone: 'droplet' },
-  ml: { fundo: colors.pillTablet, traco: colors.pillTabletIcon, icone: 'thermometer' },
-};
-
 export function MedicationCard({
   medicamento: m,
   agora,
@@ -44,7 +36,7 @@ export function MedicationCard({
   enviando = false,
 }: Props) {
   const estado = estadoHoje(m, agora);
-  const visual = LADRILHO[formaVisual(m.form)];
+  const visual = LADRILHO_POR_FORMA[formaVisual(m.form)];
   const titulo = tituloDoMedicamento(m);
 
   const status = linhaDeStatus(estado);
@@ -62,9 +54,7 @@ export function MedicationCard({
     >
       <SurfaceCard style={styles.card}>
         <View style={styles.linha}>
-          <View style={[styles.ladrilho, { backgroundColor: visual.fundo }]}>
-            <Feather name={visual.icone} size={24} color={visual.traco} />
-          </View>
+          <IconTile {...visual} size={54} />
 
           <View style={styles.meio}>
             <Text style={styles.nome} numberOfLines={1}>
@@ -150,13 +140,6 @@ const styles = StyleSheet.create({
   card: { padding: spacing.lg, marginBottom: spacing.md },
   pressionado: { opacity: 0.9 },
   linha: { flexDirection: 'row', alignItems: 'center' },
-  ladrilho: {
-    width: 54,
-    height: 54,
-    borderRadius: radii.card - 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   meio: { flex: 1, marginHorizontal: spacing.lg },
   nome: {
     fontFamily: fonts.bold,

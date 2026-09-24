@@ -117,6 +117,17 @@ export const colors = {
   quickAppointments: '#96A263',
   /** Emergencia. Unica que nao passa pelo modelo — ver QuickActions. */
   quickEmergency: '#C97550',
+
+  /**
+   * Filete entre linhas dentro de um cartao creme.
+   *
+   * Derivado do textSecondary com opacidade baixa, em vez de um cinza proprio:
+   * assim ele acompanha a temperatura do creme em vez de cortar o cartao com
+   * uma linha fria.
+   */
+  divider: 'rgba(90, 100, 73, 0.18)',
+  /** Veu do visualizador de imagem em tela cheia. */
+  overlay: 'rgba(24, 28, 18, 0.92)',
 } as const;
 
 /**
