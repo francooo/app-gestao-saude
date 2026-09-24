@@ -2,12 +2,12 @@ import { Feather } from '@expo/vector-icons';
 import { addDays, endOfDay, startOfDay } from 'date-fns';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Keyboard,
   KeyboardAvoidingView,
-  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -36,8 +36,13 @@ import { SurfaceCard } from '@/components/SurfaceCard';
 import { montarContexto } from '@/lib/contextoDeSaude';
 import { backgrounds, colors, fonts, radii, spacing } from '@/theme';
 
-/** Altura da barra de abas flutuante. */
-const ESPACO_BARRA = 96;
+/**
+ * Espaco que a barra de abas flutuante ocupa a partir do fundo da tela.
+ *
+ * Ela e `position: absolute` com `bottom: insets.bottom + 12` e `height: 68`
+ * (ver app/(app)/_layout.tsx), entao o que ela cobre e insets.bottom + 80.
+ */
+const ESPACO_BARRA = 80;
 
 /**
  * Assistente de Saude.
@@ -61,9 +66,33 @@ export default function AssistenteScreen() {
   const [consultas, setConsultas] = useState<Appointment[]>([]);
   const [mensagens, setMensagens] = useState<AssistantMessage[]>([]);
 
+  /**
+   * Com o teclado aberto a barra de abas fica escondida atras dele, e
+   * reservar o espaco dela so empurraria o campo para longe do teclado.
+   */
+  const [tecladoAberto, setTecladoAberto] = useState(false);
+
   const [carregando, setCarregando] = useState(true);
   const [enviando, setEnviando] = useState(false);
   const [texto, setTexto] = useState('');
+
+  useEffect(() => {
+    // didShow/didHide existem nas duas plataformas; os "will" sao so do iOS e
+    // deixariam o Android sem reacao nenhuma.
+    const abriu = Keyboard.addListener('keyboardDidShow', () => {
+      setTecladoAberto(true);
+      // Sem isto a ultima mensagem fica escondida atras do teclado.
+      setTimeout(() => rolagem.current?.scrollToEnd({ animated: true }), 60);
+    });
+    const fechou = Keyboard.addListener('keyboardDidHide', () => setTecladoAberto(false));
+
+    // Sem remover, os ouvintes sobrevivem a saida da tela e mexem no estado de
+    // um componente que nao existe mais.
+    return () => {
+      abriu.remove();
+      fechou.remove();
+    };
+  }, []);
 
   const carregar = useCallback(async () => {
     const agora = new Date();
@@ -143,11 +172,23 @@ export default function AssistenteScreen() {
     <View style={styles.tela}>
       <ScreenBackground colors={backgrounds.assistant} />
 
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={insets.bottom}
-      >
+      {/*
+        behavior nas DUAS plataformas. Eu tinha copiado das telas de formulario
+        o `Platform.OS === 'ios' ? 'padding' : undefined`, que no Android
+        desliga o componente por completo. La aquilo funciona porque o campo
+        fica DENTRO do ScrollView e o React Native rola ate o campo focado;
+        aqui o rodape e irmao da lista e nao rola — nada resgatava o campo de
+        baixo do teclado.
+
+        O comentario do login diz que o adjustResize do Android ja cuidaria
+        disso, mas a premissa envelheceu: desde o React Native 0.81 o Android
+        desenha em edge-to-edge obrigatorio, e nesse modo o resize nao encolhe
+        mais a view raiz. Por isso nao ha deslocamento em dobro.
+
+        keyboardVerticalOffset saiu: ele mede a distancia do TOPO da tela ate a
+        view, e eu passava a margem inferior — nao queria dizer nada.
+      */}
+      <KeyboardAvoidingView style={styles.flex} behavior="padding">
         <ScrollView
           ref={rolagem}
           contentContainerStyle={[styles.conteudo, { paddingTop: insets.top + spacing.md }]}
@@ -221,7 +262,12 @@ export default function AssistenteScreen() {
           dentro, ele rolaria junto e sumiria ao digitar. E e ele que carrega o
           espaco da barra de abas.
         */}
-        <View style={[styles.rodape, { paddingBottom: ESPACO_BARRA + insets.bottom }]}>
+        <View
+          style={[
+            styles.rodape,
+            { paddingBottom: tecladoAberto ? spacing.sm : ESPACO_BARRA + insets.bottom },
+          ]}
+        >
           <View style={styles.campo}>
             <TextInput
               value={texto}
