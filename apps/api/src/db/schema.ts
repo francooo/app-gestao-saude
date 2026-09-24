@@ -423,6 +423,75 @@ export const medicationTimes = pgTable(
 );
 
 /**
+ * A foto da receita medica de um medicamento.
+ *
+ * TABELA SEPARADA, E NAO UMA COLUNA EM `medications`. O motivo esta no codigo,
+ * nao na teoria: tres consultas fazem `select` da LINHA INTEIRA de medications
+ * — o ownership.ts, que roda em toda requisicao ao detalhe (inclusive ao
+ * registrar uma dose), a listagem, e o montar() do detalhe. Uma coluna de
+ * ~300 KB entraria nas tres EM SILENCIO, e a tela inicial passaria a baixar a
+ * receita de todos os remedios da familia a cada abertura. Nada no typecheck
+ * pegaria; so a conta de trafego e o tempo de carga.
+ *
+ * O mesmo isolamento protege o assistente: ele seleciona colunas explicitas
+ * hoje, mas um `select()` distraido num refactor mandaria a receita inteira
+ * para um modelo de terceiro. Daqui, nao ha como.
+ *
+ * LGPD: a cascata users -> profiles -> medications -> aqui faz o direito ao
+ * apagamento funcionar sem codigo novo. Note que `prescriberId` e `set null`
+ * de proposito — apagar o cadastro do medico NAO apaga a receita, que e do
+ * paciente.
+ *
+ * O que uma receita fotografada carrega, e que justifica todo o cuidado acima:
+ * nome do paciente, nome e CRM de um profissional que nunca consentiu com este
+ * aplicativo, e muitas vezes o diagnostico escrito a mao.
+ */
+export const medicationAttachments = pgTable(
+  'medication_attachments',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    medicationId: uuid('medication_id')
+      .notNull()
+      .references(() => medications.id, { onDelete: 'cascade' }),
+    /** Data URI JPEG em base64, nos mesmos termos de professionals.photo. */
+    photo: text('photo').notNull(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    /**
+     * UMA receita por remedio, por enquanto.
+     *
+     * Serve a duas coisas: soltar este indice depois e mudanca aditiva, e e
+     * ele que faz "trocar a foto" ser um onConflictDoUpdate limpo em vez de
+     * delete+insert. Sem ele, trocar criaria uma segunda linha e o detalhe
+     * passaria a mostrar uma das duas ao acaso.
+     */
+    uniqueIndex('medication_attachments_one_per_medication_idx').on(t.medicationId),
+    /**
+     * Ultima linha de defesa do tamanho, mais folgada que o teto do contrato
+     * (500 000). Se ESTA checagem disparar, alguem escreveu no banco por fora
+     * da API. A folga tambem e proposital: se 1280 px nao bastar para ler uma
+     * receita manuscrita, subir a resolucao mexe so no app e no contrato.
+     */
+    check('medication_attachments_photo_size', sql`length(${t.photo}) <= 700000`),
+    /**
+     * O prefixo para sem o ";base64," DE PROPOSITO.
+     *
+     * O drizzle-kit quebra os comandos do arquivo de migration no ponto e
+     * virgula, sem enxergar aspas. Com `LIKE 'data:image/jpeg;base64,%'` o
+     * SQL gerado sai cortado no meio do literal, com a string aberta, e a
+     * migration nao aplica. Foi visto acontecer, nao suposto.
+     *
+     * Nao se perde quase nada: o formato completo e validado pela expressao
+     * regular do contrato. Isto aqui e a ultima linha de defesa contra algo
+     * escrito no banco por fora da API, e 'data:image/jpeg%' ja barra um PNG
+     * ou um binario cru.
+     */
+    check('medication_attachments_photo_format', sql`${t.photo} LIKE 'data:image/jpeg%'`),
+  ],
+);
+
+/**
  * Registro de doses. E daqui que sai o "Ultima dose ha 2h" da tela inicial:
  * max(taken_at) por medicamento.
  */

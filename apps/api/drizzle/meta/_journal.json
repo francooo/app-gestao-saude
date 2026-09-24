@@ -71,6 +71,13 @@
       "when": 1790269691683,
       "tag": "0009_jittery_wong",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790288900896,
+      "tag": "0010_cold_sunfire",
+      "breakpoints": true
     }
   ]
 }

@@ -4,6 +4,7 @@ import { and, asc, desc, eq, sql } from 'drizzle-orm';
 import { API_ERROR, doseInputSchema, medicationPatchSchema } from '../../src/contracts';
 import { db } from '../../src/db/client';
 import {
+  medicationAttachments,
   medicationDoses,
   medicationTimes,
   medications,
@@ -83,7 +84,7 @@ async function montar(id: string) {
 
   if (!linha) return null;
 
-  const [horarios, doses] = await Promise.all([
+  const [horarios, doses, anexos] = await Promise.all([
     db
       .select()
       .from(medicationTimes)
@@ -95,6 +96,18 @@ async function montar(id: string) {
       .where(eq(medicationDoses.medicationId, id))
       .orderBy(desc(medicationDoses.takenAt))
       .limit(HISTORICO),
+    /**
+     * A receita sai numa consulta PROPRIA, e e por isso que ela mora em outra
+     * tabela: aqui, quem pede o detalhe quer ver a receita. Na listagem e no
+     * ownership, que fazem select da linha inteira de medications, ela nao
+     * pode vir junto — seriam centenas de KB por remedio a cada abertura da
+     * tela inicial, sem ninguem pedir.
+     */
+    db
+      .select({ photo: medicationAttachments.photo })
+      .from(medicationAttachments)
+      .where(eq(medicationAttachments.medicationId, id))
+      .limit(1),
   ]);
 
   return {
@@ -102,6 +115,7 @@ async function montar(id: string) {
     profileName: linha.profileName,
     profileColor: linha.profileColor,
     prescriberName: linha.prescriberName,
+    prescriptionPhoto: anexos[0]?.photo ?? null,
     times: horarios.map((h) => horaCurta(h.timeOfDay)),
     doses: doses.map(serializarDose),
     lastDoseAt: doses.find((d) => d.status === 'tomada')?.takenAt ?? null,
@@ -174,6 +188,31 @@ async function atualizar(
   // deixaria o historico de doses apontando para a pessoa errada.
   await db.transaction(async (tx) => {
     await tx.update(medications).set(mudancas).where(eq(medications.id, atual.id));
+
+    /**
+     * Tres estados, e a diferenca entre os dois primeiros e o ponto todo:
+     * ausente nao mexe, null remove, string substitui. E o mesmo padrao dos
+     * outros campos deste PATCH e da foto do medico.
+     *
+     * O onConflictDoUpdate so funciona por causa do indice unico por
+     * medicamento: sem ele, "trocar a receita" criaria uma segunda linha e o
+     * detalhe passaria a mostrar uma das duas ao acaso.
+     */
+    if (body.prescriptionPhoto !== undefined) {
+      if (body.prescriptionPhoto === null) {
+        await tx
+          .delete(medicationAttachments)
+          .where(eq(medicationAttachments.medicationId, atual.id));
+      } else {
+        await tx
+          .insert(medicationAttachments)
+          .values({ medicationId: atual.id, photo: body.prescriptionPhoto })
+          .onConflictDoUpdate({
+            target: medicationAttachments.medicationId,
+            set: { photo: body.prescriptionPhoto, createdAt: new Date() },
+          });
+      }
+    }
 
     // `times` tem semantica de substituicao total.
     if (body.times !== undefined) {

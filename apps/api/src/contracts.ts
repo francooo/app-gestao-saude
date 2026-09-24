@@ -271,9 +271,38 @@ export const medicationInputSchema = medicationBaseSchema.extend({
  * perfil deixaria todo o historico de doses apontando para a pessoa errada, e
  * nada no banco detecta isso.
  */
+/**
+ * A foto da receita medica.
+ *
+ * FICA FORA DO medicationBaseSchema de proposito, e so aparece no PATCH. O
+ * anexo e uma acao da tela de DETALHE, nao do formulario de cadastro; deixar o
+ * POST de criacao de fora mantem aquele caminho intocado. Acrescentar depois e
+ * mudanca aditiva.
+ *
+ * O teto e de 500 000 caracteres (~375 KB binarios), contra os 30 000 da foto
+ * de perfil. A diferenca nao e generosidade: aquela foto e um rosto em 200x200
+ * e esta e um DOCUMENTO que precisa ser lido. Uma receita A5 fotografada a
+ * 1280 px da cerca de 215 dpi, o suficiente para letra manuscrita com zoom; em
+ * 200x200 daria 13 dpi, ou seja, nada. O app para em 400 000, para esta
+ * validacao ser rede de seguranca de verdade e nao o mecanismo que a pessoa
+ * encontra.
+ *
+ * O .regex vem ANTES do .nullable, pelo mesmo motivo ja documentado na foto do
+ * medico: invertido, o null seria testado contra a expressao e REMOVER a
+ * receita quebraria com "Formato de imagem invalido".
+ */
+export const prescriptionPhotoSchema = z
+  .string()
+  .regex(/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/, {
+    message: 'Formato de imagem inválido',
+  })
+  .max(500_000, { message: 'A foto da receita ficou grande demais' })
+  .optional()
+  .nullable();
+
 export const medicationPatchSchema = medicationBaseSchema
   .partial()
-  .extend({ isActive: z.boolean().optional() });
+  .extend({ isActive: z.boolean().optional(), prescriptionPhoto: prescriptionPhotoSchema });
 
 /** Janela de busca das doses. O aplicativo manda o dia dele, com offset. */
 export const medicationQuerySchema = z.object({
