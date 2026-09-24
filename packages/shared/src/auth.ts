@@ -104,6 +104,13 @@ export const API_ERROR = {
    * minutos", o que mentiria sobre um limite que so vira no dia seguinte.
    */
   ASSISTANT_LIMIT_REACHED: 'ASSISTANT_LIMIT_REACHED',
+  /**
+   * O laco do assistente estourou o prazo antes de qualquer texto.
+   *
+   * Separado do INTERNAL_ERROR porque a acao do usuario e outra: aqui vale
+   * perguntar de forma mais especifica, nao tentar de novo igual.
+   */
+  ASSISTANT_TIMEOUT: 'ASSISTANT_TIMEOUT',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   /** Erros do lado do cliente, nunca vindos da API. */
   NETWORK_ERROR: 'NETWORK_ERROR',
@@ -133,6 +140,8 @@ export const ERROR_MESSAGES_PT: Record<string, string> = {
   [API_ERROR.METHOD_NOT_ALLOWED]: 'Requisição inválida.',
   [API_ERROR.ASSISTANT_LIMIT_REACHED]:
     'Você já usou as perguntas do assistente de hoje. Amanhã libera de novo.',
+  [API_ERROR.ASSISTANT_TIMEOUT]:
+    'A busca demorou demais. Tente perguntar de forma mais específica.',
   [API_ERROR.INTERNAL_ERROR]: 'Algo deu errado do nosso lado. Tente novamente.',
   [API_ERROR.NETWORK_ERROR]: 'Sem conexão com o servidor. Verifique sua internet.',
   // Nao e problema da pessoa: o app foi publicado sem a URL da API.

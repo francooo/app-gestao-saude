@@ -64,6 +64,13 @@
       "when": 1790190018725,
       "tag": "0008_naive_paladin",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790269691683,
+      "tag": "0009_jittery_wong",
+      "breakpoints": true
     }
   ]
 }

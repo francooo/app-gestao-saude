@@ -69,6 +69,13 @@ export const API_ERROR = {
    * minutos", o que mentiria sobre um limite que so vira no dia seguinte.
    */
   ASSISTANT_LIMIT_REACHED: 'ASSISTANT_LIMIT_REACHED',
+  /**
+   * O laco do assistente estourou o prazo antes de qualquer texto.
+   *
+   * Separado do INTERNAL_ERROR porque a acao do usuario e outra: aqui vale
+   * perguntar de forma mais especifica, nao tentar de novo igual.
+   */
+  ASSISTANT_TIMEOUT: 'ASSISTANT_TIMEOUT',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
 } as const;
 
@@ -410,8 +417,21 @@ export const profileQuerySchema = z.object({
 /** Teto do bloco de contexto. Uma familia grande nao pode estourar a janela. */
 export const CONTEXTO_MAXIMO = 8_000;
 
-/** Perguntas por dia, por conta. Guarda contra laco com defeito, nao custo. */
+/** Perguntas por dia, por conta. */
 export const PERGUNTAS_POR_DIA = 50;
+
+/**
+ * Buscas na internet por dia, por conta.
+ *
+ * Existe porque a conta MUDOU DE ESCALA quando a busca entrou: uma pergunta
+ * sem busca custa ~US$ 0,0002; com busca, entre US$ 0,01 e 0,03. Cinquenta
+ * perguntas com busca passariam de um dolar por dia.
+ *
+ * Ao estourar, o assistente NAO falha: ele perde a internet pelo resto do dia
+ * e segue respondendo com a base e com o proprio conhecimento. Degradar em
+ * silencio e melhor que uma tela de erro por um teto de custo.
+ */
+export const BUSCAS_POR_DIA = 10;
 
 export const assistantAskSchema = z.object({
   profileId: z.uuid().optional().nullable(),
@@ -422,6 +442,16 @@ export const assistantAskSchema = z.object({
     .max(1000, { message: 'Pergunta muito longa' }),
   /** Bloco de texto com os dados da pessoa, montado pelo aplicativo. */
   context: z.string().max(CONTEXTO_MAXIMO).optional().nullable(),
+  /**
+   * Horario local do aparelho e o fuso dele.
+   *
+   * OPCIONAIS de proposito, e isso nao e zelo: os aplicativos ja instalados
+   * nao mandam esses campos, e `eas update` nao e instantaneo — alguem pode
+   * estar dias sem abrir. Campo novo obrigatorio quebraria esses bundles.
+   * Sem eles, o servidor degrada: fala em UTC e avisa o modelo disso.
+   */
+  agora: z.iso.datetime({ offset: true }).optional(),
+  fusoHorario: z.string().max(60).optional(),
 });
 
 export const assistantHistorySchema = z.object({

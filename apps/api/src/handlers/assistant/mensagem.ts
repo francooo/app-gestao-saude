@@ -1,12 +1,18 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { and, desc, eq, gte, sql } from 'drizzle-orm';
 
-import { API_ERROR, assistantAskSchema, PERGUNTAS_POR_DIA } from '../../contracts';
+import {
+  API_ERROR,
+  assistantAskSchema,
+  BUSCAS_POR_DIA,
+  PERGUNTAS_POR_DIA,
+} from '../../contracts';
 import { db } from '../../db/client';
 import { assistantConversations, assistantMessages } from '../../db/schema';
 import { requireAuth } from '../../lib/auth';
+import { rodarLaco } from '../../lib/assistente-laco';
 import { montarPromptDeSistema } from '../../lib/assistente-prompt';
-import { perguntarAoGroq, type MensagemGroq } from '../../lib/groq';
+import type { MensagemGroq } from '../../lib/groq';
 import { fail, json, parseBody, requireMethod, withErrorHandling } from '../../lib/http';
 import { perfilDaConta } from '../../lib/ownership';
 
@@ -35,8 +41,20 @@ export default withErrorHandling(async (req: VercelRequest, res: VercelResponse)
   const conversa = await conversaDe(auth.userId, body.profileId ?? null);
   const anteriores = await ultimasMensagens(conversa, HISTORICO_NO_PROMPT);
 
+  // Esgotado o teto de buscas, o assistente NAO falha: perde a internet pelo
+  // resto do dia e segue respondendo com o cadastro e com o que ja sabe.
+  const podeBuscar = !(await passouDoLimiteDeBuscas(auth.userId));
+
   const mensagens: MensagemGroq[] = [
-    { role: 'system', content: montarPromptDeSistema(body.context) },
+    {
+      role: 'system',
+      content: montarPromptDeSistema({
+        contexto: body.context,
+        agora: body.agora,
+        fusoHorario: body.fusoHorario,
+        podeBuscar,
+      }),
+    },
     ...anteriores.map((m) => ({ role: m.role, content: m.content }) as MensagemGroq),
     { role: 'user', content: body.question },
   ];
@@ -44,13 +62,18 @@ export default withErrorHandling(async (req: VercelRequest, res: VercelResponse)
   // Marcado ANTES da chamada: e quando a pessoa perguntou, de verdade.
   const perguntadoEm = new Date();
 
-  const resposta = await perguntarAoGroq(mensagens);
+  const resposta = await rodarLaco({ mensagens, userId: auth.userId, podeBuscar });
 
   if (!resposta.ok) {
     // A pergunta NAO e gravada quando nao ha resposta: uma conversa com
     // pergunta solta no fim faria o proximo prompt parecer que o assistente
     // ignorou o usuario.
-    return fail(res, 502, API_ERROR.INTERNAL_ERROR);
+    //
+    // Prazo estourado tem codigo proprio porque a acao util e outra: nao e
+    // "tente de novo", e "pergunte de forma mais especifica".
+    return resposta.motivo === 'tempo'
+      ? fail(res, 504, API_ERROR.ASSISTANT_TIMEOUT)
+      : fail(res, 502, API_ERROR.INTERNAL_ERROR);
   }
 
   // As duas mensagens entram juntas, para nunca sobrar meia troca no banco.
@@ -71,6 +94,16 @@ export default withErrorHandling(async (req: VercelRequest, res: VercelResponse)
           // Guardar o modelo e o minimo para investigar depois uma resposta
           // problematica — o comentario do schema pede isso.
           model: resposta.modelo,
+          /**
+           * Como esta resposta foi construida: rodadas, ferramentas chamadas e
+           * se houve busca na internet.
+           *
+           * Deixou de ser opcional quando o escopo abriu. Se um dia alguem
+           * disser "o aplicativo mandou dar 10 ml", a unica pergunta que
+           * importa e de onde saiu o numero — do cadastro, de uma pagina, ou
+           * do proprio modelo. Sem isto nao ha como responder.
+           */
+          toolTrace: resposta.rastro,
           /**
            * O horario e EXPLICITO nos dois, e nao o defaultNow().
            *
@@ -169,4 +202,36 @@ async function passouDoLimiteDiario(userId: string): Promise<boolean> {
     );
 
   return (linha?.total ?? 0) >= PERGUNTAS_POR_DIA;
+}
+
+/**
+ * Teto diario de BUSCAS na internet, separado do teto de perguntas.
+ *
+ * Sao dois tetos porque sao duas contas diferentes: uma pergunta sem busca
+ * custa cerca de US$ 0,0002, e com busca pode passar de US$ 0,01 — cinquenta
+ * vezes mais. Um teto so, calibrado para o caso barato, ou seria inutil contra
+ * o caro, ou estrangularia o uso normal.
+ *
+ * Conta pelo rastro gravado, sem tabela nova. O `->>` devolve texto, entao a
+ * comparacao e com a string 'true'.
+ */
+async function passouDoLimiteDeBuscas(userId: string): Promise<boolean> {
+  const desde = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+  const [linha] = await db
+    .select({ total: sql<number>`count(*)::int` })
+    .from(assistantMessages)
+    .innerJoin(
+      assistantConversations,
+      eq(assistantConversations.id, assistantMessages.conversationId),
+    )
+    .where(
+      and(
+        eq(assistantConversations.userId, userId),
+        gte(assistantMessages.createdAt, desde),
+        sql`${assistantMessages.toolTrace}->>'buscou' = 'true'`,
+      ),
+    );
+
+  return (linha?.total ?? 0) >= BUSCAS_POR_DIA;
 }

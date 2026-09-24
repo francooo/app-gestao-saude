@@ -8,6 +8,7 @@ import {
   index,
   inet,
   integer,
+  jsonb,
   numeric,
   pgEnum,
   pgTable,
@@ -515,6 +516,20 @@ export const assistantMessages = pgTable(
      * problematica depois.
      */
     model: text('model'),
+    /**
+     * Rastro do que o assistente fez para chegar nesta resposta: quantas
+     * rodadas, quais ferramentas com quais argumentos, se buscou na internet e
+     * quais fontes citou.
+     *
+     * Existe porque o escopo deixou de ser estreito. Se um dia alguem disser
+     * "o aplicativo mandou dar 10 ml", a unica pergunta que importa e de onde
+     * veio o numero — do cadastro da familia, de uma pagina da internet, ou do
+     * proprio modelo. Sem isto nao ha resposta.
+     *
+     * NAO guarda o texto das paginas nem o raciocinio do modelo: volume grande
+     * e dado sensivel duplicado, sem ganho de investigacao.
+     */
+    toolTrace: jsonb('tool_trace'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

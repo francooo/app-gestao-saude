@@ -4,6 +4,9 @@
     "gru1"
   ],
   "functions": {
+    "api/assistant/[action].ts": {
+      "maxDuration": 60
+    },
     "api/**/*.ts": {
       "maxDuration": 15
     }

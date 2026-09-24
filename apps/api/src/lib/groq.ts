@@ -6,14 +6,17 @@
  * vale preservar.
  *
  * O modelo foi escolhido pelo que a CONTA enxerga, e nao pelo catalogo: os
- * Llama aparecem na documentacao mas nao estao ativos aqui. Dos disponiveis
- * com contexto grande (gpt-oss-120b, gpt-oss-20b, qwen3.8-27b), o 120b e o
- * mais capaz — e a latencia medida foi de 0,5 a 0,6 s, entao nao ha motivo
- * para descer.
+ * Llama aparecem na documentacao mas nao estao ativos aqui, e os `compound`
+ * (que ja trazem busca embutida) respondem 404. Dos disponiveis com contexto
+ * grande, o gpt-oss-120b e o mais capaz — e e ele quem aceita `browser_search`
+ * como ferramenta de servidor, que e o que da internet ao assistente.
  *
- * Essa latencia tambem e o que dispensa streaming: o maxDuration de 15 s da
- * Vercel e folgado, e o cliente do aplicativo continua usando request() com
- * .json(), sem SSE e sem expo/fetch.
+ * ESTE ARQUIVO NAO DECIDE NADA. Ele faz UMA chamada e devolve o que voltou,
+ * inteiro. Quem repete, executa ferramenta e desiste e o laco em
+ * assistente-laco.ts. A divisao importa porque a resposta agora tem duas
+ * formas possiveis — texto final ou pedido de ferramenta — e confundir as duas
+ * foi exatamente o defeito da versao anterior, que lia so `content` e tratava
+ * todo pedido de ferramenta como resposta vazia.
  */
 
 const URL_GROQ = 'https://api.groq.com/openai/v1/chat/completions';
@@ -21,20 +24,58 @@ const URL_GROQ = 'https://api.groq.com/openai/v1/chat/completions';
 export const MODELO = 'openai/gpt-oss-120b';
 
 /**
- * Teto proprio, menor que o da Vercel.
+ * Teto de saida por rodada.
  *
- * Estourando aqui, o erro e nosso e legivel; estourando la, vira um 504 cru
- * que o aplicativo nao sabe traduzir.
+ * Subiu de 500 porque agora a resposta pode vir depois de ler paginas da
+ * internet, e cortar no meio de uma explicacao de bula e pior que gastar mais
+ * um pouco. Continua sendo teto, nao alvo: pergunta simples segue custando
+ * algumas centenas de tokens.
  */
-const TIMEOUT_MS = 20_000;
+const TETO_DE_SAIDA = 1200;
 
-export type MensagemGroq = { role: 'system' | 'user' | 'assistant'; content: string };
+/** A busca do proprio Groq, executada no servidor deles. */
+export const BUSCA_NA_INTERNET = { type: 'browser_search' } as const;
+
+export type ChamadaDeFerramenta = {
+  id: string;
+  type: 'function';
+  function: { name: string; arguments: string };
+};
+
+export type MensagemGroq =
+  | { role: 'system' | 'user'; content: string }
+  | { role: 'assistant'; content: string | null; tool_calls?: ChamadaDeFerramenta[] }
+  | { role: 'tool'; tool_call_id: string; content: string };
+
+export type MensagemDoAssistente = {
+  role: 'assistant';
+  content: string | null;
+  tool_calls?: ChamadaDeFerramenta[];
+};
 
 export type RespostaGroq =
-  | { ok: true; texto: string; modelo: string }
-  | { ok: false; motivo: 'indisponivel' | 'modelo' | 'falha' };
+  | {
+      ok: true;
+      mensagem: MensagemDoAssistente;
+      /** 'stop' = respondeu; 'tool_calls' = quer uma ferramenta; 'length' = cortou. */
+      motivoDeParada: string;
+      modelo: string;
+      /** O modelo usou a busca do Groq nesta rodada. */
+      buscou: boolean;
+    }
+  | { ok: false; motivo: 'indisponivel' | 'modelo' | 'falha' | 'tempo' };
 
-export async function perguntarAoGroq(mensagens: MensagemGroq[]): Promise<RespostaGroq> {
+type Opcoes = {
+  /** Declaracoes de ferramenta. Lista vazia = proibido pedir ferramenta. */
+  ferramentas?: readonly unknown[];
+  /** Orcamento desta rodada, em ms. Quem controla e o laco. */
+  timeoutMs: number;
+};
+
+export async function perguntarAoGroq(
+  mensagens: MensagemGroq[],
+  opcoes: Opcoes,
+): Promise<RespostaGroq> {
   const chave = process.env.GROQ_API_KEY;
   if (!chave) {
     // Faltar a variavel e erro de implantacao, nao do usuario. Registrar alto:
@@ -44,7 +85,9 @@ export async function perguntarAoGroq(mensagens: MensagemGroq[]): Promise<Respos
   }
 
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), opcoes.timeoutMs);
+
+  const ferramentas = opcoes.ferramentas ?? [];
 
   try {
     const r = await fetch(URL_GROQ, {
@@ -56,10 +99,14 @@ export async function perguntarAoGroq(mensagens: MensagemGroq[]): Promise<Respos
       body: JSON.stringify({
         model: MODELO,
         messages: mensagens,
-        // Baixa de proposito: o assistente le agenda, nao inventa prosa.
+        // Baixa de proposito: em saude, variar a redacao nao agrega e variar o
+        // numero e perigoso.
         temperature: 0.2,
-        max_completion_tokens: 500,
+        max_completion_tokens: TETO_DE_SAIDA,
         reasoning_effort: 'low',
+        // Lista vazia sai do corpo: mandar `tools: []` e um erro 400 na API, e
+        // a ultima rodada do laco chama justamente assim, sem ferramenta.
+        ...(ferramentas.length > 0 ? { tools: ferramentas, tool_choice: 'auto' } : {}),
       }),
       signal: controller.signal,
     });
@@ -73,23 +120,52 @@ export async function perguntarAoGroq(mensagens: MensagemGroq[]): Promise<Respos
 
     const dados = (await r.json()) as {
       model?: string;
-      choices?: { message?: { content?: string } }[];
+      choices?: {
+        finish_reason?: string;
+        message?: {
+          content?: string | null;
+          tool_calls?: ChamadaDeFerramenta[];
+          /** O que o Groq executou do lado dele — hoje, so a busca. */
+          executed_tools?: { type?: string }[];
+        };
+      }[];
     };
 
-    const texto = dados.choices?.[0]?.message?.content?.trim();
-    if (!texto) {
-      console.error('[assistente] groq devolveu resposta vazia');
+    const escolha = dados.choices?.[0];
+    const mensagem = escolha?.message;
+
+    if (!mensagem) {
+      console.error('[assistente] groq devolveu resposta sem choices');
       return { ok: false, motivo: 'falha' };
     }
 
-    return { ok: true, texto, modelo: dados.model ?? MODELO };
+    /**
+     * `content` vazio NAO e mais erro.
+     *
+     * Quando o modelo pede uma ferramenta, `content` vem nulo e a informacao
+     * toda esta em `tool_calls` — era esse o caso que a versao anterior
+     * classificava como "resposta vazia" e transformava em 502. Quem decide se
+     * faltou texto e o laco, que sabe se ainda ha rodada pela frente.
+     */
+    return {
+      ok: true,
+      mensagem: {
+        role: 'assistant',
+        content: mensagem.content ?? null,
+        ...(mensagem.tool_calls?.length ? { tool_calls: mensagem.tool_calls } : {}),
+      },
+      motivoDeParada: escolha.finish_reason ?? 'stop',
+      modelo: dados.model ?? MODELO,
+      buscou: (mensagem.executed_tools ?? []).length > 0,
+    };
   } catch (erro) {
+    const abortou = erro instanceof Error && erro.name === 'AbortError';
     // Nao registramos o corpo da pergunta: e dado de saude, e os logs da
     // Vercel ficam fora do Brasil. So o tipo do erro.
     console.error('[assistente] falha ao chamar o groq', {
       name: erro instanceof Error ? erro.name : 'unknown',
     });
-    return { ok: false, motivo: 'falha' };
+    return { ok: false, motivo: abortou ? 'tempo' : 'falha' };
   } finally {
     clearTimeout(timer);
   }

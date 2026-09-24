@@ -35,11 +35,16 @@ type RequestOptions = {
   body?: unknown;
   /** Anexa o access token e tenta refresh em caso de 401. */
   authenticated?: boolean;
+  /**
+   * Sobrescreve o prazo padrao. So o assistente usa, porque ele busca na
+   * internet e pode levar dezenas de segundos.
+   */
+  timeoutMs?: number;
 };
 
 async function rawRequest(path: string, options: RequestOptions, accessToken?: string | null) {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? REQUEST_TIMEOUT_MS);
 
   try {
     return await fetch(`${API_URL}${path}`, {

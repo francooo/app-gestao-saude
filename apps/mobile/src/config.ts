@@ -52,3 +52,21 @@ export const MAPTILER_KEY = process.env.EXPO_PUBLIC_MAPTILER_KEY ?? '';
 
 /** Requisicoes que passarem disso sao abortadas — rede movel pode travar sem erro. */
 export const REQUEST_TIMEOUT_MS = 15_000;
+
+/**
+ * Tempo limite das perguntas ao assistente.
+ *
+ * Ele busca na internet e consulta o banco em rodadas, entao uma resposta pode
+ * levar de 5 a 40 segundos — os 15 s padrao cortariam quase toda pergunta que
+ * exige busca.
+ *
+ * E PROPOSITAL que este seja o MAIOR dos tres prazos:
+ *
+ *   laco no servidor 45 s  <  maxDuration da Vercel 60 s  <  este, 75 s
+ *
+ * Se o cliente desistisse primeiro, o servidor terminaria, gravaria a resposta,
+ * e a pessoa veria erro para algo que existe no historico — e reenviaria,
+ * pagando a busca duas vezes. Deixando o servidor morrer primeiro, o erro que
+ * chega e real e nada foi gravado.
+ */
+export const ASSISTANT_TIMEOUT_MS = 75_000;
