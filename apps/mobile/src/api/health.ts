@@ -1,6 +1,8 @@
 import { z } from 'zod';
 
 import { request } from '@/api/client';
+import { ASSISTANT_TIMEOUT_MS } from '@/config';
+import { agoraLocalISO, fusoDoAparelho } from '@/lib/horaLocal';
 
 /**
  * Chamadas autenticadas do dominio de saude.
@@ -452,8 +454,15 @@ export const healthApi = {
   /**
    * Manda a pergunta e devolve as DUAS mensagens gravadas.
    *
-   * Sem streaming: a latencia medida do Groq e de 0,5 a 0,6 s, entao o
-   * request() comum serve e nao ha SSE nem expo/fetch no caminho.
+   * Sem streaming, mesmo agora que a resposta pode levar 15 s: streaming aqui
+   * exigiria SSE e expo/fetch, e a tela ja mostra em que passo o assistente
+   * esta. Vale revisitar, e esta anotado como pendencia.
+   *
+   * O PRAZO E OUTRO, e maior que o de todas as outras chamadas. A cadeia e
+   * proposital: laco no servidor 45 s < maxDuration da Vercel 60 s < este.
+   * Se o cliente desistisse primeiro, o servidor terminaria, gravaria a
+   * resposta, e a pessoa veria erro por algo que ja esta no historico — e
+   * reenviaria, pagando a busca duas vezes.
    */
   perguntarAoAssistente(input: {
     question: string;
@@ -462,7 +471,14 @@ export const healthApi = {
   }): Promise<AssistantMessage[]> {
     return request(
       '/api/assistant/mensagem',
-      { method: 'POST', body: input, authenticated: true },
+      {
+        method: 'POST',
+        // O horario sai DAQUI porque so este aparelho sabe que horas sao onde
+        // a pessoa esta. Sem ele o servidor responde em UTC e erra o "hoje".
+        body: { ...input, agora: agoraLocalISO(), fusoHorario: fusoDoAparelho() },
+        authenticated: true,
+        timeoutMs: ASSISTANT_TIMEOUT_MS,
+      },
       (data) => z.object({ messages: z.array(assistantMessageSchema) }).parse(data).messages,
     );
   },

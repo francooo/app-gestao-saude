@@ -26,11 +26,11 @@ const ACOES: Acao[] = [
     pergunta: 'Quais remédios estão cadastrados e quando é a próxima dose?',
   },
   {
-    chave: 'doses',
-    rotulo: 'Doses de hoje',
-    icone: 'clock',
+    chave: 'sintomas',
+    rotulo: 'Sintomas',
+    icone: 'activity',
     cor: colors.quickSymptoms,
-    pergunta: 'Quais doses já foram tomadas hoje e quais ainda faltam?',
+    pergunta: 'Quero falar sobre um sintoma que apareceu. O que você precisa saber para me ajudar?',
   },
   {
     chave: 'consultas',
@@ -52,9 +52,14 @@ const ACOES: Acao[] = [
  * O texto de sistema tambem reconhece emergencia descrita em palavras, mas
  * isso e a segunda linha de defesa, nunca a primeira.
  *
- * O mockup rotula a segunda acao como "Sintomas". Trocado para "Doses de
- * hoje": o assistente nao interpreta sintoma, e um botao prometendo isso
- * convidaria justamente a pergunta que ele vai recusar.
+ * "Sintomas" VOLTOU ao rotulo do mockup. Eu o tinha trocado por "Doses de
+ * hoje" enquanto o assistente recusava interpretar sintoma — um botao que
+ * convida exatamente a pergunta que vai ser recusada e uma armadilha. Com o
+ * escopo aberto, o botao passou a valer o que promete.
+ *
+ * A pergunta dele nao descreve sintoma nenhum: ABRE a conversa. Estes cartoes
+ * enviam na hora, e mandar "tenho febre" sem a pessoa ter dito isso poria
+ * palavras na boca dela.
  */
 export function QuickActions({ onPerguntar, desabilitado = false }: Props) {
   function emergencia() {

@@ -47,13 +47,16 @@ const ESPACO_BARRA = 80;
 /**
  * Assistente de Saude.
  *
- * O escopo e estreito de proposito, e essa decisao estava registrada em tres
- * lugares do codigo antes desta tela existir: ele responde sobre os dados que
- * a familia cadastrou — quais remedios, que horas e a proxima dose, quando e a
- * consulta. Nao indica remedio, nao diz dose, nao interpreta sintoma.
+ * O escopo DEIXOU DE SER ESTREITO, por decisao registrada do dono do produto:
+ * o assistente consulta o cadastro da familia, busca na internet e responde
+ * tambem sobre conduta e dose. As regras vivem no servidor, em
+ * lib/assistente-prompt.ts — esta tela nao repete nenhuma delas, justamente
+ * para nao ficar dizendo na conversa algo diferente do que o assistente faz.
  *
- * O contexto vai PRONTO daqui (ver lib/contextoDeSaude.ts): so este aparelho
- * sabe que horas sao, e "proxima dose" depende disso.
+ * O contexto continua indo PRONTO daqui (ver lib/contextoDeSaude.ts): so este
+ * aparelho sabe que horas sao, e "proxima dose" depende disso. As ferramentas
+ * do servidor cobrem o que o bloco nao traz — as outras pessoas da casa, os
+ * medicos, o historico de doses.
  */
 export default function AssistenteScreen() {
   const insets = useSafeAreaInsets();
@@ -75,6 +78,17 @@ export default function AssistenteScreen() {
   const [carregando, setCarregando] = useState(true);
   const [enviando, setEnviando] = useState(false);
   const [texto, setTexto] = useState('');
+
+  /**
+   * Passou do tempo de uma resposta normal.
+   *
+   * Tres pontinhos parados por quinze segundos parecem travamento, e a pessoa
+   * fecha a tela achando que quebrou. O corte em 5 s nao e chute: nas medicoes
+   * contra a API, resposta sem busca voltou entre 0,4 e 2,4 s, e toda resposta
+   * que passou de 4 s tinha buscado na internet. Por isso o aviso e provavel,
+   * e nao afirmativo — nao da para ter certeza sem streaming.
+   */
+  const [demorando, setDemorando] = useState(false);
 
   useEffect(() => {
     // didShow/didHide existem nas duas plataformas; os "will" sao so do iOS e
@@ -147,6 +161,8 @@ export default function AssistenteScreen() {
     const anterior = texto;
     setTexto('');
 
+    const avisar = setTimeout(() => setDemorando(true), 5000);
+
     try {
       const novas = await healthApi.perguntarAoAssistente({
         question: limpa,
@@ -156,6 +172,22 @@ export default function AssistenteScreen() {
       setMensagens((atual) => [...atual, ...novas]);
       setTimeout(() => rolagem.current?.scrollToEnd({ animated: true }), 80);
     } catch (e) {
+      /**
+       * Antes de dizer que falhou, CONFERIR SE NAO FUNCIONOU.
+       *
+       * O servidor grava pergunta e resposta juntas, e so quando conseguiu
+       * responder. Entao um erro aqui — rede que caiu na volta, prazo do
+       * aparelho — nao significa que nada aconteceu do outro lado. Sem esta
+       * conferencia a pessoa via "nao consegui responder" para algo que ja
+       * estava gravado, reenviava, e a busca era paga duas vezes.
+       */
+      const recuperado = await recuperarDoHistorico(limpa);
+      if (recuperado) {
+        setMensagens(recuperado);
+        setTimeout(() => rolagem.current?.scrollToEnd({ animated: true }), 80);
+        return;
+      }
+
       // O que foi digitado VOLTA para o campo: perder a pergunta por causa da
       // rede faria a pessoa digitar tudo de novo.
       setTexto(anterior || limpa);
@@ -164,7 +196,27 @@ export default function AssistenteScreen() {
         messageForError(e instanceof ApiRequestError ? e.code : undefined),
       );
     } finally {
+      clearTimeout(avisar);
+      setDemorando(false);
       setEnviando(false);
+    }
+  }
+
+  /**
+   * Busca no historico a pergunta que acabou de falhar.
+   *
+   * Devolve a conversa inteira quando a ultima pergunta gravada e esta — o que
+   * so acontece se o servidor concluiu. Qualquer outra coisa devolve nulo, e
+   * ai o erro e real.
+   */
+  async function recuperarDoHistorico(pergunta: string): Promise<AssistantMessage[] | null> {
+    try {
+      const historico = await healthApi.historicoDoAssistente(perfilId);
+      const ultimaPergunta = [...historico].reverse().find((m) => m.role === 'user');
+      return ultimaPergunta?.content === pergunta ? historico : null;
+    } catch {
+      // Sem rede tambem para conferir. Segue para o erro normal.
+      return null;
     }
   }
 
@@ -234,11 +286,11 @@ export default function AssistenteScreen() {
                   <>
                     <ChatBubble
                       autor="assistant"
-                      texto="Posso consultar os remédios, horários de dose e consultas que a sua família cadastrou aqui."
+                      texto="Posso ver os remédios, doses e consultas que a sua família cadastrou aqui, e também procurar na internet o que você precisar saber."
                     />
                     <ChatBubble
                       autor="assistant"
-                      texto="Lembre-se: não indico remédio nem dose. Para isso, fale com o médico."
+                      texto="Sou uma inteligência artificial e posso errar — confira comigo a fonte e, no que for sério, fale com o médico. Em emergência, ligue 192."
                     />
                   </>
                 ) : (
@@ -248,6 +300,11 @@ export default function AssistenteScreen() {
                 )}
 
                 {enviando ? <ChatBubble autor="assistant" texto="" pensando /> : null}
+                {demorando ? (
+                  <Text style={styles.demorando}>
+                    Provavelmente estou procurando na internet. Isso leva alguns segundos.
+                  </Text>
+                ) : null}
 
                 <View style={styles.acoes}>
                   <QuickActions onPerguntar={(p) => void enviar(p)} desabilitado={enviando} />
@@ -330,6 +387,13 @@ const styles = StyleSheet.create({
   },
   painel: { marginTop: spacing.lg, backgroundColor: colors.assistantPanel },
   carregando: { marginVertical: spacing.xl },
+  demorando: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginTop: spacing.sm,
+    marginLeft: spacing.md,
+  },
   acoes: { marginTop: spacing.lg },
   rodape: { paddingHorizontal: spacing.xl, paddingTop: spacing.sm },
   campo: {

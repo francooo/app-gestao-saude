@@ -1,6 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { limparMarkdown } from '@/lib/textoDoAssistente';
 import { colors, fonts, radii, spacing } from '@/theme';
 
 type Props = {
@@ -14,12 +15,16 @@ type Props = {
 export function ChatBubble({ autor, texto, pensando = false }: Props) {
   const doAssistente = autor === 'assistant';
 
+  // So o texto do assistente passa pela limpeza. O que a pessoa digitou vai
+  // como ela escreveu: se ela usou asterisco, era asterisco mesmo.
+  const limpo = doAssistente ? limparMarkdown(texto) : texto;
+
   return (
     <View
       style={[styles.linha, doAssistente ? styles.linhaAssistente : styles.linhaUsuario]}
       accessibilityRole="text"
       // Sem isto o leitor de tela le a bolha sem dizer de quem e.
-      accessibilityLabel={`${doAssistente ? 'Assistente' : 'Você'}: ${pensando ? 'pensando' : texto}`}
+      accessibilityLabel={`${doAssistente ? 'Assistente' : 'Você'}: ${pensando ? 'pensando' : limpo}`}
       accessibilityLiveRegion={pensando ? 'polite' : 'none'}
     >
       {doAssistente ? (
@@ -34,7 +39,7 @@ export function ChatBubble({ autor, texto, pensando = false }: Props) {
         {pensando ? (
           <Text style={[styles.texto, styles.pensando]}>• • •</Text>
         ) : (
-          <Text style={[styles.texto, !doAssistente && styles.textoUsuario]}>{texto}</Text>
+          <Text style={[styles.texto, !doAssistente && styles.textoUsuario]}>{limpo}</Text>
         )}
       </View>
     </View>
