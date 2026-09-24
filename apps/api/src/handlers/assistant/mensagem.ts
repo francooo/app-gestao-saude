@@ -71,9 +71,10 @@ export default withErrorHandling(async (req: VercelRequest, res: VercelResponse)
     //
     // Prazo estourado tem codigo proprio porque a acao util e outra: nao e
     // "tente de novo", e "pergunte de forma mais especifica".
-    return resposta.motivo === 'tempo'
-      ? fail(res, 504, API_ERROR.ASSISTANT_TIMEOUT)
-      : fail(res, 502, API_ERROR.INTERNAL_ERROR);
+    if (resposta.motivo === 'tempo') return fail(res, 504, API_ERROR.ASSISTANT_TIMEOUT);
+    // 503 e nao 502: o servico existe e esta saudavel, so esta ocupado agora.
+    if (resposta.motivo === 'limite') return fail(res, 503, API_ERROR.ASSISTANT_BUSY);
+    return fail(res, 502, API_ERROR.INTERNAL_ERROR);
   }
 
   // As duas mensagens entram juntas, para nunca sobrar meia troca no banco.

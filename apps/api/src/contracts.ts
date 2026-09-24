@@ -76,6 +76,13 @@ export const API_ERROR = {
    * perguntar de forma mais especifica, nao tentar de novo igual.
    */
   ASSISTANT_TIMEOUT: 'ASSISTANT_TIMEOUT',
+  /**
+   * O provedor de IA recusou por excesso de uso no minuto.
+   *
+   * Separado porque a espera e de SEGUNDOS, nao do dia: mandar a pessoa
+   * "tentar amanha" seria mentira.
+   */
+  ASSISTANT_BUSY: 'ASSISTANT_BUSY',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
 } as const;
 

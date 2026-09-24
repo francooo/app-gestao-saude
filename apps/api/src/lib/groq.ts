@@ -63,7 +63,7 @@ export type RespostaGroq =
       /** O modelo usou a busca do Groq nesta rodada. */
       buscou: boolean;
     }
-  | { ok: false; motivo: 'indisponivel' | 'modelo' | 'falha' | 'tempo' };
+  | { ok: false; motivo: 'indisponivel' | 'modelo' | 'falha' | 'tempo' | 'limite' };
 
 type Opcoes = {
   /** Declaracoes de ferramenta. Lista vazia = proibido pedir ferramenta. */
@@ -113,7 +113,26 @@ export async function perguntarAoGroq(
 
     if (!r.ok) {
       const corpo = await r.text().catch(() => '');
-      console.error('[assistente] groq respondeu', r.status, corpo.slice(0, 300));
+      console.error('[assistente] groq respondeu', r.status, corpo.slice(0, 300), {
+        // Quanto falta do minuto. E a informacao que explica o 429.
+        resetTokens: r.headers.get('x-ratelimit-reset-tokens'),
+        restamTokens: r.headers.get('x-ratelimit-remaining-tokens'),
+      });
+
+      /**
+       * 429 e um caso a parte, e nesta conta e o erro MAIS PROVAVEL de todos.
+       *
+       * O plano gratuito do Groq da 8 000 tokens por MINUTO. Uma pergunta que
+       * aciona a busca gasta de 5 000 a 40 000 — ou seja, uma unica busca pode
+       * estourar o minuto inteiro sozinha. Enquanto a conta for gratuita, isso
+       * nao e excecao: e o comportamento esperado sob uso normal.
+       *
+       * Nao ha retentativa aqui de proposito: o cabecalho de reset costuma
+       * pedir mais de 30 s, o que estouraria o prazo da rota e trocaria um
+       * erro claro por um tempo esgotado. Melhor dizer a verdade rapido.
+       */
+      if (r.status === 429) return { ok: false, motivo: 'limite' };
+
       // 404 costuma ser modelo que saiu da conta — ja aconteceu com os Llama.
       return { ok: false, motivo: r.status === 404 ? 'modelo' : 'falha' };
     }

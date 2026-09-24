@@ -57,7 +57,7 @@ export type Rastro = {
 
 export type ResultadoDoLaco =
   | { ok: true; texto: string; modelo: string; rastro: Rastro }
-  | { ok: false; motivo: 'indisponivel' | 'modelo' | 'falha' | 'tempo' };
+  | { ok: false; motivo: 'indisponivel' | 'modelo' | 'falha' | 'tempo' | 'limite' };
 
 export async function rodarLaco(opcoes: {
   mensagens: MensagemGroq[];

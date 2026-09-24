@@ -111,6 +111,13 @@ export const API_ERROR = {
    * perguntar de forma mais especifica, nao tentar de novo igual.
    */
   ASSISTANT_TIMEOUT: 'ASSISTANT_TIMEOUT',
+  /**
+   * O provedor de IA recusou por excesso de uso no minuto.
+   *
+   * Separado porque a espera e de SEGUNDOS, nao do dia: mandar a pessoa
+   * "tentar amanha" seria mentira.
+   */
+  ASSISTANT_BUSY: 'ASSISTANT_BUSY',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   /** Erros do lado do cliente, nunca vindos da API. */
   NETWORK_ERROR: 'NETWORK_ERROR',
@@ -142,6 +149,8 @@ export const ERROR_MESSAGES_PT: Record<string, string> = {
     'Você já usou as perguntas do assistente de hoje. Amanhã libera de novo.',
   [API_ERROR.ASSISTANT_TIMEOUT]:
     'A busca demorou demais. Tente perguntar de forma mais específica.',
+  [API_ERROR.ASSISTANT_BUSY]:
+    'O assistente atingiu o limite de uso deste minuto. Tente de novo em instantes.',
   [API_ERROR.INTERNAL_ERROR]: 'Algo deu errado do nosso lado. Tente novamente.',
   [API_ERROR.NETWORK_ERROR]: 'Sem conexão com o servidor. Verifique sua internet.',
   // Nao e problema da pessoa: o app foi publicado sem a URL da API.
