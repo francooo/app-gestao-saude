@@ -3,7 +3,13 @@ import { and, asc, desc, eq, sql } from 'drizzle-orm';
 
 import { API_ERROR, doseInputSchema, medicationPatchSchema } from '../../src/contracts';
 import { db } from '../../src/db/client';
-import { medicationDoses, medicationTimes, medications, professionals } from '../../src/db/schema';
+import {
+  medicationDoses,
+  medicationTimes,
+  medications,
+  professionals,
+  profiles,
+} from '../../src/db/schema';
 import { requireAuth } from '../../src/lib/auth';
 import { fail, json, parseBody, withErrorHandling } from '../../src/lib/http';
 import { doseDaConta, medicamentoDaConta } from '../../src/lib/ownership';
@@ -49,9 +55,32 @@ export default withErrorHandling(async (req: VercelRequest, res: VercelResponse)
   return fail(res, 405, API_ERROR.METHOD_NOT_ALLOWED);
 });
 
-/** Monta o medicamento com horarios e historico, no formato da listagem. */
+/**
+ * Monta o medicamento com horarios e historico, no formato da listagem.
+ *
+ * OS JOINS NAO SAO ENFEITE. Sem eles esta funcao devolvia so as colunas de
+ * `medications`, e a tela de detalhe quebrava em tres lugares de uma vez:
+ * o circulo colorido da pessoa virava "?", a linha "Receitado por" nunca
+ * aparecia, e — o pior — como `atualizar()` tambem devolve daqui, encerrar um
+ * tratamento trocava o avatar correto por "?" na frente do usuario.
+ *
+ * O leftJoin em professionals e obrigatorio: com innerJoin, todo remedio sem
+ * prescritor sumiria da resposta.
+ */
 async function montar(id: string) {
-  const [linha] = await db.select().from(medications).where(eq(medications.id, id)).limit(1);
+  const [linha] = await db
+    .select({
+      medicamento: medications,
+      profileName: profiles.fullName,
+      profileColor: profiles.avatarColor,
+      prescriberName: professionals.name,
+    })
+    .from(medications)
+    .innerJoin(profiles, eq(profiles.id, medications.profileId))
+    .leftJoin(professionals, eq(professionals.id, medications.prescriberId))
+    .where(eq(medications.id, id))
+    .limit(1);
+
   if (!linha) return null;
 
   const [horarios, doses] = await Promise.all([
@@ -69,7 +98,10 @@ async function montar(id: string) {
   ]);
 
   return {
-    ...serializarMedicamento(linha),
+    ...serializarMedicamento(linha.medicamento),
+    profileName: linha.profileName,
+    profileColor: linha.profileColor,
+    prescriberName: linha.prescriberName,
     times: horarios.map((h) => horaCurta(h.timeOfDay)),
     doses: doses.map(serializarDose),
     lastDoseAt: doses.find((d) => d.status === 'tomada')?.takenAt ?? null,
