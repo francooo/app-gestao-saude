@@ -87,13 +87,17 @@ const config: ExpoConfig = {
     [
       'expo-image-picker',
       {
-        // Foto do medico no cadastro. Como a de localizacao, e opcional: sem
-        // ela o avatar continua sendo as iniciais coloridas. O texto diz para
-        // que serve, senao a pessoa nega por falta de contexto.
+        // Tres usos hoje: foto de um medico, foto de alguem da familia e a
+        // foto da RECEITA de um remedio. Todos opcionais — sem eles o avatar
+        // continua sendo as iniciais coloridas e o remedio segue sem anexo.
+        //
+        // O texto precisa citar os tres. Ele mencionava so o medico, e pedir
+        // permissao falando de medico enquanto a pessoa tenta fotografar uma
+        // receita e o tipo de descompasso que faz alguem negar — com razao.
         photosPermission:
-          'O aplicativo acessa suas fotos apenas para você escolher a foto de um médico que cadastrar.',
+          'O aplicativo acessa suas fotos apenas para você escolher a foto de um médico, de alguém da família ou da receita de um remédio.',
         cameraPermission:
-          'O aplicativo usa a câmera apenas para você fotografar um médico que cadastrar.',
+          'O aplicativo usa a câmera apenas para você fotografar um médico, alguém da família ou a receita de um remédio.',
       },
     ],
   ],

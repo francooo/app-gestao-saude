@@ -10,9 +10,24 @@ type Props = {
   onNotifications?: () => void;
   /** Marca o sino com um ponto. */
   hasNotifications?: boolean;
+  /**
+   * Quantas linhas o titulo pode ocupar. Padrao 1.
+   *
+   * "Detalhes do medicamento" nao cabe numa linha: em 27 pt ele mede mais que
+   * a coluna central num aparelho de 320 pt e era cortado com reticencias. Em
+   * duas linhas, a 25 pt, cabe em qualquer tela — e e assim que o mockup
+   * desenha. O bloco mais alto continua centralizado em relacao aos botoes.
+   */
+  titleLines?: 1 | 2;
 };
 
-export function ScreenHeader({ title, onBack, onNotifications, hasNotifications }: Props) {
+export function ScreenHeader({
+  title,
+  onBack,
+  onNotifications,
+  hasNotifications,
+  titleLines = 1,
+}: Props) {
   return (
     <View style={styles.linha}>
       <View style={styles.lado}>
@@ -28,7 +43,11 @@ export function ScreenHeader({ title, onBack, onNotifications, hasNotifications 
         ) : null}
       </View>
 
-      <Text style={styles.titulo} accessibilityRole="header" numberOfLines={1}>
+      <Text
+        style={[styles.titulo, titleLines === 2 && styles.tituloDuasLinhas]}
+        accessibilityRole="header"
+        numberOfLines={titleLines}
+      >
         {title}
       </Text>
 
@@ -81,6 +100,10 @@ const styles = StyleSheet.create({
     letterSpacing: -0.3,
     color: colors.sectionTitle,
     paddingHorizontal: spacing.sm,
+  },
+  tituloDuasLinhas: {
+    fontSize: 25,
+    lineHeight: 29,
   },
   ponto: {
     position: 'absolute',
