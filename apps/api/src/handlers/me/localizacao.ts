@@ -2,12 +2,12 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
-import { API_ERROR } from '../../src/contracts';
-import { db } from '../../src/db/client';
-import { users } from '../../src/db/schema';
-import { requireAuth } from '../../src/lib/auth';
-import { fail, json, parseBody, withErrorHandling } from '../../src/lib/http';
-import { geocodificar, geocodificarReverso } from '../../src/lib/geocoding';
+import { API_ERROR } from '../../contracts';
+import { db } from '../../db/client';
+import { users } from '../../db/schema';
+import type { AuthContext } from '../../lib/auth';
+import { fail, json, parseBody } from '../../lib/http';
+import { geocodificar, geocodificarReverso } from '../../lib/geocoding';
 
 /**
  * Ponto de referencia das distancias ate os consultorios.
@@ -29,10 +29,11 @@ const bodySchema = z.union([
   z.object({ clear: z.literal(true) }),
 ]);
 
-export default withErrorHandling(async (req: VercelRequest, res: VercelResponse) => {
-  const auth = await requireAuth(req, res);
-  if (!auth) return;
-
+export default async function localizacao(
+  req: VercelRequest,
+  res: VercelResponse,
+  auth: AuthContext,
+) {
   if (req.method === 'GET') {
     const [u] = await db
       .select({
@@ -117,7 +118,7 @@ export default withErrorHandling(async (req: VercelRequest, res: VercelResponse)
 
   res.setHeader('Allow', 'GET, PUT');
   return fail(res, 405, API_ERROR.METHOD_NOT_ALLOWED);
-});
+}
 
 /** numeric do Postgres chega como string no driver. */
 function serializar(
