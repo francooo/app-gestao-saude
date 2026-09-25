@@ -3,6 +3,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import type { Medication } from '@/api/health';
+import { lembretesDeConsultaLigados } from '@/lib/prefs';
 import {
   quantidadeComUnidade,
   slotsDoDia,
@@ -72,6 +73,36 @@ export async function pedirPermissao(): Promise<boolean> {
  * e depois de criar ou editar uma consulta.
  */
 export async function reconciliarLembretes(consultas: ConsultaParaLembrar[]): Promise<void> {
+  /**
+   * CANCELA ANTES DE PEDIR PERMISSAO. A ordem inversa era um defeito.
+   *
+   * Isto aqui comecava com `pedirPermissao()` e desistia se negada. Num
+   * aparelho onde a permissao foi revogada nos ajustes do sistema, desligar os
+   * avisos NAO cancelava os lembretes de consulta ja agendados — e o `return`
+   * silencioso escondia o problema. A funcao das doses sempre fez o certo; as
+   * duas faziam o oposto uma da outra e so uma estava certa.
+   */
+  const jaAgendadas = await agendadasComPrefixo(PREFIXO_CONSULTA);
+
+  /**
+   * O portao da preferencia fica AQUI DENTRO, e nao em quem chama.
+   *
+   * Quem chama e a tela Inicio, que nao tem — nem deveria ter — nocao de
+   * preferencia de notificacao. Obrigar cada tela a lembrar de conferir
+   * espalharia a decisao por telas que nao tem nada com o assunto, e bastaria
+   * uma esquecer para os avisos voltarem sozinhos.
+   *
+   * Nas doses e o contrario: la quem chama JA passa lista vazia quando a
+   * preferencia esta desligada, porque a tela precisa do valor de qualquer
+   * forma para desenhar o interruptor.
+   */
+  const ligado = await lembretesDeConsultaLigados();
+
+  if (consultas.length === 0 || !ligado) {
+    for (const id of jaAgendadas) await Notifications.cancelScheduledNotificationAsync(id);
+    return;
+  }
+
   const permitido = await pedirPermissao();
   if (!permitido) return;
 
@@ -84,7 +115,7 @@ export async function reconciliarLembretes(consultas: ConsultaParaLembrar[]): Pr
 
   // So os identificadores DESTE dominio. Sem o prefixo, a varredura de
   // orfaos daqui cancelaria os lembretes de dose, e vice-versa.
-  const nossas = await agendadasComPrefixo(PREFIXO_CONSULTA);
+  const nossas = jaAgendadas;
 
   const querRemos = new Set<string>();
 
@@ -247,4 +278,20 @@ export async function reconciliarLembretesDeDose(medicamentos: Medication[]): Pr
   for (const id of jaAgendadas) {
     if (!queremos.has(id)) await Notifications.cancelScheduledNotificationAsync(id);
   }
+}
+
+/**
+ * Cancela TUDO, nos dois dominios.
+ *
+ * Chamada pela tela de Ajustes ao desligar a chave geral. Explicita, e nao
+ * "reconciliar com lista vazia" nos dois: quem desliga a chave nao tem as
+ * listas em maos, e obrigar a tela a busca-las so para poder cancelar seria
+ * uma ida ao servidor para nao fazer nada.
+ */
+export async function cancelarTodosOsLembretes(): Promise<void> {
+  const ids = [
+    ...(await agendadasComPrefixo(PREFIXO_CONSULTA)),
+    ...(await agendadasComPrefixo(PREFIXO_DOSE)),
+  ];
+  for (const id of ids) await Notifications.cancelScheduledNotificationAsync(id);
 }

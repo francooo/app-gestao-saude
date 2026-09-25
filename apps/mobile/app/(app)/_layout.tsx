@@ -112,6 +112,18 @@ export default function AppLayout() {
         name="membro/[id]"
         options={{ href: null, tabBarStyle: { display: 'none' } }}
       />
+      <Tabs.Screen
+        name="conta/acesso"
+        options={{ href: null, tabBarStyle: { display: 'none' } }}
+      />
+      <Tabs.Screen
+        name="conta/familia"
+        options={{ href: null, tabBarStyle: { display: 'none' } }}
+      />
+      <Tabs.Screen
+        name="conta/privacidade"
+        options={{ href: null, tabBarStyle: { display: 'none' } }}
+      />
     </Tabs>
   );
 }

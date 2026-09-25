@@ -61,7 +61,15 @@ const PARENTESCOS = relationshipValues.map((v) => ({
 export default function MembroScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, origem } = useLocalSearchParams<{ id: string; origem?: string }>();
+  /**
+   * Chegou pelos Ajustes, e nao pela familia.
+   *
+   * Vem por PARAMETRO e nao do `titular`, que so e conhecido depois da
+   * resposta do servidor — o titulo piscaria de "Editar membro" para "Dados
+   * pessoais" no meio da carga.
+   */
+  const deAjustes = origem === 'ajustes';
   const novo = id === 'novo';
 
   const [carregando, setCarregando] = useState(!novo);
@@ -261,7 +269,7 @@ export default function MembroScreen() {
           showsVerticalScrollIndicator={false}
         >
           <ScreenHeader
-            title={novo ? 'Cadastro de membro' : 'Editar membro'}
+            title={deAjustes ? 'Dados pessoais' : novo ? 'Cadastro de membro' : 'Editar membro'}
             onBack={() => router.back()}
             onNotifications={() =>
               Alert.alert('Notificações', 'Esta parte ainda está sendo construída.')
@@ -367,17 +375,25 @@ export default function MembroScreen() {
                     editable={!salvando}
                     containerStyle={styles.coluna}
                   />
-                  <SelectField
-                    label="Parentesco"
-                    value={parentesco}
-                    options={PARENTESCOS}
-                    onChange={setParentesco}
-                    placeholder="Selecione"
-                    tituloDoPainel="Parentesco"
-                    error={erros.relationship}
-                    disabled={salvando}
-                    containerStyle={styles.coluna}
-                  />
+                  {/*
+                    Parentesco nao existe para o titular: a lista de opcoes
+                    nao tem "titular", entao o campo so ofereceria rotulos
+                    errados. Campo que so pode ser preenchido errado e pior
+                    que campo nenhum.
+                  */}
+                  {titular ? null : (
+                    <SelectField
+                      label="Parentesco"
+                      value={parentesco}
+                      options={PARENTESCOS}
+                      onChange={setParentesco}
+                      placeholder="Selecione"
+                      tituloDoPainel="Parentesco"
+                      error={erros.relationship}
+                      disabled={salvando}
+                      containerStyle={styles.coluna}
+                    />
+                  )}
                 </View>
 
                 <SectionHeader title="Informações de saúde" icon="leaf" />
@@ -430,10 +446,31 @@ export default function MembroScreen() {
                   </Pressable>
                 ) : null}
 
-                {!novo && titular ? (
+                {/*
+                  Quem chegou por "Dados pessoais" nao estava procurando um
+                  botao de remover — explicar por que ele nao esta la levanta
+                  uma pergunta que ninguem fez.
+                */}
+                {!novo && titular && !deAjustes ? (
                   <Text style={styles.titularAviso}>
                     Esta é a sua conta, por isso ela não pode ser removida da família.
                   </Text>
+                ) : null}
+
+                {/*
+                  O e-mail nao mora nesta tela, e quem abre "Dados pessoais"
+                  vai procura-lo aqui. `replace` e nao `push`: empilhar duas
+                  telas de conta obrigaria a dois toques de volta.
+                */}
+                {deAjustes ? (
+                  <Pressable
+                    onPress={() => router.replace('/conta/acesso')}
+                    disabled={salvando}
+                    accessibilityRole="button"
+                    style={styles.secundario}
+                  >
+                    <Text style={styles.cancelarTexto}>Alterar e-mail ou senha</Text>
+                  </Pressable>
                 ) : null}
               </SurfaceCard>
 
