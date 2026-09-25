@@ -21,26 +21,44 @@ import { hora, posologia, proximaDose, vigenteHoje } from '@/lib/posologia';
 /** Teto do bloco. O servidor recusa acima de 8000; paramos antes com folga. */
 const TETO = 6_000;
 
+/** Quantos nomes da familia cabem no bloco antes de valer mais uma consulta. */
+const MAXIMO_DE_NOMES = 8;
+
 export function montarContexto(
   perfil: Profile | null,
   medicamentos: Medication[],
   consultas: Appointment[],
   agora: Date,
+  /** A familia inteira, para o bloco dizer quem mais existe. */
+  todosOsPerfis: Profile[] = [],
 ): string | null {
-  if (!perfil) return null;
+  // Sem pessoa escolhida o bloco NAO e mais nulo: a lista da familia sozinha
+  // ja evita uma chamada de ferramenta so para descobrir quem mora na casa.
+  if (!perfil) {
+    const lista = outrasPessoas(null, todosOsPerfis);
+    return lista ?? null;
+  }
 
   const linhas: string[] = [];
 
-  const idade = idadeDescrita(perfil.birthDate);
-  const identidade = [
-    `Nome: ${perfil.fullName}`,
-    idade,
-    perfil.weightKg != null ? `${perfil.weightKg} kg` : null,
-    perfil.heightCm != null ? `${perfil.heightCm} cm` : null,
-  ]
-    .filter(Boolean)
-    .join(', ');
-  linhas.push(identidade);
+  /**
+   * Um rotulo por linha, e o que FALTA dito com todas as letras.
+   *
+   * Antes isto era uma frase so, montada com `.filter(Boolean)`: peso ausente
+   * simplesmente sumia, e o resultado PARECIA completo. Foi assim que o
+   * assistente afirmou nao ter um peso que estava no banco — ele nao viu
+   * lacuna nenhuma para desconfiar.
+   */
+  linhas.push(`Nome: ${perfil.fullName}`);
+  linhas.push(`Idade: ${idadeDescrita(perfil.birthDate) ?? 'data de nascimento não cadastrada'}`);
+  linhas.push(
+    perfil.weightKg != null
+      ? `Peso: ${perfil.weightKg} kg${anotadoEm(perfil.weightMeasuredAt)}`
+      : 'Peso: não cadastrado',
+  );
+  linhas.push(
+    perfil.heightCm != null ? `Altura: ${perfil.heightCm} cm` : 'Altura: não cadastrada',
+  );
 
   if (perfil.notes?.trim()) linhas.push(`Observações da família: ${perfil.notes.trim()}`);
 
@@ -102,7 +120,53 @@ export function montarContexto(
     }
   }
 
+  // A lista da familia vai POR ULTIMO de proposito: se o corte abaixo tiver
+  // que morder alguma coisa, que morda os nomes e nao os remedios.
+  const outras = outrasPessoas(perfil, todosOsPerfis);
+  if (outras) linhas.push(outras);
+
   const texto = linhas.join('\n');
   // Corta com aviso, em vez de deixar o servidor recusar a pergunta inteira.
   return texto.length <= TETO ? texto : `${texto.slice(0, TETO)}\n[lista truncada]`;
+}
+
+/** "(anotado em 12/06)". Vazio quando a medicao e antiga demais para ter data. */
+function anotadoEm(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime())
+    ? ''
+    : ` (anotado em ${d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })})`;
+}
+
+/**
+ * Quem mais mora na casa — so nome e idade.
+ *
+ * Existe por causa de um defeito medido: perguntaram o peso de uma pessoa
+ * enquanto OUTRA estava escolhida no seletor, e o assistente respondeu que o
+ * dado nao existia, sem consultar nada. Saber que a pessoa EXISTE e o empurrao
+ * que faltava para ele ir buscar.
+ *
+ * NAO leva peso, e isso e deliberado: com nome, idade e peso aqui, ele
+ * calcularia dose direto do bloco e pularia a ficha — que e onde esta a data
+ * da medicao e o aviso do que falta. Idade basta para identificar quem e.
+ */
+function outrasPessoas(atual: Profile | null, todos: Profile[]): string | null {
+  const outros = todos.filter((p) => p.isActive !== false && p.id !== atual?.id);
+  if (outros.length === 0) return null;
+
+  const cabecalho = atual
+    ? '\nOUTRAS PESSOAS DESTA CONTA (só nome e idade; todo o resto está nas ferramentas)'
+    : '\nPESSOAS DESTA CONTA (só nome e idade; todo o resto está nas ferramentas)';
+
+  const linhas = outros.slice(0, MAXIMO_DE_NOMES).map((p) => {
+    const parentesco = p.relationship ? ` (${p.relationship})` : '';
+    return `- ${p.fullName}${parentesco}, ${idadeDescrita(p.birthDate) ?? 'idade não cadastrada'}`;
+  });
+
+  if (outros.length > MAXIMO_DE_NOMES) {
+    linhas.push(`- e mais ${outros.length - MAXIMO_DE_NOMES} — use listar_perfis para a lista completa.`);
+  }
+
+  return [cabecalho, ...linhas].join('\n');
 }

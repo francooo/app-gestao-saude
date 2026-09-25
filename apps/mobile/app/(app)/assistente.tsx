@@ -167,7 +167,7 @@ export default function AssistenteScreen() {
       const novas = await healthApi.perguntarAoAssistente({
         question: limpa,
         profileId: perfilId,
-        context: montarContexto(perfil, medicamentos, consultas, new Date()),
+        context: montarContexto(perfil, medicamentos, consultas, new Date(), perfis),
       });
       setMensagens((atual) => [...atual, ...novas]);
       setTimeout(() => rolagem.current?.scrollToEnd({ animated: true }), 80);
@@ -261,7 +261,7 @@ export default function AssistenteScreen() {
               profiles={perfis}
               selectedId={perfilId}
               onSelect={setPerfilId}
-              tituloDoPainel="Tirar dúvida sobre"
+              tituloDoPainel="Começar por"
             />
           </View>
 

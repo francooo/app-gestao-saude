@@ -75,6 +75,14 @@ export default function MembroScreen() {
   const [nome, setNome] = useState('');
   const [nascimento, setNascimento] = useState('');
   const [peso, setPeso] = useState('');
+  /**
+   * Quando o peso guardado foi anotado.
+   *
+   * So leitura: quem carimba a data e o servidor, ao salvar. Aparece porque
+   * dose pediatrica se calcula por quilo, e um peso de tres meses atras num
+   * bebe ja nao vale — quem abre a ficha precisa ver isso sem procurar.
+   */
+  const [pesoAnotadoEm, setPesoAnotadoEm] = useState<string | undefined>();
   const [altura, setAltura] = useState('');
   const [parentesco, setParentesco] = useState<string | null>(null);
   const [observacoes, setObservacoes] = useState('');
@@ -107,6 +115,11 @@ export default function MembroScreen() {
     setNome(p.fullName);
     setNascimento(isoParaData(p.birthDate));
     setPeso(pesoTexto(p.weightKg));
+    setPesoAnotadoEm(
+      p.weightKg != null && p.weightMeasuredAt
+        ? `Anotado em ${new Date(p.weightMeasuredAt).toLocaleDateString('pt-BR')}`
+        : undefined,
+    );
     setAltura(cmParaAltura(p.heightCm));
     setParentesco(p.relationship);
     setObservacoes(p.notes ?? '');
@@ -336,6 +349,7 @@ export default function MembroScreen() {
                     onChangeText={setPeso}
                     placeholder="Ex.: 68 kg"
                     keyboardType="decimal-pad"
+                    hint={pesoAnotadoEm}
                     error={erros.weightKg}
                     editable={!salvando}
                     containerStyle={styles.coluna}
