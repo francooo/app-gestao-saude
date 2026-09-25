@@ -280,6 +280,29 @@ export const trocaDeEmailSchema = z.object({
   newEmail: emailSchema,
 });
 
+/**
+ * Apagar a conta. LGPD Art. 18 VI.
+ *
+ * Duas barreiras porque a acao e irreversivel e leva o historico de saude da
+ * familia inteira: a senha prova quem e, e a confirmacao explicita impede que
+ * um toque torto na tela dispare a exclusao.
+ */
+export const exclusaoDeContaSchema = z.object({
+  currentPassword: z.string().min(1, { message: 'Informe sua senha' }),
+  confirmacao: z.literal(true, { message: 'É preciso confirmar' }),
+});
+
+/**
+ * Reaceite da politica, quando a versao sobe.
+ *
+ * `literal(true)` e nao `boolean`: o mesmo rigor do cadastro. Consentimento da
+ * LGPD e manifestacao ATIVA — um `false` que passasse gravaria um aceite que
+ * nao houve.
+ */
+export const reaceiteSchema = z.object({
+  acceptedPolicy: z.literal(true, { message: 'É preciso aceitar a política' }),
+});
+
 /** O token do link enviado ao endereco novo. */
 export const confirmacaoDeEmailSchema = z.object({
   token: z.string().min(1),

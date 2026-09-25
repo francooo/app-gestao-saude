@@ -9,6 +9,7 @@ import {
   medicationDoses,
   medications,
   profiles,
+  users,
 } from '../../src/db/schema';
 import { requireAuth } from '../../src/lib/auth';
 import { fail, json, parseBody, withErrorHandling } from '../../src/lib/http';
@@ -41,7 +42,7 @@ export default withErrorHandling(async (req: VercelRequest, res: VercelResponse)
   if (!atual) return fail(res, 404, API_ERROR.INTERNAL_ERROR);
 
   if (req.method === 'GET') return detalhar(res, atual);
-  if (req.method === 'PATCH') return atualizar(req, res, atual);
+  if (req.method === 'PATCH') return atualizar(req, res, atual, auth.userId);
   if (req.method === 'DELETE') return remover(res, atual);
 
   res.setHeader('Allow', 'GET, PATCH, DELETE');
@@ -92,6 +93,7 @@ async function atualizar(
   req: VercelRequest,
   res: VercelResponse,
   atual: typeof profiles.$inferSelect,
+  userId: string,
 ) {
   const body = parseBody(res, profilePatchSchema, req.body);
   if (!body) return;
@@ -126,11 +128,35 @@ async function atualizar(
   if (body.heightCm !== undefined) mudancas.heightCm = body.heightCm;
   if (body.isActive !== undefined) mudancas.isActive = body.isActive;
 
-  const [atualizado] = await db
-    .update(profiles)
-    .set(mudancas)
-    .where(eq(profiles.id, atual.id))
-    .returning();
+  const [atualizado] = await db.transaction(async (tx) => {
+    const linhas = await tx
+      .update(profiles)
+      .set(mudancas)
+      .where(eq(profiles.id, atual.id))
+      .returning();
+
+    /**
+     * O nome do TITULAR espelha em `users.fullName`.
+     *
+     * Existem dois nomes na conta e nada os sincronizava: `profiles.fullName`,
+     * que e o que todas as telas de saude mostram e onde vivem a foto e a cor,
+     * e `users.fullName`, gravado uma unica vez no cadastro e usado nos e-mails
+     * transacionais. Quem editasse o proprio nome aqui continuaria sendo
+     * chamado pelo nome antigo no e-mail de recuperacao de senha.
+     *
+     * O espelho e UNIDIRECIONAL, perfil -> usuario, e o perfil e o canonico:
+     * ele e NOT NULL e e o que a interface inteira usa. Na mesma transacao,
+     * para os dois nunca divergirem por uma falha no meio.
+     */
+    if (atual.isAccountHolder && body.fullName !== undefined) {
+      await tx
+        .update(users)
+        .set({ fullName: body.fullName, updatedAt: new Date() })
+        .where(eq(users.id, userId));
+    }
+
+    return linhas;
+  });
 
   return json(res, 200, { profile: serializarPerfil(atualizado!) });
 }

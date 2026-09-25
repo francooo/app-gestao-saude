@@ -25,8 +25,10 @@ async function main() {
     medications,
     medicationTimes,
     medicationDoses,
+    consents,
   } = await import('../src/db/schema');
   const { hashPassword } = await import('../src/lib/password');
+  const { POLICY_VERSION } = await import('../src/contracts');
 
   const email = (process.env.SEED_EMAIL ?? 'teste@gestaosaude.com.br').toLowerCase();
   const password = process.env.SEED_PASSWORD ?? 'senha-de-teste-123';
@@ -58,6 +60,19 @@ async function main() {
     userId = criado!.id;
     console.log(`Conta criada: ${email}`);
   }
+
+  /**
+   * Consentimento da politica.
+   *
+   * O seed nao gravava nenhum, e por isso a conta de teste caia sempre no
+   * caminho "consentimento nao encontrado" — que e um estado legitimo (contas
+   * anteriores a tabela), mas deixava o caminho FELIZ da tela de privacidade
+   * sem como ser exercitado.
+   *
+   * Insere sem apagar os anteriores: a tabela e append-only, e o historico de
+   * aceites e o registro de conformidade.
+   */
+  await db.insert(consents).values({ userId, policyVersion: POLICY_VERSION });
 
   // --- Perfis da familia ---------------------------------------------------
   const familia = await db
