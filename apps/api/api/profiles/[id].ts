@@ -113,6 +113,15 @@ async function atualizar(
   if (body.photo !== undefined) mudancas.photo = body.photo;
   if (body.weightKg !== undefined) {
     mudancas.weightKg = body.weightKg == null ? null : String(body.weightKg);
+    /**
+     * A data reinicia sempre que o peso e salvo, mesmo com o MESMO numero.
+     *
+     * E deliberado: reabrir a ficha e salvar 14 kg de novo e a pessoa
+     * confirmando que 14 kg vale hoje. Comparar com o valor anterior e so
+     * carimbar quando muda faria uma confirmacao legitima ser ignorada, e o
+     * assistente continuaria avisando que o peso esta velho.
+     */
+    mudancas.weightMeasuredAt = body.weightKg == null ? null : new Date();
   }
   if (body.heightCm !== undefined) mudancas.heightCm = body.heightCm;
   if (body.isActive !== undefined) mudancas.isActive = body.isActive;

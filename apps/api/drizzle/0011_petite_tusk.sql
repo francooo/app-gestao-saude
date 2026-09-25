@@ -1,0 +1,1 @@
+ALTER TABLE "profiles" ADD COLUMN "weight_measured_at" timestamp with time zone;

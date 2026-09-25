@@ -26,6 +26,11 @@ export const profileSchema = z.object({
   photo: z.string().nullish(),
   /** Quilos. O servidor ja converte de numeric para numero. */
   weightKg: z.number().nullish(),
+  /**
+   * Quando o peso foi anotado. SOMENTE LEITURA: quem carimba e o servidor, ao
+   * salvar o peso. Nulo em quem ja tinha peso antes desta coluna existir.
+   */
+  weightMeasuredAt: z.string().nullish(),
   /** Centimetros inteiros. A tela converte para metros na borda. */
   heightCm: z.number().nullish(),
   /**

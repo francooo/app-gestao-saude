@@ -76,6 +76,11 @@ async function criar(req: VercelRequest, res: VercelResponse, userId: string) {
       photo: body.photo ?? null,
       // numeric exige string na escrita.
       weightKg: body.weightKg == null ? null : String(body.weightKg),
+      // A data da medicao sai do SERVIDOR, nunca do corpo: quem cadastra um
+      // peso esta dizendo quanto a pessoa pesa AGORA. Aceitar a data do
+      // cliente abriria caminho para um peso antigo se passar por atual, que e
+      // exatamente o que esta coluna existe para impedir.
+      weightMeasuredAt: body.weightKg == null ? null : new Date(),
       heightCm: body.heightCm ?? null,
       // isAccountHolder fica de fora do contrato E daqui: so o cadastro da
       // conta cria titular, e o indice unico parcial recusaria um segundo.

@@ -230,6 +230,21 @@ export const profiles = pgTable(
      * metros na borda, porque e como as pessoas escrevem.
      */
     heightCm: integer('height_cm'),
+    /**
+     * Quando o peso acima foi anotado. Preenchido pelo SERVIDOR, nunca pela
+     * tela — ninguem deveria ter que datar a propria medicao.
+     *
+     * Existe porque peso e um valor unico, sem historico, e o assistente
+     * tratava como se fosse de hoje. Num bebe, o peso de tres meses atras ja
+     * esta errado — e dose pediatrica se calcula por quilo. Com a data, ele
+     * passa a dizer "o cadastro tem 14 kg, anotados em 12/06; confirma?" em
+     * vez de multiplicar por um numero velho em silencio.
+     *
+     * Nulo nos perfis que ja tinham peso antes desta coluna existir: nao da
+     * para inventar a data de uma medicao passada, e fingir que foi hoje seria
+     * pior que admitir que nao se sabe.
+     */
+    weightMeasuredAt: timestamp('weight_measured_at', { withTimezone: true }),
     isAccountHolder: boolean('is_account_holder').notNull().default(false),
     isActive: boolean('is_active').notNull().default(true),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

@@ -78,6 +78,13 @@
       "when": 1790288900896,
       "tag": "0010_cold_sunfire",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1790294379340,
+      "tag": "0011_petite_tusk",
+      "breakpoints": true
     }
   ]
 }
