@@ -258,6 +258,17 @@ export const horarioSchema = z
  * validarPosologia(), no handler, que e onde da para mesclar o corpo do PATCH
  * com a linha que ja esta no banco.
  */
+/**
+ * Trocar a senha estando logado.
+ *
+ * A senha atual e obrigatoria: um access token esquecido num celular
+ * destravado nao pode virar troca de credencial.
+ */
+export const trocaDeSenhaSchema = z.object({
+  currentPassword: z.string().min(1, { message: 'Informe sua senha atual' }),
+  newPassword: passwordSchema,
+});
+
 export const medicationBaseSchema = z.object({
   name: z.string().trim().min(2, { message: 'Informe o nome do remédio' }).max(120),
   /** "500mg" */

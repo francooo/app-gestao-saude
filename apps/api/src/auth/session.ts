@@ -1,4 +1,4 @@
-import { and, eq, isNull } from 'drizzle-orm';
+import { and, eq, isNull, ne } from 'drizzle-orm';
 
 import { db } from '../db/client';
 import { refreshTokens, sessions } from '../db/schema';
@@ -136,6 +136,57 @@ export async function revokeSessionByRefreshToken(presentedToken: string): Promi
       .set({ revokedAt: new Date() })
       .where(and(eq(refreshTokens.sessionId, current.sessionId), isNull(refreshTokens.revokedAt)));
     await tx.update(sessions).set({ revokedAt: new Date() }).where(eq(sessions.id, current.sessionId));
+  });
+}
+
+/**
+ * Derruba todos os aparelhos MENOS um.
+ *
+ * Usado ao trocar a senha estando logado, e a diferenca em relacao ao
+ * revokeAllSessions e deliberada. La a premissa e "a conta pode estar
+ * comprometida, e quem pede prova a identidade por e-mail" — derrubar tudo e
+ * certo. Aqui a premissa e o oposto: a pessoa tem sessao valida E sabe a senha
+ * atual, ou seja, e a unica sessao comprovadamente legitima. Expulsa-la logo
+ * depois de "senha alterada com sucesso" seria o pior par de telas possivel.
+ *
+ * Derrubar as OUTRAS continua importando: se a troca foi por suspeita de
+ * invasao, deixar o invasor logado anula o ato. E como o requireAuth confere a
+ * linha de `sessions` a cada requisicao, o corte e imediato — nao espera os 15
+ * minutos do access token.
+ */
+export async function revokeAllSessionsExcept(
+  userId: string,
+  sessionId: string,
+): Promise<void> {
+  await db.transaction(async (tx) => {
+    const rows = await tx
+      .select({ id: sessions.id })
+      .from(sessions)
+      .where(
+        and(
+          eq(sessions.userId, userId),
+          isNull(sessions.revokedAt),
+          ne(sessions.id, sessionId),
+        ),
+      );
+
+    for (const row of rows) {
+      await tx
+        .update(refreshTokens)
+        .set({ revokedAt: new Date() })
+        .where(and(eq(refreshTokens.sessionId, row.id), isNull(refreshTokens.revokedAt)));
+    }
+
+    await tx
+      .update(sessions)
+      .set({ revokedAt: new Date() })
+      .where(
+        and(
+          eq(sessions.userId, userId),
+          isNull(sessions.revokedAt),
+          ne(sessions.id, sessionId),
+        ),
+      );
   });
 }
 

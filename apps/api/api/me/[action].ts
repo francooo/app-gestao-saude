@@ -6,6 +6,7 @@ import { fail, withErrorHandling } from '../../src/lib/http';
 
 import localizacao from '../../src/handlers/me/localizacao';
 import perfil from '../../src/handlers/me/perfil';
+import senha from '../../src/handlers/me/senha';
 
 /**
  * Tudo que e da CONTA de quem esta logado.
@@ -33,6 +34,7 @@ type Acao = (req: VercelRequest, res: VercelResponse, auth: AuthContext) => Prom
 const ROTAS: Record<string, Acao> = {
   location: localizacao,
   perfil,
+  senha,
 };
 
 export default withErrorHandling(async (req: VercelRequest, res: VercelResponse) => {
