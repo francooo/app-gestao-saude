@@ -269,6 +269,22 @@ export const trocaDeSenhaSchema = z.object({
   newPassword: passwordSchema,
 });
 
+/**
+ * Pedir a troca do e-mail da conta.
+ *
+ * A senha atual e obrigatoria: quem troca o e-mail toma a conta, porque o
+ * e-mail e o canal de recuperacao.
+ */
+export const trocaDeEmailSchema = z.object({
+  currentPassword: z.string().min(1, { message: 'Informe sua senha atual' }),
+  newEmail: emailSchema,
+});
+
+/** O token do link enviado ao endereco novo. */
+export const confirmacaoDeEmailSchema = z.object({
+  token: z.string().min(1),
+});
+
 export const medicationBaseSchema = z.object({
   name: z.string().trim().min(2, { message: 'Informe o nome do remédio' }).max(120),
   /** "500mg" */

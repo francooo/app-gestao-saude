@@ -8,6 +8,7 @@ import login from '../../src/handlers/auth/login';
 import logout from '../../src/handlers/auth/logout';
 import refresh from '../../src/handlers/auth/refresh';
 import register from '../../src/handlers/auth/register';
+import confirmarEmail from '../../src/handlers/auth/confirmar-email';
 import resetPassword from '../../src/handlers/auth/reset-password';
 
 /**
@@ -29,6 +30,9 @@ const ROTAS: Record<string, (req: VercelRequest, res: VercelResponse) => Promise
   logout,
   'forgot-password': forgotPassword,
   'reset-password': resetPassword,
+  // Aberta de proposito: o link e aberto no NAVEGADOR, que nao tem o token da
+  // sessao do aplicativo. Quem prova ser dono do endereco e quem abre o link.
+  'confirmar-email': confirmarEmail,
 };
 
 export default withErrorHandling(async (req: VercelRequest, res: VercelResponse) => {

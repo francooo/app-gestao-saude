@@ -115,6 +115,40 @@ export const passwordResetTokens = pgTable(
   ],
 );
 
+/**
+ * Tokens de confirmacao de troca de e-mail.
+ *
+ * Espelha password_reset_tokens, e existe pelo mesmo motivo que aquele: um
+ * endereco so vale quando alguem prova que o le. A diferenca e o campo
+ * `newEmail` — o endereco novo fica AQUI, e nao em `users`, ate a confirmacao
+ * chegar. Sem isso, um erro de digitacao trocaria o e-mail para um endereco
+ * inexistente e a conta ficaria irrecuperavel no dia em que a senha fosse
+ * esquecida, com o historico de saude da familia dentro.
+ *
+ * O e-mail antigo continua valendo o tempo todo, e recebe um aviso de que a
+ * troca foi pedida.
+ */
+export const emailChangeTokens = pgTable(
+  'email_change_tokens',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /** citext pelo mesmo motivo de users.email: caixa nao distingue endereco. */
+    newEmail: citext('new_email').notNull(),
+    tokenHash: text('token_hash').notNull().unique(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
+    requestedIp: inet('requested_ip'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('email_change_tokens_user_id_idx').on(t.userId),
+    index('email_change_tokens_expires_at_idx').on(t.expiresAt),
+  ],
+);
+
 /** Janela deslizante para limitar tentativas de login por e-mail e por IP. */
 export const loginAttempts = pgTable(
   'login_attempts',

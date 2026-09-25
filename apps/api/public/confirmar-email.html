@@ -1,0 +1,137 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>Confirmar e-mail — Gestão Saúde</title>
+<style>
+  :root { color-scheme: light; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    padding: 24px; box-sizing: border-box;
+    font: 16px/1.6 system-ui, -apple-system, "Segoe UI", sans-serif;
+    background: #7F8E5C; color: #39432C;
+  }
+  main {
+    background: rgba(245,243,230,.9); border-radius: 28px;
+    padding: 32px; max-width: 400px; width: 100%; text-align: center;
+    box-shadow: 0 8px 24px rgba(44,53,32,.18);
+  }
+  h1 { margin: 0 0 12px; font-size: 22px; }
+  p  { margin: 0 0 20px; color: #5A6449; font-size: 15px; }
+  strong { color: #39432C; word-break: break-all; }
+  button {
+    display: block; width: 100%; background: #B78842; color: #fff; border: 0;
+    padding: 16px 24px; border-radius: 999px; font-weight: 700; font-size: 17px;
+    font-family: inherit; cursor: pointer;
+  }
+  button:active { background: #9E7436; }
+  button[disabled] { opacity: .6; cursor: default; }
+  .aviso { margin: 20px 0 0; font-size: 13px; color: #5A6449; }
+  [hidden] { display: none !important; }
+</style>
+<main>
+  <!--
+    Diferente de redefinir-senha.html, esta pagina NAO abre o aplicativo.
+    A confirmacao se resolve aqui mesmo, e por dois motivos: quem abre o link
+    pode estar num computador, sem o aplicativo por perto; e a troca derruba
+    todas as sessoes, entao mandar para o aplicativo so para ele cair na tela
+    de login seria um passo a toa.
+
+    A confirmacao exige um TOQUE e nao acontece ao carregar. Clientes de e-mail
+    e antivirus visitam links automaticamente para checar se sao seguros — uma
+    troca de e-mail disparada por essa visita mudaria a conta sem ninguem pedir.
+  -->
+  <div id="acao">
+    <h1>Confirmar seu novo e-mail</h1>
+    <p>Toque no botão para passar a usar este endereço na sua conta do Gestão Saúde.</p>
+    <button id="confirmar" type="button">Confirmar e-mail</button>
+    <p class="aviso">
+      Depois disso, entre de novo no aplicativo com o novo endereço. Sua senha continua a mesma.
+    </p>
+  </div>
+
+  <div id="enviando" hidden>
+    <h1>Confirmando…</h1>
+    <p>Só um instante.</p>
+  </div>
+
+  <div id="pronto" hidden>
+    <h1>E-mail confirmado</h1>
+    <p>Sua conta agora usa <strong id="novoEmail"></strong>.</p>
+    <p class="aviso">
+      Os aparelhos conectados foram desconectados. Abra o aplicativo e entre com o novo
+      endereço e a mesma senha de antes.
+    </p>
+  </div>
+
+  <div id="invalido" hidden>
+    <h1>Link inválido ou vencido</h1>
+    <p>
+      Este link já foi usado, venceu ou foi alterado. Peça a troca de novo pelo aplicativo,
+      em Ajustes, E-mail e senha.
+    </p>
+  </div>
+
+  <div id="ocupado" hidden>
+    <h1>Este e-mail já tem conta</h1>
+    <p>
+      Enquanto você confirmava, este endereço passou a ser usado por outra conta.
+      Seu e-mail continua o mesmo.
+    </p>
+  </div>
+
+  <div id="falhou" hidden>
+    <h1>Não consegui confirmar</h1>
+    <p>Tente de novo em alguns instantes. Se persistir, peça a troca novamente pelo aplicativo.</p>
+  </div>
+</main>
+
+<script>
+  (function () {
+    var token = new URLSearchParams(location.search).get('token') || '';
+
+    function mostrar(id) {
+      ['acao', 'enviando', 'pronto', 'invalido', 'ocupado', 'falhou'].forEach(function (x) {
+        document.getElementById(x).hidden = x !== id;
+      });
+    }
+
+    // O token e base64url de 32 bytes. Validar antes de enviar evita gastar uma
+    // requisicao com uma URL obviamente forjada.
+    if (!/^[A-Za-z0-9_-]{20,120}$/.test(token)) {
+      mostrar('invalido');
+      return;
+    }
+
+    document.getElementById('confirmar').addEventListener('click', function () {
+      this.disabled = true;
+      mostrar('enviando');
+
+      fetch('/api/auth/confirmar-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token }),
+      })
+        .then(function (r) {
+          return r.json().then(function (corpo) {
+            return { status: r.status, corpo: corpo };
+          });
+        })
+        .then(function (r) {
+          if (r.status === 200) {
+            document.getElementById('novoEmail').textContent = r.corpo.email || '';
+            mostrar('pronto');
+          } else if (r.status === 409) {
+            mostrar('ocupado');
+          } else if (r.status === 400) {
+            mostrar('invalido');
+          } else {
+            mostrar('falhou');
+          }
+        })
+        .catch(function () {
+          mostrar('falhou');
+        });
+    });
+  })();
+</script>

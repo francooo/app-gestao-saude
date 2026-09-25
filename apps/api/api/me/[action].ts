@@ -5,6 +5,7 @@ import { type AuthContext, requireAuth } from '../../src/lib/auth';
 import { fail, withErrorHandling } from '../../src/lib/http';
 
 import localizacao from '../../src/handlers/me/localizacao';
+import email from '../../src/handlers/me/email';
 import perfil from '../../src/handlers/me/perfil';
 import senha from '../../src/handlers/me/senha';
 
@@ -35,6 +36,7 @@ const ROTAS: Record<string, Acao> = {
   location: localizacao,
   perfil,
   senha,
+  email,
 };
 
 export default withErrorHandling(async (req: VercelRequest, res: VercelResponse) => {
