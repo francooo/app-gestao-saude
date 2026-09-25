@@ -104,7 +104,7 @@ export function QuickActions({ onPerguntar, desabilitado = false }: Props) {
           accessibilityLabel="Emergência. Mostra o número do SAMU."
           style={({ pressed }) => [styles.cartao, pressed && styles.pressionado]}
         >
-          <View style={[styles.circulo, { backgroundColor: colors.quickEmergency }]}>
+          <View style={[styles.circulo, { backgroundColor: colors.terracotta }]}>
             <Feather name="plus" size={24} color={colors.onAccent} />
           </View>
           <Text style={styles.rotulo} numberOfLines={2}>

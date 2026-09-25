@@ -116,7 +116,15 @@ export const colors = {
   quickSymptoms: '#D8AF4F',
   quickAppointments: '#96A263',
   /** Emergencia. Unica que nao passa pelo modelo — ver QuickActions. */
-  quickEmergency: '#C97550',
+  /**
+   * Terracota. Fundo saturado com icone CLARO por cima — nunca traco escuro.
+   *
+   * Nasceu como `quickEmergency`, do circulo de Emergencia do assistente, e
+   * foi renomeada quando a tela de Ajustes passou a usa-la em "Membros da
+   * familia": um token chamado emergencia marcando a familia e uma mentira que
+   * confunde quem le o codigo depois.
+   */
+  terracotta: '#C97550',
 
   /**
    * Filete entre linhas dentro de um cartao creme.
@@ -149,6 +157,11 @@ export const backgrounds = {
   family: ['#A7B081', '#A2AD7B', '#909D6A'] as const,
   /** Bem mais claro que os outros. Medido do mockup do assistente, x=10. */
   assistant: ['#D0D0A8', '#EAE6CA', '#DEDDB9', '#ECE8CA'] as const,
+  /**
+   * Quase PLANO e o mais claro do conjunto. Medido do mockup de ajustes na
+   * coluna x=88 — x=8 cai dentro da faixa de folhas nesta arte.
+   */
+  settings: ['#ECE9CD', '#EAE8CC', '#E2E0BE'] as const,
 } as const;
 
 /**

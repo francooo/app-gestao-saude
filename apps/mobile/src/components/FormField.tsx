@@ -1,6 +1,8 @@
-import { forwardRef } from 'react';
+import { Feather } from '@expo/vector-icons';
+import { forwardRef, useState } from 'react';
 import {
   ActivityIndicator,
+  Pressable,
   StyleSheet,
   Text,
   TextInput,
@@ -18,6 +20,13 @@ type Props = Omit<TextInputProps, 'style'> & {
   hint?: string;
   /** Indicador a direita, usado na busca de CEP. */
   loading?: boolean;
+  /**
+   * Campo de senha, com o olho de mostrar e ocultar.
+   *
+   * O unico campo de senha que existia era o PillInput das telas de
+   * autenticacao, com o visual translucido que ficaria errado sobre creme.
+   */
+  secure?: boolean;
   containerStyle?: ViewStyle;
 };
 
@@ -31,9 +40,11 @@ export type FormFieldHandle = TextInput;
  * mais legiveis assim, e sem icone sobrando em cada linha.
  */
 export const FormField = forwardRef<TextInput, Props>(function FormField(
-  { label, error, hint, loading, containerStyle, multiline, ...inputProps },
+  { label, error, hint, loading, secure, containerStyle, multiline, ...inputProps },
   ref,
 ) {
+  const [oculto, setOculto] = useState(true);
+
   return (
     <View style={[styles.wrapper, containerStyle]}>
       <Text style={styles.label}>{label}</Text>
@@ -44,9 +55,25 @@ export const FormField = forwardRef<TextInput, Props>(function FormField(
           style={[styles.input, multiline && styles.inputMultiline]}
           placeholderTextColor={colors.textPlaceholder}
           multiline={multiline}
+          secureTextEntry={secure ? oculto : undefined}
           {...inputProps}
         />
         {loading ? <ActivityIndicator size="small" color={colors.accentGreen} /> : null}
+        {secure ? (
+          <Pressable
+            onPress={() => setOculto((v) => !v)}
+            // O icone tem 20; o hitSlop leva o alvo de toque aos 44 minimos.
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel={oculto ? 'Mostrar senha' : 'Ocultar senha'}
+          >
+            <Feather
+              name={oculto ? 'eye' : 'eye-off'}
+              size={20}
+              color={colors.textSecondary}
+            />
+          </Pressable>
+        ) : null}
       </View>
 
       {error ? (
