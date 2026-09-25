@@ -55,6 +55,19 @@ export const resetPasswordRequestSchema = z.object({
 
 export const API_ERROR = {
   INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
+  /**
+   * A senha atual informada nao confere, numa acao de quem JA esta logado.
+   *
+   * 403 e nao 401, e isso e load-bearing: o cliente faz retry automatico com
+   * rotacao de refresh em qualquer 401 de requisicao autenticada (ver
+   * client.ts). Um 401 aqui faria o aplicativo REENVIAR a senha errada
+   * sozinho, gastando dois scrypt, contando duas tentativas no limite e
+   * queimando uma rotacao de token a toa.
+   *
+   * Tambem nao reusa INVALID_CREDENTIALS: a mensagem daquele fala em "e-mail
+   * ou senha", e estas telas nao tem campo de e-mail.
+   */
+  WRONG_PASSWORD: 'WRONG_PASSWORD',
   EMAIL_ALREADY_REGISTERED: 'EMAIL_ALREADY_REGISTERED',
   INVALID_REFRESH_TOKEN: 'INVALID_REFRESH_TOKEN',
   INVALID_RESET_TOKEN: 'INVALID_RESET_TOKEN',

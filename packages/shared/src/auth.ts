@@ -90,6 +90,19 @@ export type ResetPasswordForm = z.infer<typeof resetPasswordFormSchema>;
  */
 export const API_ERROR = {
   INVALID_CREDENTIALS: 'INVALID_CREDENTIALS',
+  /**
+   * A senha atual informada nao confere, numa acao de quem JA esta logado.
+   *
+   * 403 e nao 401, e isso e load-bearing: o cliente faz retry automatico com
+   * rotacao de refresh em qualquer 401 de requisicao autenticada (ver
+   * client.ts). Um 401 aqui faria o aplicativo REENVIAR a senha errada
+   * sozinho, gastando dois scrypt, contando duas tentativas no limite e
+   * queimando uma rotacao de token a toa.
+   *
+   * Tambem nao reusa INVALID_CREDENTIALS: a mensagem daquele fala em "e-mail
+   * ou senha", e estas telas nao tem campo de e-mail.
+   */
+  WRONG_PASSWORD: 'WRONG_PASSWORD',
   EMAIL_ALREADY_REGISTERED: 'EMAIL_ALREADY_REGISTERED',
   INVALID_REFRESH_TOKEN: 'INVALID_REFRESH_TOKEN',
   INVALID_RESET_TOKEN: 'INVALID_RESET_TOKEN',
@@ -138,6 +151,7 @@ export type ApiError = z.infer<typeof apiErrorSchema>;
 export const ERROR_MESSAGES_PT: Record<string, string> = {
   // "E-mail" e nao "Usuario": as duas telas rotulam o campo assim.
   [API_ERROR.INVALID_CREDENTIALS]: 'E-mail ou senha inválidos.',
+  [API_ERROR.WRONG_PASSWORD]: 'Senha incorreta.',
   [API_ERROR.EMAIL_ALREADY_REGISTERED]: 'Já existe uma conta com este e-mail.',
   [API_ERROR.INVALID_REFRESH_TOKEN]: 'Sua sessão expirou. Entre novamente.',
   [API_ERROR.INVALID_RESET_TOKEN]: 'Este link de recuperação expirou ou já foi usado.',
