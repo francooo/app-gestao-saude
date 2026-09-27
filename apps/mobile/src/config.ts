@@ -80,3 +80,32 @@ export const ASSISTANT_TIMEOUT_MS = 75_000;
  * "sem conexao" com a rede funcionando perfeitamente.
  */
 export const ANEXO_TIMEOUT_MS = 45_000;
+
+/**
+ * Tempo limite da leitura de receita ou de caixa por foto.
+ *
+ * NAO REUSA O ANEXO_TIMEOUT_MS, embora suba uma foto do mesmo tamanho: aquele
+ * cobre subida + gravacao no banco, e aqui ha subida + INFERENCIA do modelo.
+ * Com 45 s, a subida sozinha pode consumir o orcamento inteiro e o cliente
+ * abortaria com o servidor trabalhando — que e exatamente o modo de falha que
+ * aquela constante foi criada para evitar, um degrau acima. Reusar tambem
+ * amarraria os dois: quem mexer no prazo do anexo amanha mudaria este sem
+ * saber.
+ *
+ * A cadeia aqui e:
+ *
+ *   modelo no servidor 25 s (+ subida)  <  maxDuration da Vercel 60 s  <  este
+ *
+ * A DIFERENCA PARA O ASSISTENTE, e ela muda o calculo: la a ordem existe
+ * contra ESCRITA ORFA — o servidor terminava, gravava a resposta, e a pessoa
+ * via erro para algo que ja existia no historico. Esta rota grava uma linha de
+ * auditoria ANTES de chamar o modelo, entao desistir cedo nao esconde nada;
+ * so gastaria duas unidades do teto diario por uma foto so.
+ *
+ * Por que 90 s e nao os 105 s que a desigualdade estrita pediria (45 s de
+ * subida no pior caso + 60 s de corte da Vercel): ninguem espera 105 s olhando
+ * para uma tela. Em rede boa — o caso comum, alguns segundos de subida — a
+ * ordem se mantem com folga. Em rede pessima, o que chega e um 504 da propria
+ * Vercel, e a tela sabe traduzir isso.
+ */
+export const LEITURA_TIMEOUT_MS = 90_000;

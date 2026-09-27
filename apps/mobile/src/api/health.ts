@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { request } from '@/api/client';
-import { ANEXO_TIMEOUT_MS, ASSISTANT_TIMEOUT_MS } from '@/config';
+import { ANEXO_TIMEOUT_MS, ASSISTANT_TIMEOUT_MS, LEITURA_TIMEOUT_MS } from '@/config';
 import { agoraLocalISO, fusoDoAparelho } from '@/lib/horaLocal';
 
 /**
@@ -158,6 +158,13 @@ export const medicationSchema = z.object({
   form: z.string().nullish(),
   doseAmount: z.number().nullish(),
   doseUnit: z.string().nullish(),
+  /**
+   * Quantas unidades vem na embalagem. A unidade e o `form`.
+   *
+   * `nullish` pelo motivo de sempre neste arquivo: contra um servidor mais
+   * antigo o campo chega AUSENTE, e `nullable()` sozinho derrubaria a tela.
+   */
+  packageAmount: z.number().nullish(),
   scheduleType: scheduleTypeSchema,
   intervalHours: z.number().nullish(),
   startsAt: z.string().nullish(),
@@ -197,6 +204,7 @@ export type MedicationInput = {
   form?: string | null;
   doseAmount?: number | null;
   doseUnit?: string | null;
+  packageAmount?: number | null;
   scheduleType: ScheduleType;
   intervalHours?: number | null;
   times?: string[];
@@ -204,7 +212,58 @@ export type MedicationInput = {
   endsAt?: string | null;
   instructions?: string | null;
   prescriberId?: string | null;
+  /**
+   * De qual leitura de foto este cadastro veio, e de qual item dela.
+   *
+   * Nao e seguranca (o servidor confere que a leitura e da conta): e o que
+   * permite comparar depois o que a IA propos com o que a pessoa salvou. O
+   * cadastro manual nao manda nenhum dos dois.
+   */
+  photoReadId?: string | null;
+  photoReadItem?: number | null;
 };
+
+/**
+ * Um remedio lido de uma foto.
+ *
+ * NAO E um Medication: nao tem id, nem perfil, nem createdAt — nada disso
+ * existe antes de a pessoa salvar.
+ *
+ * `form` e `scheduleType` sao string frouxa DE PROPOSITO, ao contrario do
+ * resto do arquivo. Se o servidor um dia devolver um valor que o enum daqui
+ * nao conhece, um `z.enum` faria o parse LANCAR e jogaria fora um envio de ate
+ * 45 s por causa de uma palavra. O servidor ja normaliza; aqui a tela so
+ * aproveita o que reconhece.
+ */
+export const medicamentoLidoSchema = z.object({
+  index: z.number(),
+  name: z.string(),
+  strength: z.string().nullish(),
+  form: z.string().nullish(),
+  doseAmount: z.number().nullish(),
+  doseUnit: z.string().nullish(),
+  packageAmount: z.number().nullish(),
+  scheduleType: z.string().nullish(),
+  intervalHours: z.number().nullish(),
+  times: z.array(z.string()).default([]),
+  /** "por 7 dias". Vira endsAt AQUI, com o relogio do aparelho. */
+  durationDays: z.number().nullish(),
+  instructions: z.string().nullish(),
+});
+export type MedicamentoLido = z.infer<typeof medicamentoLidoSchema>;
+
+export const leituraDeFotoSchema = z.object({
+  readId: z.uuid(),
+  kind: z.enum(['receita', 'caixa']),
+  /** Vazia e resposta VALIDA: "nao li remedio nenhum nesta foto". */
+  items: z.array(medicamentoLidoSchema).default([]),
+  /** Itens que o modelo devolveu e nao davam para aproveitar. */
+  discarded: z.number().default(0),
+  prescriber: z
+    .object({ nameRead: z.string().nullish(), professionalId: z.uuid().nullish() })
+    .nullish(),
+});
+export type LeituraDeFoto = z.infer<typeof leituraDeFotoSchema>;
 
 /** profileId ausente: o servidor ignora, e mover de perfil orfanaria o historico. */
 export type MedicationPatch = Partial<Omit<MedicationInput, 'profileId'>> & {
@@ -417,6 +476,27 @@ export const healthApi = {
   getMedication(id: string): Promise<Medication> {
     return request(`/api/medications/${id}`, { authenticated: true }, (data) =>
       z.object({ medication: medicationSchema }).parse(data).medication,
+    );
+  },
+
+  /**
+   * Manda a foto e devolve os remedios que o modelo conseguiu ler.
+   *
+   * Devolve uma LISTA: uma receita costuma trazer de 2 a 5, e escolher qual
+   * cadastrar e da pessoa. Lista vazia e resposta VALIDA — "nao li nada aqui"
+   * —, e a tela trata isso como desfecho proprio, nao como erro.
+   *
+   * A foto vem de escolherFotoDeDocumento, e so de la: a URI crua do seletor
+   * levaria o EXIF junto, com a coordenada do consultorio.
+   */
+  lerFoto(
+    input: { photo: string; kind: 'receita' | 'caixa'; profileId?: string | null },
+    signal?: AbortSignal,
+  ): Promise<LeituraDeFoto> {
+    return request(
+      '/api/assistant/ler-foto',
+      { method: 'POST', body: input, authenticated: true, timeoutMs: LEITURA_TIMEOUT_MS, signal },
+      (data) => leituraDeFotoSchema.parse(data),
     );
   },
 

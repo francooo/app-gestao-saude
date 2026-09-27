@@ -36,15 +36,40 @@ type RequestOptions = {
   /** Anexa o access token e tenta refresh em caso de 401. */
   authenticated?: boolean;
   /**
-   * Sobrescreve o prazo padrao. So o assistente usa, porque ele busca na
-   * internet e pode levar dezenas de segundos.
+   * Sobrescreve o prazo padrao.
+   *
+   * Tres caminhos usam: o assistente (que busca na internet), o anexo da
+   * receita (que sobe ~300 KB) e a leitura de foto (que sobe E espera o
+   * modelo). Ver a cadeia comentada em config.ts.
    */
   timeoutMs?: number;
+  /**
+   * Cancelamento vindo de fora, somado ao do prazo.
+   *
+   * Existe para o botao "Cancelar" da leitura de foto: uma espera de ate 90 s
+   * sem saida seria uma tela travada. O prazo continua valendo — os dois
+   * abortam a mesma requisicao, e quem chegar primeiro ganha.
+   */
+  signal?: AbortSignal;
 };
 
 async function rawRequest(path: string, options: RequestOptions, accessToken?: string | null) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? REQUEST_TIMEOUT_MS);
+
+  /**
+   * Encadeia o sinal de fora no nosso.
+   *
+   * `AbortSignal.any` nao existe no Hermes, entao o encadeamento e manual. O
+   * `once: true` importa: sem ele, um sinal reusado acumularia ouvintes a cada
+   * requisicao e vazaria memoria em silencio.
+   */
+  const externo = options.signal;
+  const abortar = () => controller.abort();
+  if (externo) {
+    if (externo.aborted) controller.abort();
+    else externo.addEventListener('abort', abortar, { once: true });
+  }
 
   try {
     return await fetch(`${API_URL}${path}`, {
@@ -58,6 +83,7 @@ async function rawRequest(path: string, options: RequestOptions, accessToken?: s
     });
   } finally {
     clearTimeout(timeout);
+    externo?.removeEventListener('abort', abortar);
   }
 }
 

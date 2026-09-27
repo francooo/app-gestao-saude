@@ -1,6 +1,6 @@
 import { Feather } from '@expo/vector-icons';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -28,13 +28,20 @@ import { FormField } from '@/components/FormField';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SurfaceCard } from '@/components/SurfaceCard';
+// FORMAS e INTERVALOS moraram aqui ate a leitura por foto existir. Saíram
+// porque o normalizador da leitura precisa EXATAMENTE da lista que esta tela
+// oferece, e uma segunda copia seria divergencia garantida.
+import { SeloDaIA } from '@/components/SeloDaIA';
+import {
+  camposVazios,
+  consumirRascunho,
+  descartarRascunho,
+  FORMAS,
+  INTERVALOS,
+  marcarCadastroConcluido,
+  type CampoLido,
+} from '@/lib/rascunhoDeMedicamento';
 import { backgrounds, colors, fonts, radii, spacing } from '@/theme';
-
-/** As formas que o servidor aceita. Precisa bater com medicationFormValues. */
-const FORMAS = ['cápsula', 'comprimido', 'ml', 'gotas', 'outro'] as const;
-
-/** Intervalos oferecidos. Cobrem a receita comum sem virar campo livre. */
-const INTERVALOS = [4, 6, 8, 12, 24] as const;
 
 const TIPOS: { valor: ScheduleType; rotulo: string; ajuda: string }[] = [
   { valor: 'interval', rotulo: 'A cada X horas', ajuda: 'Ex.: de 8 em 8 horas' },
@@ -45,7 +52,7 @@ const TIPOS: { valor: ScheduleType; rotulo: string; ajuda: string }[] = [
 export default function MedicamentoFormScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, rascunho } = useLocalSearchParams<{ id: string; rascunho?: string }>();
   const novo = id === 'novo';
 
   const [carregando, setCarregando] = useState(!novo);
@@ -56,16 +63,55 @@ export default function MedicamentoFormScreen() {
   const [perfis, setPerfis] = useState<Profile[]>([]);
   const [medicos, setMedicos] = useState<Professional[]>([]);
 
+  /**
+   * ANTES DE ACRESCENTAR O PROXIMO CAMPO: ele precisa entrar em `camposVazios()`
+   * e em `aplicarRascunho()` tambem. Um campo que so nasce aqui sobrevive de uma
+   * visita para a outra quando a tela e reaproveitada sem remontar, e aparece
+   * preenchido sem a pessoa ter digitado nada agora.
+   */
+  const inicial = camposVazios();
   const [perfilId, setPerfilId] = useState<string | null>(null);
-  const [nome, setNome] = useState('');
-  const [concentracao, setConcentracao] = useState('');
-  const [forma, setForma] = useState<(typeof FORMAS)[number]>('cápsula');
-  const [quantidade, setQuantidade] = useState('1');
-  const [tipo, setTipo] = useState<ScheduleType>('interval');
-  const [intervalo, setIntervalo] = useState<number>(8);
-  const [horarios, setHorarios] = useState<string[]>(['08:00']);
-  const [instrucoes, setInstrucoes] = useState('');
+  const [nome, setNome] = useState(inicial.nome);
+  const [concentracao, setConcentracao] = useState(inicial.concentracao);
+  const [forma, setForma] = useState<(typeof FORMAS)[number]>(inicial.forma);
+  const [quantidade, setQuantidade] = useState(inicial.quantidade);
+  const [embalagem, setEmbalagem] = useState(inicial.embalagem);
+  const [tipo, setTipo] = useState<ScheduleType>(inicial.tipo);
+  const [intervalo, setIntervalo] = useState<number>(inicial.intervalo);
+  const [horarios, setHorarios] = useState<string[]>(inicial.horarios);
+  const [instrucoes, setInstrucoes] = useState(inicial.instrucoes);
   const [prescritorId, setPrescritorId] = useState<string | null>(null);
+  const [fimDoTratamento, setFimDoTratamento] = useState<string | null>(null);
+
+  /**
+   * Quais campos vieram da leitura por foto e AINDA NAO FORAM CONFERIDOS.
+   *
+   * Um conjunto, e nao um booleano por campo: doze booleanos seriam doze
+   * useState e doze chances de esquecer um. Nada disto e persistido — o selo e
+   * mecanismo de revisao, nao metadado do remedio.
+   */
+  const [camposDaIA, setCamposDaIA] = useState<Set<CampoLido>>(new Set());
+
+  /**
+   * A foto lida, e se a pessoa quer guarda-la como receita.
+   *
+   * Um objeto e nao dois estados: os dois nascem e morrem juntos, e separados
+   * abririam o estado impossivel "quer guardar, mas nao tem foto".
+   */
+  const [receita, setReceita] = useState<{ foto: string; guardar: boolean } | null>(null);
+  const [origemDaLeitura, setOrigemDaLeitura] = useState<{ readId: string; item: number } | null>(
+    null,
+  );
+
+  /** Editar e o ato de conferir: o selo some no primeiro toque no campo. */
+  function conferido(campo: CampoLido) {
+    setCamposDaIA((atual) => {
+      if (!atual.has(campo)) return atual;
+      const novo = new Set(atual);
+      novo.delete(campo);
+      return novo;
+    });
+  }
 
   useEffect(() => {
     let cancelado = false;
@@ -97,6 +143,54 @@ export default function MedicamentoFormScreen() {
     };
   }, [id, novo]);
 
+  /**
+   * Consome o rascunho da leitura por foto.
+   *
+   * Efeito SEPARADO do carregamento, e sincrono. Depende de [novo, rascunho] e
+   * nao so da montagem porque chegar aqui por NAVIGATE nao remonta o
+   * componente — com um token novo, e preciso reaplicar.
+   *
+   * So no cadastro: um rascunho nunca pode cair sobre um remedio que ja existe
+   * e sobrescrever o que a pessoa tinha.
+   */
+  useEffect(() => {
+    if (!novo || !rascunho) return;
+    const r = consumirRascunho(rascunho);
+    if (!r) return;
+
+    // Escreve TODOS os campos, inclusive os que o rascunho nao traz: um patch
+    // parcial misturaria, numa segunda visita, o que foi digitado antes com o
+    // que veio da leitura — sem marcacao, porque nao veio da IA, e sem a
+    // pessoa ter digitado agora.
+    setNome(r.campos.nome);
+    setConcentracao(r.campos.concentracao);
+    setForma(r.campos.forma);
+    setQuantidade(r.campos.quantidade);
+    setEmbalagem(r.campos.embalagem);
+    setTipo(r.campos.tipo);
+    setIntervalo(r.campos.intervalo);
+    setHorarios(r.campos.horarios);
+    setInstrucoes(r.campos.instrucoes);
+    setFimDoTratamento(r.campos.fimDoTratamento);
+    setCamposDaIA(new Set(r.camposLidos));
+    if (r.prescritorId) setPrescritorId(r.prescritorId);
+    setOrigemDaLeitura({ readId: r.readId, item: r.readItem });
+    // Caixa nao e receita: nao tem o que anexar, e perguntar treinaria a
+    // pessoa a responder no automatico.
+    setReceita(r.kind === 'receita' && r.foto ? { foto: r.foto, guardar: false } : null);
+  }, [novo, rascunho]);
+
+  /** Sair da tela descarta a foto, mesmo que a vaga ainda nao tenha vencido. */
+  useFocusEffect(
+    useCallback(
+      () => () => {
+        descartarRascunho();
+        setReceita(null);
+      },
+      [],
+    ),
+  );
+
   function preencher(m: Medication) {
     setPerfilId(m.profileId);
     setNome(m.name);
@@ -108,6 +202,12 @@ export default function MedicamentoFormScreen() {
     setHorarios(m.times.length > 0 ? m.times : ['08:00']);
     setInstrucoes(m.instructions ?? '');
     setPrescritorId(m.prescriberId ?? null);
+    setEmbalagem(m.packageAmount != null ? String(m.packageAmount) : '');
+    setFimDoTratamento(m.endsAt ?? null);
+    // Um remedio que veio do banco nao tem campo pendente de conferencia.
+    setCamposDaIA(new Set());
+    setReceita(null);
+    setOrigemDaLeitura(null);
   }
 
   function mudarHorario(indice: number, valor: string) {
@@ -138,12 +238,19 @@ export default function MedicamentoFormScreen() {
 
     const quantidadeNumero = Number(quantidade.replace(',', '.'));
 
+    const embalagemNumero = Number(embalagem.replace(',', '.'));
+
     const dados = {
       name: nome.trim(),
       strength: concentracao.trim() || null,
       form: forma,
       doseAmount: Number.isFinite(quantidadeNumero) && quantidadeNumero > 0 ? quantidadeNumero : null,
       doseUnit: forma === 'outro' ? null : forma,
+      packageAmount:
+        Number.isFinite(embalagemNumero) && embalagemNumero > 0
+          ? Math.round(embalagemNumero)
+          : null,
+      endsAt: fimDoTratamento,
       scheduleType: tipo,
       // Campos de um tipo precisam ser LIMPOS ao trocar de tipo, senao o
       // servidor recusa com "horários fixos só valem para esse tipo".
@@ -155,14 +262,49 @@ export default function MedicamentoFormScreen() {
 
     setSalvando(true);
     try {
-      if (novo) await healthApi.createMedication({ ...dados, profileId: perfilId! });
-      else await healthApi.updateMedication(id!, dados);
+      if (novo) {
+        const criado = await healthApi.createMedication({
+          ...dados,
+          profileId: perfilId!,
+          photoReadId: origemDaLeitura?.readId ?? null,
+          photoReadItem: origemDaLeitura?.item ?? null,
+        });
+        // So depois de o remedio existir: o POST de criacao nao aceita
+        // prescriptionPhoto, de proposito (ver o contrato).
+        if (receita?.guardar) await anexarReceita(criado.id, receita.foto);
+      } else {
+        await healthApi.updateMedication(id!, dados);
+      }
+      // A tela de leitura por foto fica na pilha e precisa se dispensar, senao
+      // o "voltar" depois de salvar cai na camera. Ver rascunhoDeMedicamento.
+      if (novo && origemDaLeitura) marcarCadastroConcluido();
+      setReceita(null);
       router.back();
     } catch (e) {
       if (e instanceof ApiRequestError && e.fields) setErros(e.fields);
       setErroGeral(messageForError(e instanceof ApiRequestError ? e.code : undefined));
     } finally {
       setSalvando(false);
+    }
+  }
+
+  /**
+   * Engole o proprio erro, E ISSO E O PONTO.
+   *
+   * O remedio JA FOI CRIADO quando esta funcao roda. Se a falha subisse para o
+   * catch do salvar(), a tela diria "nao consegui salvar" e continuaria no
+   * formulario — e o segundo toque em "Cadastrar remedio" criaria um remedio
+   * DUPLICADO. A mensagem tem que dizer o que e verdade: o remedio esta la, a
+   * receita nao, e da para anexar depois pela tela do remedio.
+   */
+  async function anexarReceita(idCriado: string, foto: string) {
+    try {
+      await healthApi.updateMedication(idCriado, { prescriptionPhoto: foto });
+    } catch {
+      Alert.alert(
+        'Remédio cadastrado',
+        'Não consegui guardar a receita agora. Dá para anexar depois, na tela do remédio.',
+      );
     }
   }
 
@@ -219,48 +361,117 @@ export default function MedicamentoFormScreen() {
                 <FormField
                   label="Nome"
                   value={nome}
-                  onChangeText={setNome}
+                  onChangeText={(v) => {
+                    conferido('nome');
+                    setNome(v);
+                  }}
                   placeholder="Amoxicilina"
                   error={erros.nome ?? erros.name}
+                  selo={camposDaIA.has('nome') ? <SeloDaIA /> : undefined}
+                  /*
+                    O aviso fica SO no nome, e o texto e especifico de proposito.
+                    E o campo em que a correcao silenciosa do modelo faz
+                    estrago: um nome pouco familiar vira outro parecido, e a
+                    pessoa passa batido porque o resultado "parece certo".
+                  */
+                  aviso={
+                    camposDaIA.has('nome')
+                      ? 'Confira o nome na caixa ou na receita, letra por letra. A leitura automática às vezes troca por um nome parecido.'
+                      : undefined
+                  }
                   autoCapitalize="words"
                   editable={!salvando}
                 />
                 <FormField
                   label="Concentração"
                   value={concentracao}
-                  onChangeText={setConcentracao}
+                  onChangeText={(v) => {
+                    conferido('concentracao');
+                    setConcentracao(v);
+                  }}
                   placeholder="500mg"
                   hint="Como está escrito na caixa"
                   error={erros.strength}
+                  selo={camposDaIA.has('concentracao') ? <SeloDaIA /> : undefined}
                   editable={!salvando}
                 />
 
-                <Text style={styles.rotulo}>Forma</Text>
+                <View style={styles.linhaDoRotulo}>
+                  <Text style={styles.rotulo}>Forma</Text>
+                  {camposDaIA.has('forma') ? <SeloDaIA /> : null}
+                </View>
                 <View style={styles.chips}>
                   {FORMAS.map((f) => (
-                    <Chip key={f} rotulo={f} ativo={f === forma} desabilitado={salvando} onPress={() => setForma(f)} />
+                    <Chip
+                      key={f}
+                      rotulo={f}
+                      ativo={f === forma}
+                      desabilitado={salvando}
+                      onPress={() => {
+                        conferido('forma');
+                        setForma(f);
+                      }}
+                    />
                   ))}
                 </View>
 
+                {/*
+                  "Quantas vem na caixa", e NAO "Quantidade": o campo de dose
+                  logo abaixo ja usava essa palavra, e dois campos com
+                  "Quantidade" no rotulo, proximos, sao armadilha de digitacao
+                  num aplicativo de remedio. Por isso tambem ficam em blocos
+                  diferentes — este e sobre a embalagem, aquele e posologia.
+                */}
                 <FormField
-                  label="Quantidade por dose"
-                  value={quantidade}
-                  onChangeText={setQuantidade}
-                  placeholder="1"
-                  keyboardType="decimal-pad"
-                  hint={forma === 'outro' ? undefined : `Em ${forma}`}
-                  error={erros.doseAmount}
+                  label="Quantas vêm na caixa"
+                  value={embalagem}
+                  onChangeText={(v) => {
+                    conferido('embalagem');
+                    setEmbalagem(v.replace(/\D/g, ''));
+                  }}
+                  placeholder="21"
+                  keyboardType="number-pad"
+                  maxLength={4}
+                  hint="Opcional. Guardado para quando existir o aviso de reposição."
+                  error={erros.packageAmount}
+                  selo={camposDaIA.has('embalagem') ? <SeloDaIA /> : undefined}
                   editable={!salvando}
                 />
               </SurfaceCard>
 
               <SurfaceCard style={styles.bloco}>
                 <Text style={styles.blocoTitulo}>Quando tomar</Text>
+
+                {/*
+                  Este campo morava no bloco do remedio, com o rotulo
+                  "Quantidade por dose". Mudou de lugar e de nome porque
+                  quantidade por dose E posologia — le-se junto com o intervalo
+                  ("1 capsula a cada 8 horas") — e porque a palavra
+                  "Quantidade" ficou para o campo da embalagem.
+                */}
+                <FormField
+                  label="Quanto tomar por vez"
+                  value={quantidade}
+                  onChangeText={(v) => {
+                    conferido('quantidade');
+                    setQuantidade(v);
+                  }}
+                  placeholder="1"
+                  keyboardType="decimal-pad"
+                  hint={forma === 'outro' ? undefined : `Em ${forma}`}
+                  error={erros.doseAmount}
+                  selo={camposDaIA.has('quantidade') ? <SeloDaIA /> : undefined}
+                  editable={!salvando}
+                />
+
                 <View style={styles.tipos}>
                   {TIPOS.map((t) => (
                     <Pressable
                       key={t.valor}
-                      onPress={() => setTipo(t.valor)}
+                      onPress={() => {
+                        conferido('tipo');
+                        setTipo(t.valor);
+                      }}
                       disabled={salvando}
                       accessibilityRole="radio"
                       accessibilityState={{ selected: t.valor === tipo }}
@@ -283,7 +494,10 @@ export default function MedicamentoFormScreen() {
 
                 {tipo === 'interval' ? (
                   <>
-                    <Text style={styles.rotulo}>De quantas em quantas horas</Text>
+                    <View style={styles.linhaDoRotulo}>
+                      <Text style={styles.rotulo}>De quantas em quantas horas</Text>
+                      {camposDaIA.has('intervalo') ? <SeloDaIA /> : null}
+                    </View>
                     <View style={styles.chips}>
                       {INTERVALOS.map((h) => (
                         <Chip
@@ -291,7 +505,10 @@ export default function MedicamentoFormScreen() {
                           rotulo={h === 24 ? '1x ao dia' : `${h}h`}
                           ativo={h === intervalo}
                           desabilitado={salvando}
-                          onPress={() => setIntervalo(h)}
+                          onPress={() => {
+                            conferido('intervalo');
+                            setIntervalo(h);
+                          }}
                         />
                       ))}
                     </View>
@@ -347,13 +564,55 @@ export default function MedicamentoFormScreen() {
                 ) : null}
               </SurfaceCard>
 
+              {receita ? (
+                /*
+                  A PERGUNTA MORA AQUI, na revisao, e nao num Alert depois de
+                  salvar. Um Alert no momento da conclusao interrompe a pessoa
+                  justamente quando ela terminou, e o "Agora nao" viraria um
+                  caminho que destroi a foto em silencio, sem ela ter visto
+                  qual foto era. A premissa do recurso e revisar antes de
+                  salvar — a foto e parte do que se revisa.
+
+                  DESLIGADO POR PADRAO: ligado seria "guardar sempre, a menos
+                  que voce repare", que e o oposto de perguntar.
+                */
+                <SurfaceCard style={styles.bloco}>
+                  <Pressable
+                    onPress={() => setReceita({ ...receita, guardar: !receita.guardar })}
+                    disabled={salvando}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: receita.guardar }}
+                    accessibilityLabel="Guardar esta foto como a receita deste remédio"
+                    style={({ pressed }) => [styles.guardar, pressed && styles.pressionado]}
+                  >
+                    <Feather
+                      name={receita.guardar ? 'check-square' : 'square'}
+                      size={20}
+                      color={receita.guardar ? colors.accentGreen : colors.textSecondary}
+                    />
+                    <View style={styles.flex}>
+                      <Text style={styles.guardarTitulo}>
+                        Guardar esta foto como a receita deste remédio
+                      </Text>
+                      <Text style={styles.guardarAjuda}>
+                        Ela fica na tela do remédio, para você ter em mãos na farmácia.
+                      </Text>
+                    </View>
+                  </Pressable>
+                </SurfaceCard>
+              ) : null}
+
               <SurfaceCard style={styles.bloco}>
                 <FormField
                   label="Orientações"
                   value={instrucoes}
-                  onChangeText={setInstrucoes}
+                  onChangeText={(v) => {
+                    conferido('instrucoes');
+                    setInstrucoes(v);
+                  }}
                   placeholder="Tomar com um copo de água, após as refeições."
                   multiline
+                  selo={camposDaIA.has('instrucoes') ? <SeloDaIA /> : undefined}
                   editable={!salvando}
                 />
 
@@ -435,6 +694,16 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSecondary,
     marginTop: spacing.sm,
+  },
+  linhaDoRotulo: { flexDirection: 'row', alignItems: 'center' },
+  guardar: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.md, minHeight: 56 },
+  guardarTitulo: { fontFamily: fonts.semibold, fontSize: 15, color: colors.textPrimary },
+  guardarAjuda: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    lineHeight: 19,
+    color: colors.textSecondary,
+    marginTop: 2,
   },
   rotulo: {
     fontFamily: fonts.semibold,

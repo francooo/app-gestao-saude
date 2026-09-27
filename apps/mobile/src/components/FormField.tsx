@@ -1,5 +1,5 @@
 import { Feather } from '@expo/vector-icons';
-import { forwardRef, useState } from 'react';
+import { forwardRef, useState, type ReactNode } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -18,6 +18,22 @@ type Props = Omit<TextInputProps, 'style'> & {
   error?: string;
   /** Texto de apoio abaixo do campo, quando nao ha erro. */
   hint?: string;
+  /**
+   * Adorno a direita do rotulo. Hoje, o selo "da foto".
+   *
+   * Vive no rotulo e nao dentro do campo de propósito: dentro, disputaria
+   * espaço com o texto digitado e sumiria assim que o valor crescesse — e ele
+   * precisa estar visivel justamente quando ha valor.
+   */
+  selo?: ReactNode;
+  /**
+   * Pedido de conferencia, em ambar, no lugar do hint.
+   *
+   * Precedencia: error > aviso > hint. Um erro de validacao e sobre o que
+   * IMPEDE de salvar e tem que vencer; o aviso e sobre o que merece um
+   * segundo olhar antes de salvar.
+   */
+  aviso?: string;
   /** Indicador a direita, usado na busca de CEP. */
   loading?: boolean;
   /**
@@ -40,14 +56,21 @@ export type FormFieldHandle = TextInput;
  * mais legiveis assim, e sem icone sobrando em cada linha.
  */
 export const FormField = forwardRef<TextInput, Props>(function FormField(
-  { label, error, hint, loading, secure, containerStyle, multiline, ...inputProps },
+  { label, error, hint, selo, aviso, loading, secure, containerStyle, multiline, ...inputProps },
   ref,
 ) {
   const [oculto, setOculto] = useState(true);
 
   return (
     <View style={[styles.wrapper, containerStyle]}>
-      <Text style={styles.label}>{label}</Text>
+      {selo ? (
+        <View style={styles.linhaDoRotulo}>
+          <Text style={styles.label}>{label}</Text>
+          {selo}
+        </View>
+      ) : (
+        <Text style={styles.label}>{label}</Text>
+      )}
 
       <View style={[styles.campo, multiline && styles.campoMultiline, error && styles.campoErro]}>
         <TextInput
@@ -80,6 +103,11 @@ export const FormField = forwardRef<TextInput, Props>(function FormField(
         <Text style={styles.erro} accessibilityLiveRegion="polite">
           {error}
         </Text>
+      ) : aviso ? (
+        <View style={styles.linhaDoAviso}>
+          <Feather name="alert-circle" size={14} color={colors.accent} />
+          <Text style={styles.aviso}>{aviso}</Text>
+        </View>
       ) : hint ? (
         <Text style={styles.hint}>{hint}</Text>
       ) : null}
@@ -89,6 +117,21 @@ export const FormField = forwardRef<TextInput, Props>(function FormField(
 
 const styles = StyleSheet.create({
   wrapper: { marginBottom: spacing.lg },
+  linhaDoRotulo: { flexDirection: 'row', alignItems: 'center' },
+  linhaDoAviso: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+    paddingHorizontal: spacing.lg,
+  },
+  aviso: {
+    flex: 1,
+    fontFamily: fonts.semibold,
+    fontSize: 13,
+    lineHeight: 18,
+    color: colors.accent,
+  },
   label: {
     fontFamily: fonts.bold,
     fontSize: 14,

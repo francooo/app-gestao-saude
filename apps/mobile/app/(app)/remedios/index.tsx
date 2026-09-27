@@ -275,7 +275,7 @@ export default function RemediosScreen() {
             </View>
 
             <Pressable
-              onPress={() => router.push('/medicamento/form/novo')}
+              onPress={() => router.push('/remedios/novo')}
               accessibilityRole="button"
               style={({ pressed }) => [styles.adicionar, pressed && styles.adicionarPressionado]}
             >
