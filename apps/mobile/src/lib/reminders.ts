@@ -3,7 +3,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import type { Medication } from '@/api/health';
-import { lembretesDeConsultaLigados } from '@/lib/prefs';
+import { lembretesDeConsultaLigados, lembretesDeDoseLigados } from '@/lib/prefs';
 import {
   quantidadeComUnidade,
   slotsDoDia,
@@ -194,6 +194,141 @@ const HORIZONTE_HORAS = 48;
  *
  * Passar uma lista vazia desliga tudo — e assim que o interruptor funciona.
  */
+/**
+ * Prefixo dos avisos de UM medicamento.
+ *
+ * O hifen no fim e load-bearing: sem ele, `dose-<uuid>` seria prefixo de
+ * qualquer id que comecasse com aqueles caracteres. Com ele, so casa com os
+ * sufixos que nos mesmos geramos (`-08:00`, `-1727470800000`).
+ */
+function prefixoDe(medicamentoId: string): string {
+  return `${PREFIXO_DOSE}${medicamentoId}-`;
+}
+
+/** Canal do Android. Idempotente; criar de novo nao duplica. */
+async function prepararCanal(): Promise<string | undefined> {
+  if (Platform.OS !== 'android') return undefined;
+  await Notifications.setNotificationChannelAsync('doses', {
+    name: 'Lembretes de remédio',
+    importance: Notifications.AndroidImportance.HIGH,
+  });
+  return 'doses';
+}
+
+/**
+ * Agenda os avisos de UM medicamento e devolve os identificadores criados.
+ *
+ * Extraido do laco da reconciliacao para a EDICAO poder reusar exatamente a
+ * mesma regra. Duplicar isso garantiria que um dia a lista e a tela de edicao
+ * discordassem sobre o que agendar — e o sintoma seria um aviso fantasma, que
+ * e o defeito mais dificil de acreditar quando alguem reporta.
+ *
+ * Nao cancela nada: quem chama decide o que fazer com os orfaos.
+ */
+async function agendarDoMedicamento(
+  m: Medication,
+  agora: Date,
+  canal: string | undefined,
+  teto: number,
+): Promise<string[]> {
+  if (m.scheduleType === 'as_needed' || !vigenteHoje(m, agora)) return [];
+
+  const titulo = tituloDoMedicamento(m);
+  const quem = m.profileName ? ` de ${m.profileName.split(' ')[0]}` : '';
+  const corpo = `Está na hora${quem}: ${[quantidadeComUnidade(m.doseAmount ?? null, m.doseUnit ?? null), titulo].filter(Boolean).join(' de ')}.`;
+  const criados: string[] = [];
+
+  if (m.scheduleType === 'fixed_times') {
+    for (const hhmm of m.times) {
+      if (criados.length >= teto) break;
+      const [h, min] = hhmm.split(':').map(Number);
+      // O identificador inclui o horario: um remedio de 08:00 e 20:00 sao
+      // dois avisos, e sem isso o segundo substituiria o primeiro.
+      const identifier = `${prefixoDe(m.id)}${hhmm}`;
+      criados.push(identifier);
+
+      await Notifications.scheduleNotificationAsync({
+        identifier,
+        content: { title: titulo, body: corpo, data: { medicationId: m.id } },
+        trigger: {
+          type: Notifications.SchedulableTriggerInputTypes.DAILY,
+          hour: h!,
+          minute: min!,
+          channelId: canal,
+        },
+      });
+    }
+    return criados;
+  }
+
+  // interval
+  const limite = new Date(agora.getTime() + HORIZONTE_HORAS * 3_600_000);
+  const proximos = [...slotsDoDia(m, agora), ...slotsDoDia(m, addDays(agora, 1))].filter(
+    (s) => s > agora && s <= limite,
+  );
+
+  for (const slot of proximos) {
+    if (criados.length >= teto) break;
+    const identifier = `${prefixoDe(m.id)}${slot.getTime()}`;
+    criados.push(identifier);
+
+    await Notifications.scheduleNotificationAsync({
+      identifier,
+      content: { title: titulo, body: corpo, data: { medicationId: m.id } },
+      trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.DATE,
+        date: slot,
+        channelId: canal,
+      },
+    });
+  }
+
+  return criados;
+}
+
+/**
+ * Poe os avisos de UM medicamento em dia, logo depois de ele mudar.
+ *
+ * EXISTE POR UM DEFEITO MEDIDO, e o relato foi exato: editar um remedio para
+ * "Se necessario" nao parava os avisos. A reconciliacao sabia lidar com isso
+ * — ela pula `as_needed` e cancela os orfaos —, mas ela so roda na tela de
+ * LISTA de remedios, e quem edita esta na tela de DETALHE. Os avisos
+ * continuavam ate a pessoa passar pela lista; e em "horarios fixos", cujo
+ * gatilho e DIARIO, continuavam para sempre.
+ *
+ * Por que sincroniza em vez de so cancelar: cancelar deixaria um buraco entre
+ * a edicao e a proxima visita a lista. Trocar 08:00 por 09:00 e ficar sem
+ * aviso nenhum ate abrir outra tela e trocar um defeito por outro mais
+ * silencioso — num aplicativo de remedio, aviso que falta e tao ruim quanto
+ * aviso a mais.
+ *
+ * NAO TOCA NO HISTORICO DE DOSES. Estes sao alarmes do relogio do aparelho; as
+ * doses ja tomadas sao linhas em `medication_doses`, no servidor, e continuam
+ * la — inclusive as que foram tomadas sob o horario antigo. Conferido contra
+ * producao: duas doses antes da edicao, as mesmas duas depois.
+ */
+export async function cancelarLembretesDeUmMedicamento(medicamentoId: string): Promise<void> {
+  const meus = await agendadasComPrefixo(prefixoDe(medicamentoId));
+  for (const id of meus) await Notifications.cancelScheduledNotificationAsync(id);
+}
+
+/** Ver o comentario acima: esta e a versao que tambem REAGENDA. */
+export async function sincronizarLembretesDeUmMedicamento(m: Medication): Promise<void> {
+  const meus = await agendadasComPrefixo(prefixoDe(m.id));
+  for (const id of meus) await Notifications.cancelScheduledNotificationAsync(id);
+
+  // Interruptor geral desligado: cancelar ja foi o suficiente.
+  if (!(await lembretesDeDoseLigados())) return;
+  if (m.scheduleType === 'as_needed' || !vigenteHoje(m, new Date())) return;
+  if (!(await pedirPermissao())) return;
+
+  const canal = await prepararCanal();
+  // Teto por medicamento: 8 horarios fixos e o maximo do cadastro, e 48 h de
+  // um remedio de 4 em 4 horas dao 12. A reconciliacao da lista tem a visao do
+  // orcamento total do aparelho; aqui so nao se pode estourar sozinho.
+  await agendarDoMedicamento(m, new Date(), canal, 16);
+}
+
 export async function reconciliarLembretesDeDose(medicamentos: Medication[]): Promise<void> {
   const jaAgendadas = await agendadasComPrefixo(PREFIXO_DOSE);
 
@@ -206,72 +341,16 @@ export async function reconciliarLembretesDeDose(medicamentos: Medication[]): Pr
   const permitido = await pedirPermissao();
   if (!permitido) return;
 
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('doses', {
-      name: 'Lembretes de remédio',
-      importance: Notifications.AndroidImportance.HIGH,
-    });
-  }
-
-  const canal = Platform.OS === 'android' ? 'doses' : undefined;
+  const canal = await prepararCanal();
   const agora = new Date();
   const queremos = new Set<string>();
   let restantes = MAXIMO_DE_DOSES;
 
   for (const m of medicamentos) {
     if (restantes <= 0) break;
-    if (m.scheduleType === 'as_needed' || !vigenteHoje(m, agora)) continue;
-
-    const titulo = tituloDoMedicamento(m);
-    const quem = m.profileName ? ` de ${m.profileName.split(' ')[0]}` : '';
-    const corpo = `Está na hora${quem}: ${[quantidadeComUnidade(m.doseAmount ?? null, m.doseUnit ?? null), titulo].filter(Boolean).join(' de ')}.`;
-
-    if (m.scheduleType === 'fixed_times') {
-      for (const hhmm of m.times) {
-        if (restantes <= 0) break;
-        const [h, min] = hhmm.split(':').map(Number);
-        // O identificador inclui o horario: um remedio de 08:00 e 20:00 sao
-        // dois avisos, e sem isso o segundo substituiria o primeiro.
-        const identifier = `${PREFIXO_DOSE}${m.id}-${hhmm}`;
-        queremos.add(identifier);
-        restantes--;
-
-        await Notifications.scheduleNotificationAsync({
-          identifier,
-          content: { title: titulo, body: corpo, data: { medicationId: m.id } },
-          trigger: {
-            type: Notifications.SchedulableTriggerInputTypes.DAILY,
-            hour: h!,
-            minute: min!,
-            channelId: canal,
-          },
-        });
-      }
-      continue;
-    }
-
-    // interval
-    const limite = new Date(agora.getTime() + HORIZONTE_HORAS * 3_600_000);
-    const proximos = [...slotsDoDia(m, agora), ...slotsDoDia(m, addDays(agora, 1))].filter(
-      (s) => s > agora && s <= limite,
-    );
-
-    for (const slot of proximos) {
-      if (restantes <= 0) break;
-      const identifier = `${PREFIXO_DOSE}${m.id}-${slot.getTime()}`;
-      queremos.add(identifier);
-      restantes--;
-
-      await Notifications.scheduleNotificationAsync({
-        identifier,
-        content: { title: titulo, body: corpo, data: { medicationId: m.id } },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.DATE,
-          date: slot,
-          channelId: canal,
-        },
-      });
-    }
+    const criados = await agendarDoMedicamento(m, agora, canal, restantes);
+    for (const id of criados) queremos.add(id);
+    restantes -= criados.length;
   }
 
   // Remedio apagado, encerrado, ou horario que mudou deixam aviso orfao.

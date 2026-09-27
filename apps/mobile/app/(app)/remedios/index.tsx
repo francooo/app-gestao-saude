@@ -64,6 +64,15 @@ export default function RemediosScreen() {
     setErro(null);
     const referencia = new Date();
 
+    /**
+     * A preferencia e LOCAL e nao depende da rede.
+     *
+     * Lida aqui fora do try de proposito: dentro dele, uma busca que falhasse
+     * deixaria o interruptor mostrando "ligado" para quem o desligou.
+     */
+    const ligados = await lembretesDeDoseLigados();
+    setLembretes(ligados);
+
     try {
       const [listaPerfis, lista] = await Promise.all([
         healthApi.listProfiles(),
@@ -80,6 +89,19 @@ export default function RemediosScreen() {
       setPerfis(listaPerfis);
       setMedicamentos(lista);
       setAgora(referencia);
+
+      /**
+       * RECONCILIA AQUI, com a lista que acabou de chegar.
+       *
+       * Antes isto morava num useFocusEffect proprio, e o defeito era sutil:
+       * no instante do foco, `medicamentos` ainda e a lista da visita
+       * ANTERIOR. Um remedio editado para "Se necessario" era reagendado com
+       * os dados velhos, e so era cancelado quando a resposta do servidor
+       * chegava — e nunca, se a rede falhasse.
+       *
+       * Falhar em agendar e conveniencia perdida, nao erro de tela.
+       */
+      void reconciliarLembretesDeDose(ligados ? lista : []);
     } catch (e) {
       setErro(messageForError(e instanceof ApiRequestError ? e.code : undefined));
     } finally {
@@ -91,16 +113,7 @@ export default function RemediosScreen() {
   useFocusEffect(
     useCallback(() => {
       void carregar();
-      void lembretesDeDoseLigados().then(setLembretes);
     }, [carregar]),
-  );
-
-  // Reconcilia os avisos sempre que a lista ou a preferencia mudam. Falhar
-  // aqui e conveniencia perdida, nao erro de tela.
-  useFocusEffect(
-    useCallback(() => {
-      void reconciliarLembretesDeDose(lembretes ? medicamentos : []);
-    }, [medicamentos, lembretes]),
   );
 
   const visiveis = useMemo(

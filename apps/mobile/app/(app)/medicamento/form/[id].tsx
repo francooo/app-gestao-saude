@@ -32,6 +32,7 @@ import { SurfaceCard } from '@/components/SurfaceCard';
 // porque o normalizador da leitura precisa EXATAMENTE da lista que esta tela
 // oferece, e uma segunda copia seria divergencia garantida.
 import { SeloDaIA } from '@/components/SeloDaIA';
+import { sincronizarLembretesDeUmMedicamento } from '@/lib/reminders';
 import {
   camposVazios,
   consumirRascunho,
@@ -272,8 +273,18 @@ export default function MedicamentoFormScreen() {
         // So depois de o remedio existir: o POST de criacao nao aceita
         // prescriptionPhoto, de proposito (ver o contrato).
         if (receita?.guardar) await anexarReceita(criado.id, receita.foto);
+        await porLembretesEmDia(criado);
       } else {
-        await healthApi.updateMedication(id!, dados);
+        const salvo = await healthApi.updateMedication(id!, dados);
+        /**
+         * OS AVISOS SAO ACERTADOS AQUI, e nao so quando a lista abrir.
+         *
+         * Era este o defeito relatado: editar para "Se necessario" nao parava
+         * as notificacoes. A reconciliacao sabe lidar com isso, mas ela mora na
+         * tela de LISTA — e quem edita esta na de DETALHE. Em "horarios fixos",
+         * cujo gatilho e DIARIO, o aviso continuava para sempre.
+         */
+        await porLembretesEmDia(salvo);
       }
       // A tela de leitura por foto fica na pilha e precisa se dispensar, senao
       // o "voltar" depois de salvar cai na camera. Ver rascunhoDeMedicamento.
@@ -285,6 +296,21 @@ export default function MedicamentoFormScreen() {
       setErroGeral(messageForError(e instanceof ApiRequestError ? e.code : undefined));
     } finally {
       setSalvando(false);
+    }
+  }
+
+  /**
+   * Falhar aqui e conveniencia perdida, nao erro de cadastro.
+   *
+   * O remedio JA FOI SALVO. Deixar uma excecao de agendamento derrubar o
+   * salvamento faria a pessoa achar que perdeu o que digitou — e a
+   * reconciliacao da lista conserta o agendamento na proxima abertura.
+   */
+  async function porLembretesEmDia(m: Medication) {
+    try {
+      await sincronizarLembretesDeUmMedicamento(m);
+    } catch {
+      // silencio de proposito: ver o comentario acima.
     }
   }
 

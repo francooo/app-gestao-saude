@@ -27,6 +27,10 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SurfaceCard } from '@/components/SurfaceCard';
 import { escolherFotoDeDocumento } from '@/lib/foto';
+import {
+  cancelarLembretesDeUmMedicamento,
+  sincronizarLembretesDeUmMedicamento,
+} from '@/lib/reminders';
 import { alternarDose, comDose, semDose } from '@/lib/marcarDose';
 import {
   diaCurto,
@@ -202,7 +206,12 @@ export default function MedicamentoDetalheScreen() {
           text: m.isActive ? 'Encerrar' : 'Retomar',
           onPress: async () => {
             try {
-              setM(await healthApi.updateMedication(m.id, { isActive: !m.isActive }));
+              const salvo = await healthApi.updateMedication(m.id, { isActive: !m.isActive });
+              setM(salvo);
+              // Encerrar tem que CALAR os avisos na hora, e retomar tem que
+              // traze-los de volta. Sem isto, o efeito so apareceria quando a
+              // lista de remedios fosse aberta.
+              await sincronizarLembretesDeUmMedicamento(salvo);
             } catch (e) {
               Alert.alert(
                 'Não consegui salvar',
@@ -231,6 +240,8 @@ export default function MedicamentoDetalheScreen() {
           onPress: async () => {
             try {
               await healthApi.deleteMedication(m.id);
+              // O remedio deixou de existir; o alarme dele nao pode sobreviver.
+              await cancelarLembretesDeUmMedicamento(m.id);
               router.back();
             } catch (e) {
               Alert.alert(
