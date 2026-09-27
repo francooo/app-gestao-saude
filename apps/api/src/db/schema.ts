@@ -179,7 +179,15 @@ export const consents = pgTable('consents', {
   grantedAt: timestamp('granted_at', { withTimezone: true }).notNull().defaultNow(),
   ip: inet('ip'),
   userAgent: text('user_agent'),
-});
+}, (t) => [
+  /**
+   * A tabela nasceu sem indice nenhum, e a consulta que ela serve e sempre a
+   * mesma: a ULTIMA linha de um usuario, por granted_at desc. Isso roda a cada
+   * abertura do aplicativo (me/perfil) e agora tambem no caminho da leitura de
+   * foto, que recusa quem nao aceitou a versao corrente da politica.
+   */
+  index('consents_user_granted_idx').on(t.userId, t.grantedAt),
+]);
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
@@ -424,6 +432,15 @@ export const medications = pgTable(
     form: text('form'),
     doseAmount: numeric('dose_amount'),
     doseUnit: text('dose_unit'),
+    /**
+     * Quantas unidades vem na embalagem: "21 capsulas" e 21, com form
+     * 'capsula'. A unidade NAO e coluna nova — e o `form` que ja existe.
+     *
+     * NASCE SEM CONSUMIDOR, e isso foi decidido com o custo a vista: nada no
+     * aplicativo desconta dose daqui nem avisa que esta acabando. E um numero
+     * guardado ate existir o aviso de reposicao, que e quem vai dar uso a ele.
+     */
+    packageAmount: integer('package_amount'),
     scheduleType: scheduleTypeEnum('schedule_type').notNull(),
     /** Preenchido apenas quando scheduleType = 'interval'. */
     intervalHours: integer('interval_hours'),
@@ -436,11 +453,34 @@ export const medications = pgTable(
       onDelete: 'set null',
     }),
     isActive: boolean('is_active').notNull().default(true),
+    /**
+     * De qual leitura de foto este medicamento saiu, e de qual item dela.
+     *
+     * DUAS COLUNAS ESCALARES, e nao um jsonb com a proposta. A seta aponta
+     * desta direcao porque UMA receita gera N medicamentos; guardar a proposta
+     * aqui duplicaria o mesmo texto em cada um. E um uuid e um smallint nao
+     * pesam nas tres consultas que leem esta linha inteira (ver o cabecalho de
+     * medication_attachments).
+     *
+     * E o que permite comparar o que a IA propos com o que foi salvo. Sem
+     * isso nao ha como separar "a IA errou" de "a IA errou e ninguem
+     * conferiu" — e a segunda e a unica que interessa investigar.
+     */
+    photoReadId: uuid('photo_read_id').references(() => medicationPhotoReads.id, {
+      onDelete: 'set null',
+    }),
+    photoReadItem: smallint('photo_read_item'),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     index('medications_profile_active_idx').on(t.profileId, t.isActive),
+    // Espelha o teto do contrato. Uma embalagem com 0 unidades nao existe, e
+    // 9999 ja cobre frasco de 1000 ml com folga.
+    check(
+      'medications_package_amount_range',
+      sql`${t.packageAmount} IS NULL OR (${t.packageAmount} >= 1 AND ${t.packageAmount} <= 9999)`,
+    ),
     // Um medicamento "a cada N horas" sem o N e um registro que o app nao
     // consegue exibir nem lembrar. Melhor o banco recusar do que a tela quebrar.
     check(
@@ -482,9 +522,21 @@ export const medicationTimes = pgTable(
  * receita de todos os remedios da familia a cada abertura. Nada no typecheck
  * pegaria; so a conta de trafego e o tempo de carga.
  *
- * O mesmo isolamento protege o assistente: ele seleciona colunas explicitas
- * hoje, mas um `select()` distraido num refactor mandaria a receita inteira
- * para um modelo de terceiro. Daqui, nao ha como.
+ * O mesmo isolamento protege o assistente do caminho ACIDENTAL: ele seleciona
+ * colunas explicitas hoje, mas um `select()` distraido num refactor mandaria a
+ * receita inteira para um modelo de terceiro. Daqui, nao ha como.
+ *
+ * O QUE MUDOU, e que este paragrafo precisa dizer para nao mentir: existe
+ * agora um caminho DELIBERADO. O `POST /api/assistant/ler-foto` envia uma foto
+ * de receita ao Groq, fora do Brasil, para extrair os campos do medicamento.
+ * Ele NAO passa por esta tabela — le o data URI do corpo da requisicao e nao
+ * grava imagem nenhuma. Quem grava continua sendo o PATCH, depois, se a pessoa
+ * pedir. Ou seja: esta tabela nunca e ORIGEM de envio para fora; ela e so
+ * destino, e e isso que o paragrafo acima continua garantindo.
+ *
+ * Aquele caminho exige consentimento na versao corrente da politica, que subiu
+ * por causa dele: o que a receita carrega passou a SAIR DO PAIS, e nao so a
+ * ficar guardado aqui.
  *
  * LGPD: a cascata users -> profiles -> medications -> aqui faz o direito ao
  * apagamento funcionar sem codigo novo. Note que `prescriberId` e `set null`
@@ -537,6 +589,79 @@ export const medicationAttachments = pgTable(
      * ou um binario cru.
      */
     check('medication_attachments_photo_format', sql`${t.photo} LIKE 'data:image/jpeg%'`),
+  ],
+);
+
+/**
+ * Cada vez que uma foto de receita ou de caixa foi mandada para a IA ler.
+ *
+ * FAZ DUAS COISAS QUE PARECEM UMA SO, e e por isso que e tabela e nao coluna:
+ *
+ * 1. E O CONTADOR do teto diario. Os dois tetos do assistente contam linhas em
+ *    `assistant_messages`; uma leitura de foto nao gera mensagem nenhuma e
+ *    escaparia dos dois. E o teto precisa contar as leituras ABANDONADAS —
+ *    e justamente isso que um laco com defeito produz. Um contador que so
+ *    enxerga o caso bem-sucedido nao e contador.
+ *
+ * 2. E O RASTRO. Vale o mesmo argumento escrito em `assistant_messages.
+ *    tool_trace`, com mais forca: la o modelo escrevia um numero numa resposta
+ *    de texto; aqui ele escreve um numero de dose que vira LEMBRETE. Se um dia
+ *    alguem disser "o aplicativo mandou dar 10 ml", a pergunta e se aquele 10
+ *    foi lido da receita, inventado pelo modelo, ou digitado pela pessoa.
+ *
+ * A LINHA NASCE ANTES DA CHAMADA, com outcome 'enviada'. Diverge de
+ * mensagem.ts, que so grava quando ha resposta, e a divergencia e deliberada:
+ * o que esta auditoria registra e A TRANSFERENCIA, nao o resultado. A foto
+ * saiu do Brasil mesmo quando a leitura falhou. Uma linha 'enviada' orfa e o
+ * registro de uma funcao cortada no meio da inferencia — informacao, nao lixo.
+ *
+ * NAO GUARDA A IMAGEM. Nunca. Guarda o texto cru que o modelo devolveu
+ * (cortado) e a proposta que montamos a partir dele — sem o cru nao ha como
+ * separar "o modelo errou" de "o nosso mapeador errou". E a mesma regra do
+ * tool_trace, que tambem nao guarda o texto das paginas lidas.
+ *
+ * LGPD: o que fica aqui e dado de saude transcrito (nomes de remedio,
+ * posologia, nome de quem receitou). A cascata users -> aqui apaga junto.
+ */
+export const medicationPhotoReads = pgTable(
+  'medication_photo_reads',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /**
+     * Para quem a leitura foi feita, quando o aplicativo soube dizer.
+     * `set null` e nao cascade: apagar um perfil nao deve apagar o registro de
+     * que uma foto saiu do pais.
+     */
+    profileId: uuid('profile_id').references(() => profiles.id, { onDelete: 'set null' }),
+    /** 'receita' | 'caixa' — sao prompts diferentes, e o rastro precisa saber qual. */
+    kind: text('kind').notNull(),
+    model: text('model'),
+    /** 'enviada' | 'lida' | 'vazia' | 'falha' */
+    outcome: text('outcome').notNull().default('enviada'),
+    /** { bruto: <texto do modelo, cortado>, proposto: <o corpo devolvido> } */
+    proposal: jsonb('proposal'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    /** Os dois tetos (dia e minuto) saem de UMA consulta sobre este indice. */
+    index('medication_photo_reads_user_created_idx').on(t.userId, t.createdAt),
+    /**
+     * `text` + check em vez de pgEnum nos dois campos abaixo: um terceiro tipo
+     * e plausivel (bula, pedido de exame), e acrescentar valor a um enum do
+     * Postgres e ALTER TYPE, que o drizzle-kit gera mal. `medications.form` ja
+     * abre o precedente de texto livre com a restricao no contrato.
+     *
+     * Nenhum literal aqui tem ponto e virgula, pelo motivo explicado no check
+     * de formato de medication_attachments.
+     */
+    check('medication_photo_reads_kind', sql`${t.kind} in ('receita', 'caixa')`),
+    check(
+      'medication_photo_reads_outcome',
+      sql`${t.outcome} in ('enviada', 'lida', 'vazia', 'falha')`,
+    ),
   ],
 );
 

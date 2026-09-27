@@ -175,6 +175,7 @@ async function atualizar(
     mudancas.doseAmount = body.doseAmount == null ? null : String(body.doseAmount);
   }
   if (body.doseUnit !== undefined) mudancas.doseUnit = body.doseUnit;
+  if (body.packageAmount !== undefined) mudancas.packageAmount = body.packageAmount;
   if (body.scheduleType !== undefined) mudancas.scheduleType = body.scheduleType;
   if (body.intervalHours !== undefined) mudancas.intervalHours = body.intervalHours;
   if (body.startsAt !== undefined) mudancas.startsAt = body.startsAt ? new Date(body.startsAt) : null;

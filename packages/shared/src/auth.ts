@@ -131,6 +131,25 @@ export const API_ERROR = {
    * "tentar amanha" seria mentira.
    */
   ASSISTANT_BUSY: 'ASSISTANT_BUSY',
+  /**
+   * A leitura de foto exige o aceite da versao corrente da politica.
+   *
+   * SO ESSA ROTA BLOQUEIA. Em todo o resto o servidor relata a versao velha e
+   * deixa passar, porque 403 nas outras derrubaria aplicativo ja instalado.
+   * La bloquear e seguro porque a rota e nova, e necessario porque e a unica
+   * cuja finalidade e mandar um documento de saude para fora do pais.
+   */
+  POLICY_REACCEPT_REQUIRED: 'POLICY_REACCEPT_REQUIRED',
+  /**
+   * Os quatro abaixo NAO reusam os ASSISTANT_*, pelo mesmo motivo que
+   * ASSISTANT_LIMIT_REACHED nao reusou TOO_MANY_ATTEMPTS: aquelas mensagens
+   * dizem "o assistente", e quem fotografou uma caixa sem nunca ter aberto o
+   * assistente leria uma frase sobre um recurso que nao usou.
+   */
+  PHOTO_READ_LIMIT_REACHED: 'PHOTO_READ_LIMIT_REACHED',
+  PHOTO_READ_BUSY: 'PHOTO_READ_BUSY',
+  PHOTO_READ_TIMEOUT: 'PHOTO_READ_TIMEOUT',
+  PHOTO_READ_FAILED: 'PHOTO_READ_FAILED',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   /** Erros do lado do cliente, nunca vindos da API. */
   NETWORK_ERROR: 'NETWORK_ERROR',
@@ -165,6 +184,18 @@ export const ERROR_MESSAGES_PT: Record<string, string> = {
     'A busca demorou demais. Tente perguntar de forma mais específica.',
   [API_ERROR.ASSISTANT_BUSY]:
     'O assistente atingiu o limite de uso deste minuto. Tente de novo em instantes.',
+  [API_ERROR.POLICY_REACCEPT_REQUIRED]:
+    'Para ler a foto é preciso aceitar a nova política de privacidade, em Ajustes › Privacidade e segurança.',
+  [API_ERROR.PHOTO_READ_LIMIT_REACHED]:
+    'Você já usou as leituras de foto de hoje. Amanhã libera de novo.',
+  // "deste minuto" e literal: o balde do provedor reseta em segundos.
+  [API_ERROR.PHOTO_READ_BUSY]:
+    'A leitura de fotos atingiu o limite deste minuto. Tente de novo em instantes.',
+  [API_ERROR.PHOTO_READ_TIMEOUT]:
+    'Não deu tempo de ler a foto. Tente de novo — com a internet lenta, pode demorar.',
+  // Diz o que fazer diferente. "Tente novamente" igual daria o mesmo erro.
+  [API_ERROR.PHOTO_READ_FAILED]:
+    'Não consegui ler esta foto. Tente outra, com mais luz e o papel reto — ou preencha à mão.',
   [API_ERROR.INTERNAL_ERROR]: 'Algo deu errado do nosso lado. Tente novamente.',
   [API_ERROR.NETWORK_ERROR]: 'Sem conexão com o servidor. Verifique sua internet.',
   // Nao e problema da pessoa: o app foi publicado sem a URL da API.
@@ -188,7 +219,7 @@ export function messageForError(code: string | undefined): string {
  * versao: a LGPD exige saber a QUAL texto a pessoa consentiu, nao apenas que
  * consentiu. Sem isso, um consentimento antigo vira indefensavel.
  */
-export const POLICY_VERSION = '2026-09-20';
+export const POLICY_VERSION = '2026-09-27';
 
 export const fullNameSchema = z
   .string()

@@ -337,6 +337,7 @@ const RESUMO = [
   'Não vendemos nem compartilhamos seus dados, e não há publicidade.',
   'As perguntas ao assistente, e os dados necessários para respondê-las, vão para a Groq, fora do Brasil.',
   'O assistente também pesquisa na internet quando precisa, e cita a fonte.',
+  'Se você pedir para ler a foto de uma receita ou de uma caixa, a imagem também vai para a Groq, fora do Brasil, só para preencher o cadastro.',
   'Apagar a conta remove tudo: pessoas, remédios, doses, receitas e conversas.',
 ];
 

@@ -96,6 +96,31 @@ export const API_ERROR = {
    * "tentar amanha" seria mentira.
    */
   ASSISTANT_BUSY: 'ASSISTANT_BUSY',
+  /**
+   * A leitura de foto exige o aceite da versao corrente da politica.
+   *
+   * SO ESTA ROTA BLOQUEIA. Em todo o resto o servidor RELATA a versao velha e
+   * deixa passar (ver handlers/me/perfil.ts), porque 403 nas outras rotas
+   * derrubaria todo aplicativo instalado que nao conhece a tela de reaceite.
+   * Aqui bloquear e seguro porque a rota E NOVA — nenhum bundle publicado a
+   * chama, entao nenhum 403 pode quebrar um caminho que funcionava. E e
+   * necessario porque esta e a unica rota cuja finalidade e mandar um
+   * documento de saude para fora do pais: o consentimento e a base legal, nao
+   * formalidade.
+   */
+  POLICY_REACCEPT_REQUIRED: 'POLICY_REACCEPT_REQUIRED',
+  /**
+   * Os quatro erros da leitura de foto NAO reusam os ASSISTANT_*.
+   *
+   * Pelo mesmo motivo que ASSISTANT_LIMIT_REACHED nao reusou
+   * TOO_MANY_ATTEMPTS: aquelas mensagens dizem "o assistente", e quem
+   * fotografou uma caixa de remedio sem nunca ter aberto o assistente leria
+   * uma frase sobre um recurso que nao usou.
+   */
+  PHOTO_READ_LIMIT_REACHED: 'PHOTO_READ_LIMIT_REACHED',
+  PHOTO_READ_BUSY: 'PHOTO_READ_BUSY',
+  PHOTO_READ_TIMEOUT: 'PHOTO_READ_TIMEOUT',
+  PHOTO_READ_FAILED: 'PHOTO_READ_FAILED',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
 } as const;
 
@@ -110,7 +135,7 @@ export type ApiErrorCode = (typeof API_ERROR)[keyof typeof API_ERROR];
  * consentimento: a LGPD exige saber a QUAL texto a pessoa consentiu.
  * Ao mudar o texto da politica, suba esta versao nos DOIS arquivos.
  */
-export const POLICY_VERSION = '2026-09-20';
+export const POLICY_VERSION = '2026-09-27';
 
 export const fullNameSchema = z
   .string()
@@ -315,6 +340,13 @@ export const medicationBaseSchema = z.object({
   form: z.enum(medicationFormValues).optional().nullable(),
   doseAmount: z.number().positive().max(9999).optional().nullable(),
   doseUnit: z.string().trim().max(20).optional().nullable(),
+  /**
+   * Quantas unidades vem na embalagem. A unidade e o `form` acima.
+   *
+   * Inteiro: "21 capsulas", "30 comprimidos", "frasco 100 ml". Meia unidade
+   * pode ser DOSE, nunca embalagem. Espelha o check do banco (1 a 9999).
+   */
+  packageAmount: z.number().int().min(1).max(9999).optional().nullable(),
   scheduleType: z.enum(scheduleTypeValues),
   intervalHours: z.number().int().min(1).max(72).optional().nullable(),
   times: z.array(horarioSchema).max(8).default([]),
@@ -326,6 +358,17 @@ export const medicationBaseSchema = z.object({
 
 export const medicationInputSchema = medicationBaseSchema.extend({
   profileId: z.uuid({ message: 'Escolha para quem é o remédio' }),
+  /**
+   * De qual leitura de foto, e de qual item dela, este cadastro veio.
+   *
+   * Opcionais: o cadastro manual nao manda nenhum dos dois. O servidor confere
+   * que a leitura e DA CONTA antes de gravar (404 se nao for, nunca 403).
+   *
+   * Nao e seguranca, e investigacao: e o que permite comparar depois o que a
+   * IA propos com o que a pessoa salvou.
+   */
+  photoReadId: z.uuid().optional().nullable(),
+  photoReadItem: z.number().int().min(0).max(50).optional().nullable(),
 });
 
 /**
@@ -341,6 +384,11 @@ export const medicationInputSchema = medicationBaseSchema.extend({
  * anexo e uma acao da tela de DETALHE, nao do formulario de cadastro; deixar o
  * POST de criacao de fora mantem aquele caminho intocado. Acrescentar depois e
  * mudanca aditiva.
+ *
+ * Isso continua valendo mesmo agora que o cadastro TAMBEM lida com fotos: a
+ * leitura por foto manda a imagem para o /api/assistant/ler-foto, que nao
+ * grava nada. Se a pessoa quiser guardar aquela receita, o aplicativo cria o
+ * remedio e so entao chama este PATCH. Um caminho le, o outro persiste.
  *
  * O teto e de 500 000 caracteres (~375 KB binarios), contra os 30 000 da foto
  * de perfil. A diferenca nao e generosidade: aquela foto e um rosto em 200x200
@@ -555,4 +603,73 @@ export const assistantAskSchema = z.object({
 
 export const assistantHistorySchema = z.object({
   profileId: z.uuid().optional(),
+});
+
+// ---------------------------------------------------------------------------
+// Leitura de receita e de caixa por foto
+//
+// Mora sob /api/assistant por DUAS razoes, e nenhuma e semantica: o projeto
+// esta em 12/12 funcoes serverless, e aquela e a unica rota com maxDuration de
+// 60 s. Isto NAO e o assistente, e os erros acima dizem isso.
+// ---------------------------------------------------------------------------
+
+/**
+ * Leituras de foto por dia, por conta.
+ *
+ * Vinte, e nao cinquenta como as perguntas, porque as unidades nao se
+ * comparam: uma pergunta custa 200-400 tokens e se refaz de graca; CADA
+ * LEITURA E UM DOCUMENTO DE SAUDE SAINDO DO PAIS. Um dia pesado de uma familia
+ * cadastrando uma receita da 6 a 8 (a receita, duas ou tres caixas, e algumas
+ * refotografadas por falta de luz). Vinte e cerca de 3x o pior caso plausivel.
+ *
+ * Como os dois tetos do assistente, existe contra laco com defeito, nao contra
+ * custo — e por isso conta tambem as leituras que falharam.
+ */
+export const LEITURAS_DE_FOTO_POR_DIA = 20;
+
+/**
+ * Leituras por minuto, por conta.
+ *
+ * TRES, e o numero foi MEDIDO contra a API, nao estimado. O plano gratuito do
+ * Groq da 7 000 tokens de ENTRADA por minuto (ITPM) por modelo, e o limitador
+ * cobra cerca de 2 300 por foto — mesmo quando o uso real medido e de ~850.
+ * Quem manda no 429 e a cobranca, nao o consumo, entao cabem tres.
+ *
+ * Serve para dizer a verdade rapido, sem ida ao Groq, e para um cliente
+ * travado parar de bater la fora. Bom saber: o balde e POR MODELO, entao isto
+ * nao disputa tokens com o assistente.
+ */
+export const LEITURAS_POR_MINUTO = 3;
+
+/**
+ * A foto que vai para a IA ler.
+ *
+ * NAO REUSA prescriptionPhotoSchema de proposito. Aquele e optional+nullable
+ * porque no PATCH a foto tem tres estados (ausente preserva, null remove,
+ * string substitui). Aqui a foto E a requisicao: ausente nao significa nada.
+ * Mesma expressao regular, mesmo teto, mesma ordem — cardinalidade diferente.
+ */
+export const fotoParaLeituraSchema = z
+  .string()
+  .regex(/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/, {
+    message: 'Formato de imagem inválido',
+  })
+  .max(500_000, { message: 'A foto ficou grande demais' });
+
+export const leituraDeFotoSchema = z.object({
+  photo: fotoParaLeituraSchema,
+  /**
+   * OBRIGATORIO E SEM DEFAULT.
+   *
+   * Um default de 'receita' faria a foto de uma CAIXA produzir posologia
+   * inventada — medido: sem a regra de que embalagem nao tem posologia, o
+   * modelo devolveu "Uso oral - adulto" como se fosse prescricao.
+   *
+   * Campo novo obrigatorio normalmente quebraria bundles ja instalados (e o
+   * argumento que deixou `agora` e `fusoHorario` opcionais acima). Aqui nao
+   * quebra nada porque nenhum aplicativo publicado conhece esta URL: estreia e
+   * o unico momento em que obrigatorio sai de graca.
+   */
+  kind: z.enum(['receita', 'caixa']),
+  profileId: z.uuid().optional().nullable(),
 });

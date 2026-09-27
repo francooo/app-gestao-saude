@@ -5,6 +5,7 @@ import { API_ERROR, medicationInputSchema, medicationQuerySchema } from '../../s
 import { db } from '../../src/db/client';
 import {
   medicationDoses,
+  medicationPhotoReads,
   medicationTimes,
   medications,
   professionals,
@@ -168,6 +169,26 @@ async function criar(req: VercelRequest, res: VercelResponse, userId: string) {
     if (!prof) return fail(res, 404, API_ERROR.INTERNAL_ERROR);
   }
 
+  /**
+   * A leitura de foto precisa ser DESTA CONTA.
+   *
+   * 404 e nao 403, como o prescriberId acima: o padrao do projeto e nunca
+   * confirmar que um id existe em outra conta. Sem isso, um readId alheio
+   * ligaria o cadastro a uma leitura que nao e da pessoa e poluiria a unica
+   * trilha que responde de onde veio um numero de dose.
+   */
+  if (body.photoReadId) {
+    const [leitura] = await db
+      .select({ id: medicationPhotoReads.id })
+      .from(medicationPhotoReads)
+      .where(
+        and(eq(medicationPhotoReads.id, body.photoReadId), eq(medicationPhotoReads.userId, userId)),
+      )
+      .limit(1);
+
+    if (!leitura) return fail(res, 404, API_ERROR.INTERNAL_ERROR);
+  }
+
   // Espelha o CHECK medications_interval_requires_hours para o erro sair 400
   // com o campo, em vez de 500 vindo do banco.
   const erros = validarPosologia(body);
@@ -190,6 +211,12 @@ async function criar(req: VercelRequest, res: VercelResponse, userId: string) {
         endsAt: body.endsAt ? new Date(body.endsAt) : null,
         instructions: body.instructions ?? null,
         prescriberId: body.prescriberId ?? null,
+        packageAmount: body.packageAmount ?? null,
+        // So fica gravado quando os DOIS vem: item sem leitura nao aponta
+        // para lugar nenhum, e leitura sem item nao diz qual remedio da
+        // receita virou este cadastro.
+        photoReadId: body.photoReadId ?? null,
+        photoReadItem: body.photoReadId == null ? null : (body.photoReadItem ?? null),
       })
       .returning();
 

@@ -4,6 +4,7 @@ import { API_ERROR } from '../../src/contracts';
 import { fail, withErrorHandling } from '../../src/lib/http';
 
 import historico from '../../src/handlers/assistant/historico';
+import lerFoto from '../../src/handlers/assistant/ler-foto';
 import mensagem from '../../src/handlers/assistant/mensagem';
 
 /**
@@ -17,12 +18,20 @@ import mensagem from '../../src/handlers/assistant/mensagem';
  * A PARTIR DAQUI, QUALQUER ROTA NOVA EXIGE CONSOLIDAR ALGUMA EXISTENTE. Rodar
  * `pnpm --filter @gestao/api check:funcoes` antes de qualquer deploy.
  *
- * As duas acoes moram em src/handlers/assistant/, no mesmo padrao de
+ * As acoes moram em src/handlers/assistant/, no mesmo padrao de
  * api/auth/[action].ts.
+ *
+ * ATENCAO: `ler-foto` NAO E O ASSISTENTE. Ela mora aqui por falta de vaga e
+ * porque esta e a unica rota com maxDuration de 60 s no vercel.json — nao
+ * porque leitura de foto seja uma conversa. Quem for mexer nela nao deve
+ * reusar ASSISTANT_BUSY nem ASSISTANT_LIMIT_REACHED por analogia: aquelas
+ * mensagens dizem "o assistente" para quem talvez nunca o tenha aberto. Ela
+ * tem os proprios codigos, PHOTO_READ_*.
  */
 const ROTAS: Record<string, (req: VercelRequest, res: VercelResponse) => Promise<void>> = {
   mensagem,
   historico,
+  'ler-foto': lerFoto,
 };
 
 export default withErrorHandling(async (req: VercelRequest, res: VercelResponse) => {
