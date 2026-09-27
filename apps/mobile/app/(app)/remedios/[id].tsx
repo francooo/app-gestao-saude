@@ -269,10 +269,7 @@ export default function MedicamentoDetalheScreen() {
           title="Detalhes do medicamento"
           titleLines={2}
           onBack={() => router.back()}
-          onNotifications={() =>
-            Alert.alert('Notificações', 'Esta parte ainda está sendo construída.')
-          }
-          hasNotifications
+          mostrarSino
         />
 
         {carregando ? (

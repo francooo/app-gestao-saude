@@ -250,10 +250,7 @@ export default function AssistenteScreen() {
           <ScreenHeader
             title="Assistente de Saúde"
             onBack={() => router.replace('/inicio')}
-            onNotifications={() =>
-              Alert.alert('Notificações', 'Esta parte ainda está sendo construída.')
-            }
-            hasNotifications
+          mostrarSino
           />
 
           <View style={styles.seletor}>

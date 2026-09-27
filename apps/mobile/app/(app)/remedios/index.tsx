@@ -201,8 +201,7 @@ export default function RemediosScreen() {
           title="Medicamentos"
           // Aba nao tem historico para voltar; a seta leva para o Inicio.
           onBack={() => router.replace('/inicio')}
-          onNotifications={() => Alert.alert('Notificações', 'Esta parte ainda está sendo construída.')}
-          hasNotifications
+          mostrarSino
         />
 
         <View style={styles.seletor}>

@@ -1,15 +1,21 @@
 import { Feather } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { BotaoDeSino } from '@/components/BotaoDeSino';
 import { colors, fonts, radii, spacing } from '@/theme';
 
 type Props = {
   title: string;
   /** Sem onBack o botao de voltar nao aparece — caso das abas principais. */
   onBack?: () => void;
-  onNotifications?: () => void;
-  /** Marca o sino com um ponto. */
-  hasNotifications?: boolean;
+  /**
+   * Mostra o sino, que abre a tela de Notificacoes.
+   *
+   * Substituiu o par `onNotifications` + `hasNotifications`: o destino e
+   * sempre o mesmo, e o ponto vem do provider em vez de ser passado tela a
+   * tela — antes ele era fixo no codigo em cinco lugares, sempre aceso.
+   */
+  mostrarSino?: boolean;
   /**
    * Quantas linhas o titulo pode ocupar. Padrao 1.
    *
@@ -21,13 +27,7 @@ type Props = {
   titleLines?: 1 | 2;
 };
 
-export function ScreenHeader({
-  title,
-  onBack,
-  onNotifications,
-  hasNotifications,
-  titleLines = 1,
-}: Props) {
+export function ScreenHeader({ title, onBack, mostrarSino = false, titleLines = 1 }: Props) {
   return (
     <View style={styles.linha}>
       <View style={styles.lado}>
@@ -52,19 +52,7 @@ export function ScreenHeader({
       </Text>
 
       <View style={[styles.lado, styles.ladoDireito]}>
-        {onNotifications ? (
-          <Pressable
-            onPress={onNotifications}
-            accessibilityRole="button"
-            accessibilityLabel={
-              hasNotifications ? 'Notificações, há novidades' : 'Notificações'
-            }
-            style={styles.botao}
-          >
-            <Feather name="bell" size={20} color={colors.sectionTitle} />
-            {hasNotifications ? <View style={styles.ponto} /> : null}
-          </Pressable>
-        ) : null}
+        {mostrarSino ? <BotaoDeSino /> : null}
       </View>
     </View>
   );
@@ -104,16 +92,5 @@ const styles = StyleSheet.create({
   tituloDuasLinhas: {
     fontSize: 25,
     lineHeight: 29,
-  },
-  ponto: {
-    position: 'absolute',
-    top: 10,
-    right: 11,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: colors.accent,
-    borderWidth: 2,
-    borderColor: colors.surface,
   },
 });

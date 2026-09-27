@@ -4,6 +4,8 @@ import { StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/auth/AuthContext';
+import { AberturaPorNotificacao } from '@/components/AberturaPorNotificacao';
+import { AvisosProvider } from '@/lib/avisosContext';
 import { colors, fonts, radii } from '@/theme';
 
 /**
@@ -16,7 +18,13 @@ export default function AppLayout() {
 
   if (!user) return <Redirect href="/login" />;
 
+  /**
+   * O provider fica DEPOIS do guard de sessao: ele busca dados da conta, e
+   * montar isso antes de haver sessao dispararia quatro requisicoes com 401.
+   */
   return (
+    <AvisosProvider>
+    <AberturaPorNotificacao />
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -112,6 +120,18 @@ export default function AppLayout() {
         name="membro/[id]"
         options={{ href: null, tabBarStyle: { display: 'none' } }}
       />
+      {/*
+        Notificacoes ESCONDE a barra, e isso diverge do mockup, que a desenha
+        com "Inicio" aceso. E impossivel: uma rota irma com href: null em foco
+        nao acende aba nenhuma, e a barra apareceria apagada parecendo defeito.
+        Virar pilha dentro de uma aba tambem nao serve — a tela e alcancavel de
+        SEIS telas, em quatro abas: "Inicio aceso" seria mentira para quem
+        chegou de Remedios. Escondida, o voltar devolve sempre a origem.
+      */}
+      <Tabs.Screen
+        name="notificacoes"
+        options={{ href: null, tabBarStyle: { display: 'none' } }}
+      />
       <Tabs.Screen
         name="conta/acesso"
         options={{ href: null, tabBarStyle: { display: 'none' } }}
@@ -125,6 +145,7 @@ export default function AppLayout() {
         options={{ href: null, tabBarStyle: { display: 'none' } }}
       />
     </Tabs>
+    </AvisosProvider>
   );
 }
 

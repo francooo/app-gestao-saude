@@ -8,13 +8,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppointmentCard } from '@/components/AppointmentCard';
 import { AssistantCard } from '@/components/AssistantCard';
 import { FamilyMemberStrip } from '@/components/FamilyMemberStrip';
+import { BotaoDeSino } from '@/components/BotaoDeSino';
 import { HomeHeaderCard } from '@/components/HomeHeaderCard';
 import { MedicationCard } from '@/components/MedicationCard';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SurfaceCard } from '@/components/SurfaceCard';
-import { CONSULTAS_EXEMPLO, USANDO_DADOS_DE_EXEMPLO } from '@/mocks/home';
-import { healthApi, type Medication, type Profile } from '@/api/health';
-import { vigenteHoje } from '@/lib/posologia';
+import { healthApi, type Appointment, type Medication, type Profile } from '@/api/health';
+import { hora, vigenteHoje } from '@/lib/posologia';
 import { reconciliarLembretes } from '@/lib/reminders';
 import { colors, fonts, radii, spacing } from '@/theme';
 
@@ -26,6 +26,7 @@ export default function InicioScreen() {
   const router = useRouter();
 
   const [medicamentos, setMedicamentos] = useState<Medication[]>([]);
+  const [consultas, setConsultas] = useState<Appointment[]>([]);
   const [perfis, setPerfis] = useState<Profile[]>([]);
   const [carregandoPerfis, setCarregandoPerfis] = useState(true);
   const [erroPerfis, setErroPerfis] = useState(false);
@@ -64,8 +65,18 @@ export default function InicioScreen() {
           setAgora(referencia);
           setMedicamentos(remedios);
 
+          /**
+           * So as AGENDADAS.
+           *
+           * A API filtra apenas por data: consulta CANCELADA no futuro volta
+           * na lista. Sem este filtro, a tela mostrava a consulta desmarcada e
+           * — pior — o aparelho agendava lembrete para ela.
+           */
+          const agendadas = consultas.filter((c) => c.status === 'agendada');
+          setConsultas(agendadas);
+
           await reconciliarLembretes(
-            consultas.map((c) => ({
+            agendadas.map((c) => ({
               id: c.id,
               scheduledAt: c.scheduledAt,
               reminderMinutesBefore: c.reminderMinutesBefore,
@@ -118,9 +129,9 @@ export default function InicioScreen() {
     [medicamentos, agora],
   );
 
-  function emBreve(recurso: string) {
-    Alert.alert(recurso, 'Esta parte do aplicativo ainda está sendo construída.');
-  }
+
+  // Tres, como o resto da tela: a lista completa e assunto de outra tela.
+  const consultasVisiveis = consultas.slice(0, 3);
 
   return (
     <View style={styles.tela}>
@@ -136,13 +147,18 @@ export default function InicioScreen() {
         ]}
         showsVerticalScrollIndicator={false}
       >
-        {USANDO_DADOS_DE_EXEMPLO ? (
-          <View style={styles.faixaDemo}>
-            <Text style={styles.faixaDemoTexto}>
-              Dados de demonstração — nada aqui é real
-            </Text>
-          </View>
-        ) : null}
+
+        {/*
+          O sino flutua sobre a faixa ilustrada.
+
+          A Inicio nao usa ScreenHeader — ela tem a ilustracao da mae com o
+          bebe, que sangra pela direita. Enfiar um cabecalho aqui so para ter o
+          sino custaria a ilustracao; o botao solto, posicionado por cima, sai
+          mais barato e nao mexe no desenho.
+        */}
+        <View style={styles.sino}>
+          <BotaoDeSino />
+        </View>
 
         {/* Cabecalho e lista de membros formam um card so, como no mockup. */}
         <SurfaceCard flush>
@@ -199,36 +215,63 @@ export default function InicioScreen() {
             title="Próximas consultas"
             onVerTodos={() => router.push('/medicos')}
           />
-          {CONSULTAS_EXEMPLO.map((c) => (
-            <AppointmentCard
-              key={c.id}
-              consulta={c}
-              onPress={() => emBreve('Detalhe da consulta')}
-            />
-          ))}
+          {consultasVisiveis.length === 0 ? (
+            <Text style={styles.semConsultas}>Nenhuma consulta agendada.</Text>
+          ) : (
+            consultasVisiveis.map((c) => (
+              <AppointmentCard
+                key={c.id}
+                consulta={paraCartao(c)}
+                // Nao ha tela de detalhe de consulta. Com medico vinculado, a
+                // ficha dele e o destino util; sem ele, o cartao fica inerte —
+                // melhor que abrir um aviso de "em construcao".
+                onPress={
+                  c.professionalId ? () => router.push(`/medico/${c.professionalId}`) : undefined
+                }
+              />
+            ))
+          )}
         </View>
       </ScrollView>
     </View>
   );
 }
 
+/**
+ * Da consulta da API para o formato que o cartao entende.
+ *
+ * O cartao nasceu no tempo do mock e pede tudo em texto ja formatado. Converter
+ * aqui evita mexer num componente que so esta tela usa — se um dia houver uma
+ * lista de consultas, o certo e o cartao passar a receber a consulta crua.
+ */
+function paraCartao(c: Appointment) {
+  const quando = new Date(c.scheduledAt);
+  const onde = c.location ?? (c.modality === 'teleconsulta' ? 'Teleconsulta' : 'Presencial');
+
+  return {
+    id: c.id,
+    medico: c.professionalName ?? c.title ?? 'Consulta',
+    especialidade: c.professionalSpecialty ?? c.profileName ?? '',
+    data: quando.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
+    hora: hora(quando),
+    local: onde,
+  };
+}
+
 const styles = StyleSheet.create({
+  semConsultas: {
+    fontFamily: fonts.regular,
+    fontSize: 14,
+    color: colors.textSecondary,
+    paddingVertical: spacing.md,
+  },
+
+  // zIndex para ficar acima do card; alinhado a direita como nas outras telas.
+  sino: { alignItems: 'flex-end', marginBottom: -60, zIndex: 1, paddingRight: spacing.sm },
+
   tela: { flex: 1, backgroundColor: colors.homeBackgroundTop },
   conteudo: {
     paddingHorizontal: spacing.xl,
-  },
-  faixaDemo: {
-    backgroundColor: 'rgba(44, 53, 32, 0.28)',
-    borderRadius: radii.pill,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.lg,
-    alignSelf: 'center',
-    marginBottom: spacing.lg,
-  },
-  faixaDemoTexto: {
-    fontFamily: fonts.semibold,
-    fontSize: 12,
-    color: colors.onAccent,
   },
   vazio: { padding: spacing.xl, alignItems: 'center' },
   vazioTexto: {

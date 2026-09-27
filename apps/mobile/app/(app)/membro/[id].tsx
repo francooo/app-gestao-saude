@@ -271,10 +271,7 @@ export default function MembroScreen() {
           <ScreenHeader
             title={deAjustes ? 'Dados pessoais' : novo ? 'Cadastro de membro' : 'Editar membro'}
             onBack={() => router.back()}
-            onNotifications={() =>
-              Alert.alert('Notificações', 'Esta parte ainda está sendo construída.')
-            }
-            hasNotifications
+          mostrarSino
           />
 
           {carregando ? (

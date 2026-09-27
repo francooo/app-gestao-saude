@@ -225,8 +225,7 @@ export default function MedicosScreen() {
           // Medicos e uma aba, entao nao ha historico. A seta leva para
           // Inicio, que e o que se espera dela numa aba secundaria.
           onBack={() => router.replace('/inicio')}
-          onNotifications={() => emBreve('Notificações')}
-          hasNotifications
+          mostrarSino
         />
 
         <View style={styles.seletor}>
