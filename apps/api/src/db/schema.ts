@@ -578,14 +578,15 @@ export const medicationAttachments = pgTable(
      * drizzle-kit gera mal. Sao as MESMAS duas palavras que o rastro da
      * leitura por foto usa, entao da para cruzar os dois sem traducao.
      *
-     * O `.default('receita')` existe APENAS durante a janela de implantacao:
-     * ele rotula corretamente as linhas que ja existiam (eram todas receita)
-     * sem backfill, e mantem a API antiga funcionando enquanto ela ainda
-     * estiver no ar. A migracao seguinte o derruba — com default, o tipo do
-     * drizzle deixa este campo OPCIONAL no insert, e um anexo que esquecesse
-     * de informa-lo viraria receita em silencio.
+     * SEM `.default`, e isso e deliberado: com default, o tipo do drizzle
+     * deixaria este campo OPCIONAL no insert, e um anexo que esquecesse de
+     * informa-lo viraria receita em silencio. Sem ele, esquecer nao compila.
+     *
+     * O default existiu por uma migracao so, para rotular as linhas antigas
+     * (eram todas receita) sem backfill e para manter a API anterior
+     * funcionando durante a janela de implantacao.
      */
-    kind: text('kind').notNull().default('receita'),
+    kind: text('kind').notNull(),
     /** Data URI JPEG em base64, nos mesmos termos de professionals.photo. */
     photo: text('photo').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -604,16 +605,6 @@ export const medicationAttachments = pgTable(
      * a mostrar uma das duas ao acaso.
      */
     uniqueIndex('medication_attachments_one_per_kind_idx').on(t.medicationId, t.kind),
-    /**
-     * O indice antigo, mantido DE PROPOSITO nesta migracao.
-     *
-     * Enquanto a API anterior estiver em producao ela executa
-     * `ON CONFLICT (medication_id)`; derrubar este indice agora transformaria
-     * todo anexo de receita num 42P10 — erro que este projeto ja levou no
-     * indice parcial das doses. Ele sai na migracao seguinte, depois do
-     * deploy.
-     */
-    uniqueIndex('medication_attachments_one_per_medication_idx').on(t.medicationId),
     check('medication_attachments_kind', sql`${t.kind} in ('receita', 'caixa')`),
     /**
      * Ultima linha de defesa do tamanho, mais folgada que o teto do contrato
