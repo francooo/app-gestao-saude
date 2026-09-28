@@ -139,7 +139,7 @@ export type ApiErrorCode = (typeof API_ERROR)[keyof typeof API_ERROR];
  * quem seguisse ao pe da letra deixaria o packages/shared para tras, e todo
  * cadastro novo ja nasceria pedindo reaceite.
  */
-export const POLICY_VERSION = '2026-09-28';
+export const POLICY_VERSION = '2026-09-29';
 
 export const fullNameSchema = z
   .string()

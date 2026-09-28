@@ -36,6 +36,7 @@ import {
   medications,
   professionals,
   profiles,
+  symptomEntries,
 } from '../db/schema';
 
 /**
@@ -49,6 +50,9 @@ const MAXIMO_REMEDIOS = 40;
 const MAXIMO_CONSULTAS = 20;
 const MAXIMO_MEDICOS = 30;
 const MAXIMO_DOSES = 20;
+const MAXIMO_SINTOMAS = 30;
+/** Quanto tempo para tras `listar_sintomas` enxerga. */
+const DIAS_DE_SINTOMA = 30;
 
 /** Quanto tempo para tras `listar_consultas` enxerga. */
 const DIAS_DE_CONSULTA_PASSADA = 60;
@@ -180,7 +184,112 @@ export const FERRAMENTAS = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'listar_sintomas',
+      description:
+        'O diario de sintomas que a familia registrou: o tipo (febre, dor, ' +
+        'nausea, tosse, humor ou sono), a intensidade de 1 a 5, o instante em ' +
+        'ISO com fuso, a temperatura em graus Celsius quando foi febre e a ' +
+        'observacao escrita. Em humor e sono a escala de 1 a 5 e o mesmo campo ' +
+        'intensidade, com outro rotulo na tela e a direcao invertida: ali 5 e o ' +
+        'MELHOR. Use para saber o que foi REGISTRADO — nao para concluir que ' +
+        'alguem esta bem, porque nao ter registro nao e o mesmo que nao ter ' +
+        'sentido. Compare os instantes devolvidos com a hora local que veio em ' +
+        'AGORA: esta ferramenta nao sabe que dia e hoje.',
+      parameters: {
+        type: 'object',
+        properties: {
+          pessoa: {
+            type: 'string',
+            description: 'Nome da pessoa. Sem isto, traz a familia toda.',
+          },
+          tipo: {
+            type: 'string',
+            enum: ['febre', 'dor', 'nausea', 'tosse', 'humor', 'sono'],
+            description: 'Restringe a um tipo. Sem isto, traz todos.',
+          },
+        },
+        additionalProperties: false,
+      },
+    },
+  },
 ] as const;
+
+const TIPOS_DE_SINTOMA = ['febre', 'dor', 'nausea', 'tosse', 'humor', 'sono'];
+
+/**
+ * O diario de sintomas da familia, ou de uma pessoa.
+ *
+ * `pessoa` e opcional, como em listar_consultas: "alguem teve febre esta
+ * semana?" e pergunta legitima sobre a casa inteira.
+ *
+ * A JANELA E ARITMETICA DE INSTANTE, nao de dia — subtracao de milissegundos,
+ * como em listarConsultas. Dividir o tempo em dias e o que este arquivo nao
+ * faz, porque o servidor nao sabe o dia do aparelho.
+ */
+async function listarSintomas(userId: string, args: { pessoa?: string; tipo?: string }) {
+  const alvo = await resolverPessoa(userId, args.pessoa);
+  if (!alvo.ok) return { erro: alvo.erro };
+
+  if (args.tipo && !TIPOS_DE_SINTOMA.includes(args.tipo)) {
+    // Erro legivel com as opcoes reais, como o resolverPessoa: o modelo se
+    // corrige na rodada seguinte em vez de a conversa morrer.
+    return { erro: `Tipo desconhecido. Os tipos sao: ${TIPOS_DE_SINTOMA.join(', ')}.` };
+  }
+
+  const desde = new Date(Date.now() - DIAS_DE_SINTOMA * 24 * 60 * 60 * 1000);
+  const ids = alvo.perfis.map((p) => p.id);
+
+  const filtros = [inArray(symptomEntries.profileId, ids), gte(symptomEntries.occurredAt, desde)];
+  if (args.tipo) filtros.push(eq(symptomEntries.kind, args.tipo));
+
+  const linhas = await db
+    .select({
+      pessoa: profiles.fullName,
+      tipo: symptomEntries.kind,
+      intensidade: symptomEntries.intensity,
+      temperatura: symptomEntries.temperatureC,
+      quando: symptomEntries.occurredAt,
+      observacoes: symptomEntries.note,
+    })
+    .from(symptomEntries)
+    .innerJoin(profiles, eq(profiles.id, symptomEntries.profileId))
+    .where(and(...filtros))
+    .orderBy(desc(symptomEntries.occurredAt))
+    .limit(MAXIMO_SINTOMAS);
+
+  const quem = args.pessoa ? alvo.perfis[0]?.nome ?? args.pessoa : 'a familia';
+
+  if (linhas.length === 0) {
+    return {
+      sintomas: [],
+      /**
+       * O AVISO NAO E ENFEITE, e e o mesmo mecanismo do aviso_medicos da ficha.
+       * Aqui o risco e pior: "nenhum registro" PARECE clinicamente informativo
+       * e nao e. Sem esta frase, o modelo pode concluir que a pessoa passou bem
+       * quando ninguem simplesmente anotou nada.
+       */
+      aviso: `Nenhum sintoma anotado para ${quem} nos ultimos ${DIAS_DE_SINTOMA} dias. Isso quer dizer que ninguem registrou, nao que ninguem sentiu nada.`,
+    };
+  }
+
+  return {
+    sintomas: linhas.map((l) => ({
+      pessoa: l.pessoa,
+      tipo: l.tipo,
+      // Numero puro, sem traduzir para palavra: inventar "moderada" para o 3
+      // seria o servidor opinando sobre uma escala cujo rotulo e da tela.
+      intensidade: l.intensidade,
+      temperatura_c: l.temperatura == null ? null : Number(l.temperatura),
+      quando: l.quando.toISOString(),
+      observacoes: l.observacoes,
+    })),
+    janela_dias: DIAS_DE_SINTOMA,
+    aviso: `Esta lista cobre os ultimos ${DIAS_DE_SINTOMA} dias. Um sintoma que nao aparece aqui pode simplesmente nao ter sido anotado.`,
+  };
+}
 
 /** Sem acento, sem caixa, sem espaco sobrando. "José" e "jose" sao o mesmo. */
 function normalizar(texto: string): string {
@@ -711,6 +820,10 @@ export async function executarFerramenta(
       case 'historico_de_doses':
         return JSON.stringify(
           await historicoDeDoses(userId, { remedio: texto('remedio'), pessoa: texto('pessoa') }),
+        );
+      case 'listar_sintomas':
+        return JSON.stringify(
+          await listarSintomas(userId, { pessoa: texto('pessoa'), tipo: texto('tipo') }),
         );
       default:
         return JSON.stringify({ erro: `Ferramenta "${nome}" nao existe.` });

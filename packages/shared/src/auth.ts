@@ -219,7 +219,7 @@ export function messageForError(code: string | undefined): string {
  * versao: a LGPD exige saber a QUAL texto a pessoa consentiu, nao apenas que
  * consentiu. Sem isso, um consentimento antigo vira indefensavel.
  */
-export const POLICY_VERSION = '2026-09-28';
+export const POLICY_VERSION = '2026-09-29';
 
 export const fullNameSchema = z
   .string()
