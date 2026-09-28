@@ -110,8 +110,30 @@ export default function AssistenteScreen() {
 
   const carregar = useCallback(async () => {
     const agora = new Date();
+
+    /**
+     * A TELA ABRE LIMPA, E ISSO NAO APAGA A MEMORIA DO ASSISTENTE.
+     *
+     * Sao duas memorias independentes, e confundi-las e o erro facil aqui:
+     *
+     *  - o que APARECE vinha de `historicoDoAssistente`, buscado a cada foco;
+     *  - o que o MODELO LEMBRA vem das ultimas mensagens que o servidor
+     *    injeta no prompt (HISTORICO_NO_PROMPT em handlers/assistant/
+     *    mensagem.ts). A tela nunca participou disso.
+     *
+     * Entao parar de mostrar nao faz o assistente esquecer: "e a Valentina?"
+     * depois de perguntar da Maria continua funcionando. E nada e apagado —
+     * os tetos diarios contam linhas em `assistant_messages`, e o rastro que
+     * responde "de onde veio este numero de dose" mora na mesma tabela.
+     *
+     * Limpar AQUI, e nao so na montagem, resolve dois casos de uma vez: sair
+     * da tela e voltar, e trocar de pessoa — cada pessoa tem a sua conversa
+     * no servidor, e deixar na tela as mensagens da anterior seria mentira.
+     */
+    setMensagens([]);
+
     try {
-      const [listaPerfis, remedios, agenda, historico] = await Promise.all([
+      const [listaPerfis, remedios, agenda] = await Promise.all([
         healthApi.listProfiles(),
         healthApi.listMedications({
           from: startOfDay(agora),
@@ -119,13 +141,11 @@ export default function AssistenteScreen() {
           profileId: perfilId,
         }),
         healthApi.listAppointments({ profileId: perfilId, upcoming: true }),
-        healthApi.historicoDoAssistente(perfilId),
       ]);
 
       setPerfis(listaPerfis);
       setMedicamentos(remedios);
       setConsultas(agenda);
-      setMensagens(historico);
 
       // Sem pessoa escolhida o assistente nao tem agenda para consultar, e o
       // titular e quem mais pergunta sobre a propria familia.
@@ -183,7 +203,10 @@ export default function AssistenteScreen() {
        */
       const recuperado = await recuperarDoHistorico(limpa);
       if (recuperado) {
-        setMensagens(recuperado);
+        // ACRESCENTA o par recuperado, nao substitui a lista: com a tela
+        // comecando limpa, trocar tudo pelo historico despejaria conversas
+        // antigas que a pessoa acabou de deixar de ver.
+        setMensagens((atual) => [...atual, ...recuperado]);
         setTimeout(() => rolagem.current?.scrollToEnd({ animated: true }), 80);
         return;
       }
@@ -205,15 +228,20 @@ export default function AssistenteScreen() {
   /**
    * Busca no historico a pergunta que acabou de falhar.
    *
-   * Devolve a conversa inteira quando a ultima pergunta gravada e esta — o que
-   * so acontece se o servidor concluiu. Qualquer outra coisa devolve nulo, e
-   * ai o erro e real.
+   * Devolve SO O PAR — a pergunta e o que veio depois dela — quando a ultima
+   * pergunta gravada e esta, o que so acontece se o servidor concluiu.
+   * Qualquer outra coisa devolve nulo, e ai o erro e real.
+   *
+   * Antes devolvia a conversa inteira, e fazia sentido enquanto a tela
+   * mostrava o historico todo. Agora ela comeca limpa, e despejar o passado
+   * num erro de rede seria a unica forma de ele reaparecer.
    */
   async function recuperarDoHistorico(pergunta: string): Promise<AssistantMessage[] | null> {
     try {
       const historico = await healthApi.historicoDoAssistente(perfilId);
-      const ultimaPergunta = [...historico].reverse().find((m) => m.role === 'user');
-      return ultimaPergunta?.content === pergunta ? historico : null;
+      const ultima = historico.map((m) => m.role).lastIndexOf('user');
+      if (ultima === -1 || historico[ultima]?.content !== pergunta) return null;
+      return historico.slice(ultima);
     } catch {
       // Sem rede tambem para conferir. Segue para o erro normal.
       return null;
@@ -288,6 +316,16 @@ export default function AssistenteScreen() {
                     <ChatBubble
                       autor="assistant"
                       texto="Sou uma inteligência artificial e posso errar — confira comigo a fonte e, no que for sério, fale com o médico. Em emergência, ligue 192."
+                    />
+                    {/*
+                      A tela abre limpa, mas o assistente LEMBRA. Sem dizer
+                      isso, a pessoa que perguntasse "e a Valentina?" depois de
+                      voltar levaria um susto com ele sabendo do que nao esta
+                      escrito em lugar nenhum.
+                    */}
+                    <ChatBubble
+                      autor="assistant"
+                      texto="Esta tela sempre começa vazia, mas eu lembro do que conversamos por último — dá para continuar de onde paramos."
                     />
                   </>
                 ) : (
