@@ -512,7 +512,22 @@ export const medicationTimes = pgTable(
 );
 
 /**
- * A foto da receita medica de um medicamento.
+ * As fotos de um medicamento: a receita, e a caixa.
+ *
+ * SAO DUAS ESPECIES NA MESMA TABELA, separadas por `kind`, e elas tem
+ * SENSIBILIDADES DIFERENTES — e essa diferenca e a razao de o aplicativo
+ * trata-las de formas opostas, entao precisa estar escrita aqui:
+ *
+ *  - 'receita' carrega o nome do paciente, o nome e o CRM de um profissional
+ *    que nunca consentiu com este aplicativo, e muitas vezes o diagnostico
+ *    escrito a mao. Por isso ela SO e guardada quando a pessoa pede, numa
+ *    caixa de selecao desligada por padrao.
+ *  - 'caixa' e uma embalagem de farmacia: nome comercial, concentracao,
+ *    laboratorio. Por isso ela e guardada sem perguntar, quando a pessoa
+ *    cadastra o remedio fotografando a embalagem — e pode ser removida a
+ *    qualquer momento na tela de detalhe. O botao de remover NAO E OPCIONAL:
+ *    e comum a farmacia colar na caixa a etiqueta com o nome do paciente, e
+ *    sem saida o recurso viraria uma armadilha.
  *
  * TABELA SEPARADA, E NAO UMA COLUNA EM `medications`. O motivo esta no codigo,
  * nao na teoria: tres consultas fazem `select` da LINHA INTEIRA de medications
@@ -554,20 +569,52 @@ export const medicationAttachments = pgTable(
     medicationId: uuid('medication_id')
       .notNull()
       .references(() => medications.id, { onDelete: 'cascade' }),
+    /**
+     * 'receita' | 'caixa'.
+     *
+     * `text` + check em vez de pgEnum pelo mesmo motivo ja escrito em
+     * medication_photo_reads: um terceiro tipo e plausivel (bula, pedido de
+     * exame), e acrescentar valor a um enum do Postgres e ALTER TYPE, que o
+     * drizzle-kit gera mal. Sao as MESMAS duas palavras que o rastro da
+     * leitura por foto usa, entao da para cruzar os dois sem traducao.
+     *
+     * O `.default('receita')` existe APENAS durante a janela de implantacao:
+     * ele rotula corretamente as linhas que ja existiam (eram todas receita)
+     * sem backfill, e mantem a API antiga funcionando enquanto ela ainda
+     * estiver no ar. A migracao seguinte o derruba — com default, o tipo do
+     * drizzle deixa este campo OPCIONAL no insert, e um anexo que esquecesse
+     * de informa-lo viraria receita em silencio.
+     */
+    kind: text('kind').notNull().default('receita'),
     /** Data URI JPEG em base64, nos mesmos termos de professionals.photo. */
     photo: text('photo').notNull(),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     /**
-     * UMA receita por remedio, por enquanto.
+     * UMA foto por remedio E POR TIPO.
      *
-     * Serve a duas coisas: soltar este indice depois e mudanca aditiva, e e
-     * ele que faz "trocar a foto" ser um onConflictDoUpdate limpo em vez de
-     * delete+insert. Sem ele, trocar criaria uma segunda linha e o detalhe
-     * passaria a mostrar uma das duas ao acaso.
+     * Era uma por remedio, e o comentario dizia "por enquanto, soltar este
+     * indice depois e mudanca aditiva". O depois chegou: um remedio agora pode
+     * ter a receita E a caixa ao mesmo tempo.
+     *
+     * Ele e o que faz "trocar a foto" ser um onConflictDoUpdate limpo em vez
+     * de delete+insert — e o alvo daquele conflito passa a ser AS DUAS
+     * COLUNAS. Sem isso, trocar criaria uma segunda linha e o detalhe passaria
+     * a mostrar uma das duas ao acaso.
+     */
+    uniqueIndex('medication_attachments_one_per_kind_idx').on(t.medicationId, t.kind),
+    /**
+     * O indice antigo, mantido DE PROPOSITO nesta migracao.
+     *
+     * Enquanto a API anterior estiver em producao ela executa
+     * `ON CONFLICT (medication_id)`; derrubar este indice agora transformaria
+     * todo anexo de receita num 42P10 — erro que este projeto ja levou no
+     * indice parcial das doses. Ele sai na migracao seguinte, depois do
+     * deploy.
      */
     uniqueIndex('medication_attachments_one_per_medication_idx').on(t.medicationId),
+    check('medication_attachments_kind', sql`${t.kind} in ('receita', 'caixa')`),
     /**
      * Ultima linha de defesa do tamanho, mais folgada que o teto do contrato
      * (500 000). Se ESTA checagem disparar, alguem escreveu no banco por fora

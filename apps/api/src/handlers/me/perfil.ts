@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { count, desc, eq, inArray } from 'drizzle-orm';
+import { and, count, desc, eq, inArray } from 'drizzle-orm';
 
 import { API_ERROR, POLICY_VERSION } from '../../contracts';
 import { db } from '../../db/client';
@@ -134,10 +134,21 @@ async function contagens(userId: string) {
     // Anexos passam pelos REMEDIOS da conta. Contar a tabela inteira daria o
     // numero de receitas de todo mundo — numero errado na tela que decide uma
     // exclusao irreversivel.
+    //
+    // E o `kind` e pelo MESMO motivo: a tabela guarda duas especies de foto, e
+    // sem o filtro este numero somaria as fotos de caixinha e a tela
+    // prometeria "3 receitas" para quem tem 1 receita e 2 caixas. As caixas
+    // tambem sao apagadas — quem diz isso e a politica de privacidade, nao
+    // este numero.
     db
       .select({ n: count() })
       .from(medicationAttachments)
-      .where(inArray(medicationAttachments.medicationId, remediosDaConta)),
+      .where(
+        and(
+          inArray(medicationAttachments.medicationId, remediosDaConta),
+          eq(medicationAttachments.kind, 'receita'),
+        ),
+      ),
     db
       .select({ n: count() })
       .from(appointments)

@@ -135,7 +135,7 @@ export type ApiErrorCode = (typeof API_ERROR)[keyof typeof API_ERROR];
  * consentimento: a LGPD exige saber a QUAL texto a pessoa consentiu.
  * Ao mudar o texto da politica, suba esta versao nos DOIS arquivos.
  */
-export const POLICY_VERSION = '2026-09-27';
+export const POLICY_VERSION = '2026-09-28';
 
 export const fullNameSchema = z
   .string()
@@ -387,8 +387,12 @@ export const medicationInputSchema = medicationBaseSchema.extend({
  *
  * Isso continua valendo mesmo agora que o cadastro TAMBEM lida com fotos: a
  * leitura por foto manda a imagem para o /api/assistant/ler-foto, que nao
- * grava nada. Se a pessoa quiser guardar aquela receita, o aplicativo cria o
- * remedio e so entao chama este PATCH. Um caminho le, o outro persiste.
+ * grava nada. O aplicativo cria o remedio e so entao chama este PATCH. Um
+ * caminho le, o outro persiste.
+ *
+ * O que mudou: a foto da CAIXINHA vai nesse PATCH sem a pessoa pedir, e a da
+ * receita continua indo so quando ela marca. O porque da assimetria esta no
+ * cabecalho da tabela medication_attachments.
  *
  * O teto e de 500 000 caracteres (~375 KB binarios), contra os 30 000 da foto
  * de perfil. A diferenca nao e generosidade: aquela foto e um rosto em 200x200
@@ -402,18 +406,42 @@ export const medicationInputSchema = medicationBaseSchema.extend({
  * medico: invertido, o null seria testado contra a expressao e REMOVER a
  * receita quebraria com "Formato de imagem invalido".
  */
-export const prescriptionPhotoSchema = z
-  .string()
-  .regex(/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/, {
-    message: 'Formato de imagem inválido',
-  })
-  .max(500_000, { message: 'A foto da receita ficou grande demais' })
-  .optional()
-  .nullable();
+/**
+ * FABRICA, e nao duas copias.
+ *
+ * As duas fotos anexadas seguem exatamente a mesma regra; so a mensagem de
+ * tamanho muda. Escrita uma vez, nao ha como a segunda sair com o `.regex`
+ * depois do `.nullable` — armadilha ja documentada duas vezes neste arquivo,
+ * e que faria REMOVER a foto quebrar com "Formato de imagem invalido".
+ */
+function fotoAnexadaSchema(mensagemDeTamanho: string) {
+  return z
+    .string()
+    .regex(/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/, {
+      message: 'Formato de imagem inválido',
+    })
+    .max(500_000, { message: mensagemDeTamanho })
+    .optional()
+    .nullable();
+}
 
-export const medicationPatchSchema = medicationBaseSchema
-  .partial()
-  .extend({ isActive: z.boolean().optional(), prescriptionPhoto: prescriptionPhotoSchema });
+export const prescriptionPhotoSchema = fotoAnexadaSchema('A foto da receita ficou grande demais');
+
+/**
+ * A foto da EMBALAGEM.
+ *
+ * Mesmo teto e mesmo formato da receita, e de proposito: as duas vem da mesma
+ * `escolherFotoDeDocumento` do aplicativo, calibrada para documento. O que
+ * muda entre elas nao e o tamanho — e a sensibilidade, e isso esta no
+ * cabecalho da tabela `medication_attachments`.
+ */
+export const packagePhotoSchema = fotoAnexadaSchema('A foto da caixinha ficou grande demais');
+
+export const medicationPatchSchema = medicationBaseSchema.partial().extend({
+  isActive: z.boolean().optional(),
+  prescriptionPhoto: prescriptionPhotoSchema,
+  packagePhoto: packagePhotoSchema,
+});
 
 /** Janela de busca das doses. O aplicativo manda o dia dele, com offset. */
 export const medicationQuerySchema = z.object({

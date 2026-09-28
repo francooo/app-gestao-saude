@@ -1,0 +1,3 @@
+ALTER TABLE "medication_attachments" ADD COLUMN "kind" text DEFAULT 'receita' NOT NULL;--> statement-breakpoint
+CREATE UNIQUE INDEX "medication_attachments_one_per_kind_idx" ON "medication_attachments" USING btree ("medication_id","kind");--> statement-breakpoint
+ALTER TABLE "medication_attachments" ADD CONSTRAINT "medication_attachments_kind" CHECK ("medication_attachments"."kind" in ('receita', 'caixa'));

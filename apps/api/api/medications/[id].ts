@@ -102,12 +102,20 @@ async function montar(id: string) {
      * ownership, que fazem select da linha inteira de medications, ela nao
      * pode vir junto — seriam centenas de KB por remedio a cada abertura da
      * tela inicial, sem ninguem pedir.
+     *
+     * Sao DUAS fotos possiveis por remedio, a receita e a caixa, separadas
+     * pela coluna `kind`. Uma consulta so traz as duas.
+     */
+    /**
+     * SEM `.limit(1)`, e isso e load-bearing: agora ha ate DUAS linhas por
+     * remedio (receita e caixa). Com o limite, o detalhe traria uma das duas
+     * ao acaso e a poria no campo errado — exatamente o defeito que o indice
+     * unico existe para impedir, reintroduzido do lado da leitura.
      */
     db
-      .select({ photo: medicationAttachments.photo })
+      .select({ kind: medicationAttachments.kind, photo: medicationAttachments.photo })
       .from(medicationAttachments)
-      .where(eq(medicationAttachments.medicationId, id))
-      .limit(1),
+      .where(eq(medicationAttachments.medicationId, id)),
   ]);
 
   return {
@@ -115,7 +123,8 @@ async function montar(id: string) {
     profileName: linha.profileName,
     profileColor: linha.profileColor,
     prescriberName: linha.prescriberName,
-    prescriptionPhoto: anexos[0]?.photo ?? null,
+    prescriptionPhoto: anexos.find((a) => a.kind === 'receita')?.photo ?? null,
+    packagePhoto: anexos.find((a) => a.kind === 'caixa')?.photo ?? null,
     times: horarios.map((h) => horaCurta(h.timeOfDay)),
     doses: doses.map(serializarDose),
     lastDoseAt: doses.find((d) => d.status === 'tomada')?.takenAt ?? null,
@@ -191,29 +200,16 @@ async function atualizar(
     await tx.update(medications).set(mudancas).where(eq(medications.id, atual.id));
 
     /**
-     * Tres estados, e a diferenca entre os dois primeiros e o ponto todo:
-     * ausente nao mexe, null remove, string substitui. E o mesmo padrao dos
-     * outros campos deste PATCH e da foto do medico.
+     * Tres estados por foto, e a diferenca entre os dois primeiros e o ponto
+     * todo: ausente nao mexe, null remove, string substitui. E o mesmo padrao
+     * dos outros campos deste PATCH e da foto do medico.
      *
-     * O onConflictDoUpdate so funciona por causa do indice unico por
-     * medicamento: sem ele, "trocar a receita" criaria uma segunda linha e o
-     * detalhe passaria a mostrar uma das duas ao acaso.
+     * Um caminho UNICO de escrita para as duas especies, com o `kind`
+     * obrigatorio por parametro. Duplicar o bloco seria duplicar tambem a
+     * chance de esquecer o predicado do delete — ver `gravarAnexo`.
      */
-    if (body.prescriptionPhoto !== undefined) {
-      if (body.prescriptionPhoto === null) {
-        await tx
-          .delete(medicationAttachments)
-          .where(eq(medicationAttachments.medicationId, atual.id));
-      } else {
-        await tx
-          .insert(medicationAttachments)
-          .values({ medicationId: atual.id, photo: body.prescriptionPhoto })
-          .onConflictDoUpdate({
-            target: medicationAttachments.medicationId,
-            set: { photo: body.prescriptionPhoto, createdAt: new Date() },
-          });
-      }
-    }
+    await gravarAnexo(tx, atual.id, 'receita', body.prescriptionPhoto);
+    await gravarAnexo(tx, atual.id, 'caixa', body.packagePhoto);
 
     // `times` tem semantica de substituicao total.
     if (body.times !== undefined) {
@@ -227,6 +223,52 @@ async function atualizar(
   });
 
   return json(res, 200, { medication: await montar(atual.id) });
+}
+
+/**
+ * Grava, troca ou remove UMA das fotos de um medicamento.
+ *
+ * O `kind` e obrigatorio e nao tem valor padrao de proposito: este e o unico
+ * caminho de escrita da tabela, e um default aqui deixaria um chamador
+ * distraido gravar caixa por cima de receita.
+ *
+ * A LINHA QUE CARREGA O RECURSO INTEIRO e o `eq(kind)` do delete. Sem ele,
+ * remover a foto da caixinha APAGA A RECEITA JUNTO — e nada no typecheck
+ * pega, porque os tipos sao identicos. O sintoma chegaria ao usuario como
+ * "sumiu minha receita", dias depois, sem ninguem ligar uma coisa a outra.
+ *
+ * O `onConflictDoUpdate` mira AS DUAS COLUNAS, que e o indice unico novo. O
+ * indice nao e parcial, entao nao precisa de `targetWhere` — diferente do
+ * caso das doses mais abaixo, que precisa repetir o predicado sob pena de
+ * 42P10.
+ */
+async function gravarAnexo(
+  tx: Parameters<Parameters<typeof db.transaction>[0]>[0],
+  medicationId: string,
+  kind: 'receita' | 'caixa',
+  foto: string | null | undefined,
+) {
+  if (foto === undefined) return;
+
+  if (foto === null) {
+    await tx
+      .delete(medicationAttachments)
+      .where(
+        and(
+          eq(medicationAttachments.medicationId, medicationId),
+          eq(medicationAttachments.kind, kind),
+        ),
+      );
+    return;
+  }
+
+  await tx
+    .insert(medicationAttachments)
+    .values({ medicationId, kind, photo: foto })
+    .onConflictDoUpdate({
+      target: [medicationAttachments.medicationId, medicationAttachments.kind],
+      set: { photo: foto, createdAt: new Date() },
+    });
 }
 
 async function remover(res: VercelResponse, id: string) {
