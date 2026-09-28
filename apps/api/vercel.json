@@ -11,5 +11,8 @@
       "maxDuration": 15
     }
   },
-  "cleanUrls": true
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/api/health", "destination": "/api/auth/health" }
+  ]
 }

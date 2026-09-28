@@ -4,6 +4,7 @@ import { API_ERROR } from '../../src/contracts';
 import { fail, withErrorHandling } from '../../src/lib/http';
 
 import forgotPassword from '../../src/handlers/auth/forgot-password';
+import health from '../../src/handlers/auth/health';
 import login from '../../src/handlers/auth/login';
 import logout from '../../src/handlers/auth/logout';
 import refresh from '../../src/handlers/auth/refresh';
@@ -22,6 +23,10 @@ import resetPassword from '../../src/handlers/auth/reset-password';
  * As URLs nao mudam: /api/auth/login continua sendo /api/auth/login. Cada
  * handler segue no seu proprio arquivo, agora em src/handlers/auth/, com a
  * logica intacta — este arquivo so despacha.
+ *
+ * A EXCECAO e `health`, que mudou de endereco de proposito: era /api/health e
+ * virou /api/auth/health, para liberar a vaga que o diario de sintomas
+ * precisava. Foi a unica das doze funcoes sem consumidor instalado.
  */
 const ROTAS: Record<string, (req: VercelRequest, res: VercelResponse) => Promise<void>> = {
   login,
@@ -33,6 +38,15 @@ const ROTAS: Record<string, (req: VercelRequest, res: VercelResponse) => Promise
   // Aberta de proposito: o link e aberto no NAVEGADOR, que nao tem o token da
   // sessao do aplicativo. Quem prova ser dono do endereco e quem abre o link.
   'confirmar-email': confirmarEmail,
+  /**
+   * A sonda de saude, que ANTES era /api/health.
+   *
+   * Veio para ca para liberar uma vaga de funcao serverless — era a unica das
+   * doze sem consumidor instalado. Mora neste roteador porque ele e o unico
+   * sem autenticacao por desenho, e uma sonda precisa responder sem token: o
+   * nome da pasta nao e sobre credencial, e sim sobre o que responde sem ela.
+   */
+  health,
 };
 
 export default withErrorHandling(async (req: VercelRequest, res: VercelResponse) => {
