@@ -132,6 +132,17 @@ export default function AppLayout() {
         name="notificacoes"
         options={{ href: null, tabBarStyle: { display: 'none' } }}
       />
+      {/*
+        Sintomas ESCONDE a barra pelo mesmo motivo dos formularios acima: e um
+        formulario, e a regra ja esta escrita ali. O mockup acende "Assistente",
+        o que e arbitrario — a tela nao tem relacao com ele, e uma aba acesa
+        com a seta indo para o Inicio seria a mentira que o layout de Remedios
+        descreve.
+      */}
+      <Tabs.Screen
+        name="sintomas"
+        options={{ href: null, tabBarStyle: { display: 'none' } }}
+      />
       <Tabs.Screen
         name="conta/acesso"
         options={{ href: null, tabBarStyle: { display: 'none' } }}

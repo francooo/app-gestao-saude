@@ -84,6 +84,7 @@ export const profileCountsSchema = z.object({
   appointments: z.number(),
   upcomingAppointments: z.number(),
   assistantConversations: z.number(),
+  symptoms: z.number(),
 });
 export type ProfileCounts = z.infer<typeof profileCountsSchema>;
 
@@ -272,6 +273,39 @@ export const leituraDeFotoSchema = z.object({
     .nullish(),
 });
 export type LeituraDeFoto = z.infer<typeof leituraDeFotoSchema>;
+
+// ---------------------------------------------------------------------------
+// Diario de sintomas
+// ---------------------------------------------------------------------------
+
+export const symptomKindSchema = z.enum(['febre', 'dor', 'nausea', 'tosse', 'humor', 'sono']);
+export type SymptomKind = z.infer<typeof symptomKindSchema>;
+
+export const symptomEntrySchema = z.object({
+  id: z.uuid(),
+  profileId: z.uuid(),
+  kind: symptomKindSchema,
+  /** 1 a 5. O rotulo de cada degrau muda por tipo — ver lib/diarioDeSintomas. */
+  intensity: z.number(),
+  /** So em febre. Numero, nao texto: o servidor serializa o `numeric`. */
+  temperatureC: z.number().nullish(),
+  occurredAt: z.string(),
+  note: z.string().nullish(),
+  createdAt: z.string(),
+  /** Vem do join na listagem; ausente na resposta de criacao. */
+  profileName: z.string().nullish(),
+  profileColor: z.string().nullish(),
+});
+export type SymptomEntry = z.infer<typeof symptomEntrySchema>;
+
+export type SymptomInput = {
+  profileId: string;
+  kind: SymptomKind;
+  intensity: number;
+  occurredAt: string;
+  temperatureC?: number | null;
+  note?: string | null;
+};
 
 /** profileId ausente: o servidor ignora, e mover de perfil orfanaria o historico. */
 export type MedicationPatch = Partial<Omit<MedicationInput, 'profileId'>> & {
@@ -507,6 +541,47 @@ export const healthApi = {
       '/api/assistant/ler-foto',
       { method: 'POST', body: input, authenticated: true, timeoutMs: LEITURA_TIMEOUT_MS, signal },
       (data) => leituraDeFotoSchema.parse(data),
+    );
+  },
+
+  /**
+   * O diario de sintomas de um periodo.
+   *
+   * A janela e obrigatoria e tem teto de 31 dias no servidor, pelo mesmo
+   * motivo da listagem de doses: quem sabe que dia e hoje e o aparelho.
+   */
+  listSymptoms(input: {
+    profileId?: string | null;
+    from: Date;
+    to: Date;
+  }): Promise<SymptomEntry[]> {
+    const q = new URLSearchParams({
+      from: agoraLocalISO(input.from),
+      to: agoraLocalISO(input.to),
+    });
+    if (input.profileId) q.set('profileId', input.profileId);
+
+    return request(
+      `/api/diary/sintomas?${q.toString()}`,
+      { authenticated: true },
+      (data) => z.object({ symptoms: z.array(symptomEntrySchema) }).parse(data).symptoms,
+    );
+  },
+
+  createSymptom(input: SymptomInput): Promise<SymptomEntry> {
+    return request(
+      '/api/diary/sintomas',
+      { method: 'POST', body: input, authenticated: true },
+      (data) => z.object({ symptom: symptomEntrySchema }).parse(data).symptom,
+    );
+  },
+
+  /** O id vai na querystring: o roteador ocupa o segmento do caminho. */
+  deleteSymptom(id: string): Promise<void> {
+    return request(
+      `/api/diary/sintomas?id=${id}`,
+      { method: 'DELETE', authenticated: true },
+      () => undefined,
     );
   },
 

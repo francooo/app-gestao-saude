@@ -1,8 +1,9 @@
+import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { addDays, endOfDay, startOfDay } from 'date-fns';
 import { useCallback, useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppointmentCard } from '@/components/AppointmentCard';
@@ -10,6 +11,7 @@ import { AssistantCard } from '@/components/AssistantCard';
 import { FamilyMemberStrip } from '@/components/FamilyMemberStrip';
 import { BotaoDeSino } from '@/components/BotaoDeSino';
 import { HomeHeaderCard } from '@/components/HomeHeaderCard';
+import { IconTile, LADRILHO_NEUTRO } from '@/components/IconTile';
 import { MedicationCard } from '@/components/MedicationCard';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SurfaceCard } from '@/components/SurfaceCard';
@@ -186,6 +188,36 @@ export default function InicioScreen() {
           <AssistantCard onPress={() => router.push('/assistente')} />
         </View>
 
+        {/*
+          O card "Sintomas" das acoes rapidas do Assistente NAO virou este
+          caminho, e o nome daqui e outro de proposito: la o verbo e conversar
+          sobre um sintoma, aqui e anotar um. Sao coisas diferentes, e dois
+          botoes com a mesma palavra colidiriam.
+
+          Ladrilho NEUTRO, nunca ambar: nao ter registrado nada hoje nao e
+          tarefa pendente, e ambar significa isso em todo o aplicativo.
+        */}
+        <View style={styles.secao}>
+          <Pressable
+            onPress={() => router.push('/sintomas')}
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel="Diário de sintomas. Anote febre, dor, humor e sono."
+            style={({ pressed }) => [pressed && styles.diarioPressionado]}
+          >
+            <SurfaceCard style={styles.diario}>
+              <View style={styles.diarioLinha}>
+                <IconTile size={54} icone="activity" {...LADRILHO_NEUTRO} />
+                <View style={styles.diarioTextos}>
+                  <Text style={styles.diarioTitulo}>Diário de sintomas</Text>
+                  <Text style={styles.diarioAjuda}>Anote febre, dor, humor e sono</Text>
+                </View>
+                <Feather name="chevron-right" size={22} color={colors.accentGreen} />
+              </View>
+            </SurfaceCard>
+          </Pressable>
+        </View>
+
         <View style={styles.secao}>
           <SectionHeader
             title="Medicamentos de hoje"
@@ -259,6 +291,17 @@ function paraCartao(c: Appointment) {
 }
 
 const styles = StyleSheet.create({
+  diario: { padding: spacing.lg },
+  diarioPressionado: { opacity: 0.85 },
+  diarioLinha: { flexDirection: 'row', alignItems: 'center' },
+  diarioTextos: { flex: 1, marginLeft: spacing.lg },
+  diarioTitulo: { fontFamily: fonts.bold, fontSize: 17, color: colors.sectionTitle },
+  diarioAjuda: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
   semConsultas: {
     fontFamily: fonts.regular,
     fontSize: 14,

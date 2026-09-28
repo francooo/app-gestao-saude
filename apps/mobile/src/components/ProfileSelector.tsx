@@ -24,14 +24,31 @@ type Props = {
    * frase de outra e ninguem perceberia; assim o TypeScript cobra.
    */
   tituloDoPainel: string;
+  /**
+   * Oferece a opcao "Todos da familia". Padrao `true`, para as telas que ja
+   * usam este componente nao mudarem em nada.
+   *
+   * O diario de sintomas passa `false`: um sintoma pertence a UMA pessoa, e
+   * "todos da familia" nao e um registro possivel.
+   */
+  permitirTodos?: boolean;
 };
 
 const TODOS = 'Todos da família';
+const ESCOLHER = 'Escolha a pessoa';
 
-export function ProfileSelector({ profiles, selectedId, onSelect, tituloDoPainel }: Props) {
+export function ProfileSelector({
+  profiles,
+  selectedId,
+  onSelect,
+  tituloDoPainel,
+  permitirTodos = true,
+}: Props) {
   const [aberto, setAberto] = useState(false);
   const selecionado = profiles.find((p) => p.id === selectedId) ?? null;
-  const rotulo = selecionado?.fullName ?? TODOS;
+  // Sem a opcao de todos e sem ninguem escolhido, a barra convida a escolher
+  // em vez de mentir que ha uma selecao.
+  const rotulo = selecionado?.fullName ?? (permitirTodos ? TODOS : ESCOLHER);
 
   function escolher(id: string | null) {
     onSelect(id);
@@ -60,7 +77,7 @@ export function ProfileSelector({ profiles, selectedId, onSelect, tituloDoPainel
         )}
 
         <Text style={styles.nome} numberOfLines={1}>
-          {selecionado ? selecionado.fullName.split(' ')[0] : TODOS}
+          {selecionado ? selecionado.fullName.split(' ')[0] : rotulo}
         </Text>
 
         <Feather name="chevron-down" size={22} color={colors.sectionTitle} />
@@ -79,11 +96,13 @@ export function ProfileSelector({ profiles, selectedId, onSelect, tituloDoPainel
             <Text style={styles.painelTitulo}>{tituloDoPainel}</Text>
 
             <ScrollView bounces={false}>
-              <Opcao
-                rotulo={TODOS}
-                ativo={selectedId === null}
-                onPress={() => escolher(null)}
-              />
+              {permitirTodos ? (
+                <Opcao
+                  rotulo={TODOS}
+                  ativo={selectedId === null}
+                  onPress={() => escolher(null)}
+                />
+              ) : null}
               {profiles.map((p) => (
                 <Opcao
                   key={p.id}
@@ -122,7 +141,7 @@ function Opcao({
       accessibilityState={{ selected: ativo }}
       style={[styles.opcao, ativo && styles.opcaoAtiva]}
     >
-      {rotulo === TODOS ? (
+      {rotulo === TODOS || rotulo === ESCOLHER ? (
         <View style={styles.todosIcone}>
           <Feather name="users" size={18} color={colors.accentGreen} />
         </View>

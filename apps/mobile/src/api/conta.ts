@@ -34,6 +34,7 @@ export const contagensSchema = z.object({
   prescriptions: z.number(),
   appointments: z.number(),
   assistantConversations: z.number(),
+  symptoms: z.number(),
 });
 export type Contagens = z.infer<typeof contagensSchema>;
 
