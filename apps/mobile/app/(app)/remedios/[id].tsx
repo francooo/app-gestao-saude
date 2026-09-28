@@ -5,12 +5,14 @@ import { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Linking,
   Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -26,6 +28,7 @@ import { ScreenBackground } from '@/components/ScreenBackground';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SurfaceCard } from '@/components/SurfaceCard';
+import { FotoDaEmbalagem } from '@/components/FotoDaEmbalagem';
 import { escolherFotoDeDocumento } from '@/lib/foto';
 import {
   cancelarLembretesDeUmMedicamento,
@@ -80,6 +83,11 @@ export default function MedicamentoDetalheScreen() {
   const [erro, setErro] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [anexando, setAnexando] = useState(false);
+  /**
+   * Separado do `anexando`, que e da receita: compartilhar faria o veu
+   * aparecer nas duas fotos ao mexer numa so.
+   */
+  const [fotoCaixa, setFotoCaixa] = useState<'enviando' | 'removendo' | null>(null);
   const [todasAsDoses, setTodasAsDoses] = useState(false);
 
   /**
@@ -127,46 +135,120 @@ export default function MedicamentoDetalheScreen() {
     }
   }
 
-  /** Camera ou galeria, e depois o envio. */
-  function anexar(trocando: boolean) {
+  /**
+   * Camera ou galeria, e depois o envio.
+   *
+   * O `alvo` decide o campo do PATCH e os textos. As duas fotos usam a mesma
+   * `escolherFotoDeDocumento` — o preparo e identico; o que difere entre elas
+   * e a sensibilidade, nao a resolucao.
+   */
+  function anexar(alvo: 'receita' | 'caixa', trocando: boolean) {
     if (!m) return;
-    Alert.alert(
-      trocando ? 'Trocar a receita' : 'Adicionar prescrição',
-      'De onde vem a foto da receita?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        { text: 'Tirar foto', onPress: () => void enviarFoto('camera') },
-        { text: 'Escolher da galeria', onPress: () => void enviarFoto('galeria') },
-      ],
-    );
+    const titulo =
+      alvo === 'receita'
+        ? trocando
+          ? 'Trocar a receita'
+          : 'Adicionar prescrição'
+        : trocando
+          ? 'Trocar a foto da caixinha'
+          : 'Foto da caixinha';
+
+    Alert.alert(titulo, 'De onde vem a foto?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Tirar foto', onPress: () => void enviarFoto(alvo, 'camera') },
+      { text: 'Escolher da galeria', onPress: () => void enviarFoto(alvo, 'galeria') },
+    ]);
   }
 
-  async function enviarFoto(origem: 'camera' | 'galeria') {
+  async function enviarFoto(alvo: 'receita' | 'caixa', origem: 'camera' | 'galeria') {
     if (!m) return;
 
     const escolha = await escolherFotoDeDocumento(origem);
     if (!escolha.ok) {
       if (escolha.motivo === 'cancelado') return;
-      Alert.alert(
-        'Não consegui usar a foto',
-        escolha.motivo === 'permissao'
-          ? 'Autorize o acesso à câmera nos ajustes do aparelho.'
-          : 'Tente de novo, ou escolha outra imagem.',
-      );
+      if (escolha.motivo === 'permissao') {
+        /**
+         * Antes isto era um alerta de um botao so, dizendo "autorize nos
+         * ajustes" sem nenhum caminho que levasse la — um beco. A tela de
+         * leitura por foto ja oferecia as duas saidas; agora as duas telas
+         * oferecem.
+         */
+        Alert.alert(
+          'Sem acesso à câmera',
+          'Autorize a câmera nos ajustes do aparelho, ou escolha uma foto que já está na galeria.',
+          [
+            { text: 'Cancelar', style: 'cancel' },
+            { text: 'Escolher da galeria', onPress: () => void enviarFoto(alvo, 'galeria') },
+            { text: 'Abrir ajustes', onPress: () => void Linking.openSettings() },
+          ],
+        );
+        return;
+      }
+      Alert.alert('Não consegui usar a foto', 'Tente de novo, ou escolha outra imagem.');
       return;
     }
 
-    setAnexando(true);
+    if (alvo === 'caixa') setFotoCaixa('enviando');
+    else setAnexando(true);
     try {
-      setM(await healthApi.updateMedication(m.id, { prescriptionPhoto: escolha.dataUri }));
+      setM(
+        await healthApi.updateMedication(
+          m.id,
+          alvo === 'caixa'
+            ? { packagePhoto: escolha.dataUri }
+            : { prescriptionPhoto: escolha.dataUri },
+        ),
+      );
     } catch (e) {
       Alert.alert(
-        'Não consegui guardar a receita',
+        alvo === 'caixa' ? 'Não consegui guardar a foto' : 'Não consegui guardar a receita',
         messageForError(e instanceof ApiRequestError ? e.code : undefined),
       );
     } finally {
-      setAnexando(false);
+      if (alvo === 'caixa') setFotoCaixa(null);
+      else setAnexando(false);
     }
+  }
+
+  /** O menu do "..." da faixa da foto da caixinha. */
+  function opcoesDaCaixa() {
+    Alert.alert('Foto da caixinha', 'O que você quer fazer com esta foto?', [
+      { text: 'Cancelar', style: 'cancel' },
+      { text: 'Trocar foto', onPress: () => anexar('caixa', true) },
+      { text: 'Remover foto', style: 'destructive', onPress: removerFotoDaCaixa },
+    ]);
+  }
+
+  /**
+   * Remover NAO E OPCIONAL neste recurso.
+   *
+   * A foto da caixinha e guardada sem perguntar porque uma embalagem e um
+   * produto de farmacia. So que e comum a farmacia colar nela a etiqueta com
+   * o nome do paciente — sem uma saida, "guardar sem perguntar" viraria uma
+   * armadilha.
+   */
+  function removerFotoDaCaixa() {
+    if (!m) return;
+    Alert.alert('Remover a foto da caixinha?', 'A foto sai da sua conta e não dá para recuperar.', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Remover',
+        style: 'destructive',
+        onPress: async () => {
+          setFotoCaixa('removendo');
+          try {
+            setM(await healthApi.updateMedication(m.id, { packagePhoto: null }));
+          } catch (e) {
+            Alert.alert(
+              'Não consegui remover',
+              messageForError(e instanceof ApiRequestError ? e.code : undefined),
+            );
+          } finally {
+            setFotoCaixa(null);
+          }
+        },
+      },
+    ]);
   }
 
   function removerReceita() {
@@ -302,9 +384,12 @@ export default function MedicamentoDetalheScreen() {
             todasAsDoses={todasAsDoses}
             onVerTodasAsDoses={() => setTodasAsDoses((v) => !v)}
             onMarcar={() => void marcar()}
-            onAdicionarReceita={() => anexar(false)}
-            onTrocarReceita={() => anexar(true)}
+            onAdicionarReceita={() => anexar('receita', false)}
+            onTrocarReceita={() => anexar('receita', true)}
             onRemoverReceita={removerReceita}
+            fotoCaixa={fotoCaixa}
+            onAdicionarCaixa={() => anexar('caixa', false)}
+            onOpcoesDaCaixa={opcoesDaCaixa}
             onEditar={() => router.push(`/medicamento/form/${m.id}`)}
             onEncerrar={encerrar}
             onApagar={apagar}
@@ -326,6 +411,9 @@ type ConteudoProps = {
   onAdicionarReceita: () => void;
   onTrocarReceita: () => void;
   onRemoverReceita: () => void;
+  fotoCaixa: 'enviando' | 'removendo' | null;
+  onAdicionarCaixa: () => void;
+  onOpcoesDaCaixa: () => void;
   onEditar: () => void;
   onEncerrar: () => void;
   onApagar: () => void;
@@ -342,12 +430,34 @@ function Conteudo({
   onAdicionarReceita,
   onTrocarReceita,
   onRemoverReceita,
+  fotoCaixa,
+  onAdicionarCaixa,
+  onOpcoesDaCaixa,
   onEditar,
   onEncerrar,
   onApagar,
 }: ConteudoProps) {
   const estado = estadoHoje(m, agora);
   const titulo = tituloDoMedicamento(m);
+  // Mesmo limiar e mesma fonte de verdade que o OpcaoDeFoto ja usa.
+  const { fontScale } = useWindowDimensions();
+  const fonteGrande = fontScale >= 1.3;
+
+  /**
+   * O botao aparece em UM de dois lugares, nunca nos dois. Definido uma vez
+   * porque duplicar as sete props garantiria que um dia elas divergissem.
+   */
+  const BotaoDeDose = () => (
+    <DoseButton
+      checked={marcado}
+      repetivel={repetivel}
+      disabled={semAcao}
+      enviando={enviando}
+      label={rotuloDaDose(titulo, estado, repetivel)}
+      onPress={onMarcar}
+      size={44}
+    />
+  );
   const forma = LADRILHO_POR_FORMA[formaVisual(m.form)];
   const chip = chipDeStatus(estado, agora);
   const dose = linhaDaProximaDose(m, estado, agora);
@@ -369,7 +479,24 @@ function Conteudo({
         <View style={styles.heroiLinha}>
           <IconTile {...forma} size={54} />
 
-          <View style={styles.heroiTextos}>
+          {/*
+            AGRUPADO, e isto conserta um defeito que ja existia: o Avatar fixa
+            `accessibilityLabel={nome}` sem saida, entao sem o agrupamento o
+            leitor de tela parava duas vezes e lia "Ana Clara" e depois
+            "Vinculado a Ana". Um pai `accessible` funde os filhos num no so.
+
+            Em `heroiTextos` e nao em `heroiLinha`: agrupar a linha inteira
+            engoliria o DoseButton, que precisa de foco proprio e de estado.
+          */}
+          <View
+            style={styles.heroiTextos}
+            accessible
+            accessibilityLabel={
+              m.profileName
+                ? `${titulo}. Vinculado a ${m.profileName.split(' ')[0]}.`
+                : titulo
+            }
+          >
             <Text style={styles.heroiNome} numberOfLines={2}>
               {titulo}
             </Text>
@@ -388,36 +515,53 @@ function Conteudo({
             ) : null}
           </View>
 
-          <DoseButton
-            checked={marcado}
-            repetivel={repetivel}
-            disabled={semAcao}
-            enviando={enviando}
-            label={rotuloDaDose(titulo, estado, repetivel)}
-            onPress={onMarcar}
-            size={44}
-          />
+          {/*
+            Com fonte grande o botao desce para a linha do chip, e a coluna do
+            nome sobe de 150 para 194 pt num aparelho de 360. Hoje, a 1,3x,
+            "Monoidratada" trunca — ou seja, a tela fica MELHOR com fonte
+            grande do que estava.
+          */}
+          {!fonteGrande ? <BotaoDeDose /> : null}
         </View>
 
-        <View
-          style={[styles.chip, { backgroundColor: chip.ativo ? colors.pillTablet : colors.chipMore }]}
-          accessibilityRole="text"
-          accessibilityLabel={`Situação: ${chip.texto}`}
-        >
-          <Feather
-            name={chip.icone}
-            size={15}
-            color={chip.ativo ? colors.accentGreen : colors.textSecondary}
-          />
-          <Text
+        <View style={styles.heroiSituacao}>
+          <View
             style={[
-              styles.chipTexto,
-              { color: chip.ativo ? colors.accentGreen : colors.textSecondary },
+              styles.chip,
+              { backgroundColor: chip.ativo ? colors.pillTablet : colors.chipMore },
             ]}
+            accessibilityRole="text"
+            accessibilityLabel={`Situação: ${chip.texto}`}
           >
-            {chip.texto}
-          </Text>
+            <Feather
+              name={chip.icone}
+              size={15}
+              color={chip.ativo ? colors.accentGreen : colors.textSecondary}
+            />
+            <Text
+              style={[
+                styles.chipTexto,
+                { color: chip.ativo ? colors.accentGreen : colors.textSecondary },
+              ]}
+            >
+              {chip.texto}
+            </Text>
+          </View>
+
+          {fonteGrande ? <BotaoDeDose /> : null}
         </View>
+
+        {/* Separa BLOCOS, nao itens de uma coluna de icones — por isso sem a
+            margem a esquerda que o filete das linhas de Info usa. */}
+        <View style={styles.divisorLargo} />
+
+        <FotoDaEmbalagem
+          foto={m.packagePhoto ?? null}
+          doQue={titulo}
+          ocupada={fotoCaixa}
+          onAdicionar={onAdicionarCaixa}
+          onOpcoes={onOpcoesDaCaixa}
+        />
       </SurfaceCard>
 
       <View style={styles.secao}>
@@ -716,17 +860,30 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     flexShrink: 1,
   },
+  // `flexShrink` no lugar de `alignSelf: flex-start`: dentro de uma linha ele
+  // ja nao estica, e precisa encolher para caber ao lado do botao de dose
+  // quando a fonte do sistema e grande.
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    alignSelf: 'flex-start',
     gap: spacing.xs,
     borderRadius: radii.pill,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.md,
-    marginTop: spacing.md,
+    flexShrink: 1,
   },
   chipTexto: { fontFamily: fonts.semibold, fontSize: 14, flexShrink: 1 },
+  heroiSituacao: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    marginTop: spacing.md,
+  },
+  divisorLargo: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.divider,
+    marginTop: spacing.md,
+  },
 
   secao: { marginTop: spacing.xl },
   cartao: { padding: spacing.lg },

@@ -188,7 +188,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: radii.card - 12,
-    backgroundColor: 'rgba(248, 243, 222, 0.75)',
+    backgroundColor: colors.veil,
   },
   botao: {
     flexDirection: 'row',

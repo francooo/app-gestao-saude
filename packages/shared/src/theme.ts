@@ -134,6 +134,17 @@ export const colors = {
    * uma linha fria.
    */
   divider: 'rgba(90, 100, 73, 0.18)',
+  /**
+   * Veu sobre creme, para conteudo ocupado.
+   *
+   * E o `surface` a 75%, e nao uma cor nova: o literal ja estava cravado no
+   * PrescriptionCard. Com o segundo uso virou repeticao real, e hexadecimal
+   * solto em dois arquivos e o que os tokens existem para evitar.
+   *
+   * Nao confundir com `overlay`, que e o escuro do visualizador em tela
+   * cheia: aquele escurece, este clareia.
+   */
+  veil: 'rgba(248, 243, 222, 0.75)',
   /** Veu do visualizador de imagem em tela cheia. */
   overlay: 'rgba(24, 28, 18, 0.92)',
 } as const;

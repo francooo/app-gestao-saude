@@ -187,6 +187,14 @@ export const medicationSchema = z.object({
    * cada abertura.
    */
   prescriptionPhoto: z.string().nullish(),
+  /**
+   * Data URI JPEG da foto da EMBALAGEM.
+   *
+   * Mesmas tres situacoes da receita — e uma quarta enquanto o `eas update`
+   * nao alcanca todo mundo: contra um servidor que ainda nao conhece o campo,
+   * ele simplesmente nao vem. `nullish` cobre as quatro.
+   */
+  packagePhoto: z.string().nullish(),
   times: z.array(z.string()).default([]),
   doses: z.array(doseSchema).default([]),
   /**
@@ -270,6 +278,8 @@ export type MedicationPatch = Partial<Omit<MedicationInput, 'profileId'>> & {
   isActive?: boolean;
   /** null remove a receita; ausente preserva a que estiver la. */
   prescriptionPhoto?: string | null;
+  /** Mesma semantica. Uma nao encosta na outra — o servidor filtra por tipo. */
+  packagePhoto?: string | null;
 };
 
 export type DoseInput = {
@@ -518,7 +528,7 @@ export const healthApi = {
         // O prazo maior SO quando ha foto no corpo. Dar 45 s a todo PATCH
         // faria um "encerrar tratamento" sem rede ficar quase um minuto
         // parecendo que vai dar certo.
-        ...(input.prescriptionPhoto ? { timeoutMs: ANEXO_TIMEOUT_MS } : {}),
+        ...(input.prescriptionPhoto || input.packagePhoto ? { timeoutMs: ANEXO_TIMEOUT_MS } : {}),
       },
       (data) => z.object({ medication: medicationSchema }).parse(data).medication,
     );

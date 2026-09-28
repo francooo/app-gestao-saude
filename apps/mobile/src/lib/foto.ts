@@ -180,7 +180,14 @@ async function comprimirAte(
 }
 
 /**
- * Escolhe e prepara a foto de um DOCUMENTO — hoje, a receita medica.
+ * Escolhe e prepara a foto de um DOCUMENTO: a receita medica, a caixa de um
+ * remedio, ou a foto que a IA le para preencher o cadastro.
+ *
+ * As tres usam o MESMO preparo de proposito. O que difere entre elas nao e a
+ * resolucao — e a sensibilidade, e isso e decidido em outro lugar (ver o
+ * cabecalho de medication_attachments). Uma quarta calibragem so para a caixa
+ * economizaria trafego e abriria um terceiro caminho neste arquivo, cujo
+ * cabecalho explica justamente por que existem so dois.
  *
  * As duas propriedades que o manipulador da de graca (ver escolherFoto) valem
  * ainda mais aqui, e a segunda e a razao de esta funcao nunca poder mandar a

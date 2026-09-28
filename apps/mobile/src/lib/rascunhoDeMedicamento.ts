@@ -62,7 +62,10 @@ export type RascunhoDeMedicamento = {
   camposLidos: CampoLido[];
   /** Data URI JPEG ja preparado por escolherFotoDeDocumento. */
   foto: string;
-  /** Receita pode virar anexo; caixa nunca. */
+  /**
+   * Decide para qual campo a foto vai depois do cadastro: a receita so vira
+   * anexo se a pessoa marcar; a caixa vira sempre, e e removivel no detalhe.
+   */
   kind: 'receita' | 'caixa';
   readId: string;
   readItem: number;

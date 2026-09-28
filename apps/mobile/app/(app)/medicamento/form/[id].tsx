@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { messageForError } from '@gestao/shared';
 
 import { ApiRequestError } from '@/api/client';
+import type { MedicationPatch } from '@/api/health';
 import {
   healthApi,
   type Medication,
@@ -100,6 +101,17 @@ export default function MedicamentoFormScreen() {
    * abririam o estado impossivel "quer guardar, mas nao tem foto".
    */
   const [receita, setReceita] = useState<{ foto: string; guardar: boolean } | null>(null);
+
+  /**
+   * A foto da embalagem, quando o cadastro veio de fotografar a caixinha.
+   *
+   * IRMAO de `receita`, e nao um campo dele: `receita` carrega o par
+   * foto+consentimento, e esta nao tem consentimento a carregar — ela e
+   * guardada sem perguntar. O porque da assimetria esta no cabecalho da
+   * tabela medication_attachments: uma caixa e um produto de farmacia; uma
+   * receita traz o paciente, o CRM e muitas vezes o diagnostico.
+   */
+  const [fotoDaCaixa, setFotoDaCaixa] = useState<string | null>(null);
   const [origemDaLeitura, setOrigemDaLeitura] = useState<{ readId: string; item: number } | null>(
     null,
   );
@@ -176,9 +188,12 @@ export default function MedicamentoFormScreen() {
     setCamposDaIA(new Set(r.camposLidos));
     if (r.prescritorId) setPrescritorId(r.prescritorId);
     setOrigemDaLeitura({ readId: r.readId, item: r.readItem });
-    // Caixa nao e receita: nao tem o que anexar, e perguntar treinaria a
-    // pessoa a responder no automatico.
+    // As duas fotos vao para campos diferentes, com regras diferentes: a
+    // receita SO e guardada se a pessoa marcar (perguntar toda vez treinaria
+    // a responder no automatico, entao a caixa de selecao nasce desligada); a
+    // caixinha e guardada sem perguntar, e removivel na tela do remedio.
     setReceita(r.kind === 'receita' && r.foto ? { foto: r.foto, guardar: false } : null);
+    setFotoDaCaixa(r.kind === 'caixa' && r.foto ? r.foto : null);
   }, [novo, rascunho]);
 
   /** Sair da tela descarta a foto, mesmo que a vaga ainda nao tenha vencido. */
@@ -187,6 +202,7 @@ export default function MedicamentoFormScreen() {
       () => () => {
         descartarRascunho();
         setReceita(null);
+        setFotoDaCaixa(null);
       },
       [],
     ),
@@ -208,6 +224,7 @@ export default function MedicamentoFormScreen() {
     // Um remedio que veio do banco nao tem campo pendente de conferencia.
     setCamposDaIA(new Set());
     setReceita(null);
+    setFotoDaCaixa(null);
     setOrigemDaLeitura(null);
   }
 
@@ -272,7 +289,16 @@ export default function MedicamentoFormScreen() {
         });
         // So depois de o remedio existir: o POST de criacao nao aceita
         // prescriptionPhoto, de proposito (ver o contrato).
-        if (receita?.guardar) await anexarReceita(criado.id, receita.foto);
+        /**
+         * UM PATCH com as duas fotos possiveis, e nao dois: uma requisicao,
+         * uma transacao, um modo de falha.
+         */
+        const anexos: MedicationPatch = {};
+        if (receita?.guardar) anexos.prescriptionPhoto = receita.foto;
+        if (fotoDaCaixa) anexos.packagePhoto = fotoDaCaixa;
+        if (Object.keys(anexos).length > 0) {
+          await anexarFotos(criado.id, anexos, Boolean(receita?.guardar));
+        }
         await porLembretesEmDia(criado);
       } else {
         const salvo = await healthApi.updateMedication(id!, dados);
@@ -290,6 +316,7 @@ export default function MedicamentoFormScreen() {
       // o "voltar" depois de salvar cai na camera. Ver rascunhoDeMedicamento.
       if (novo && origemDaLeitura) marcarCadastroConcluido();
       setReceita(null);
+      setFotoDaCaixa(null);
       router.back();
     } catch (e) {
       if (e instanceof ApiRequestError && e.fields) setErros(e.fields);
@@ -323,10 +350,18 @@ export default function MedicamentoFormScreen() {
    * DUPLICADO. A mensagem tem que dizer o que e verdade: o remedio esta la, a
    * receita nao, e da para anexar depois pela tela do remedio.
    */
-  async function anexarReceita(idCriado: string, foto: string) {
+  async function anexarFotos(idCriado: string, anexos: MedicationPatch, pediuAReceita: boolean) {
     try {
-      await healthApi.updateMedication(idCriado, { prescriptionPhoto: foto });
+      await healthApi.updateMedication(idCriado, anexos);
     } catch {
+      /**
+       * O alerta so aparece quando a RECEITA falhou, e isso nao e descuido: a
+       * pessoa PEDIU aquilo, marcando a caixa de selecao. Ninguem pediu a
+       * foto da caixinha — avisar sobre o fracasso de algo que nao foi pedido
+       * e ruido, ainda mais com o conserto a um toque na propria tela de
+       * detalhe, onde a faixa da foto fica vazia e convidando.
+       */
+      if (!pediuAReceita) return;
       Alert.alert(
         'Remédio cadastrado',
         'Não consegui guardar a receita agora. Dá para anexar depois, na tela do remédio.',
@@ -589,6 +624,28 @@ export default function MedicamentoFormScreen() {
                   </>
                 ) : null}
               </SurfaceCard>
+
+              {fotoDaCaixa ? (
+                /*
+                  AVISO, e nao pergunta. A caixinha e guardada sem perguntar
+                  porque e um produto de farmacia — mas guardar em silencio,
+                  sem a pessoa saber, seria outra coisa. Ela fica sabendo
+                  aqui, e a tela do remedio tem o botao de remover.
+                */
+                <SurfaceCard style={styles.bloco}>
+                  <View style={styles.guardar}>
+                    <Feather name="camera" size={20} color={colors.accentGreen} />
+                    <View style={styles.flex}>
+                      <Text style={styles.guardarTitulo}>
+                        A foto da caixinha fica guardada neste remédio
+                      </Text>
+                      <Text style={styles.guardarAjuda}>
+                        Ela aparece na tela do remédio, e dá para remover quando quiser.
+                      </Text>
+                    </View>
+                  </View>
+                </SurfaceCard>
+              ) : null}
 
               {receita ? (
                 /*
