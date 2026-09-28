@@ -9,6 +9,7 @@ import {
   medicationDoses,
   medications,
   profiles,
+  symptomEntries,
   users,
 } from '../../src/db/schema';
 import { requireAuth } from '../../src/lib/auth';
@@ -57,7 +58,7 @@ export default withErrorHandling(async (req: VercelRequest, res: VercelResponse)
  * que uma tela so mostra.
  */
 async function contagens(profileId: string) {
-  const [[remedios], [doses], [consultas], [futuras], [conversas]] = await Promise.all([
+  const [[remedios], [doses], [consultas], [futuras], [conversas], [sintomas]] = await Promise.all([
     db.select({ n: count() }).from(medications).where(eq(medications.profileId, profileId)),
     db
       .select({ n: count() })
@@ -74,6 +75,7 @@ async function contagens(profileId: string) {
       .select({ n: count() })
       .from(assistantConversations)
       .where(eq(assistantConversations.profileId, profileId)),
+    db.select({ n: count() }).from(symptomEntries).where(eq(symptomEntries.profileId, profileId)),
   ]);
 
   return {
@@ -82,6 +84,7 @@ async function contagens(profileId: string) {
     appointments: consultas?.n ?? 0,
     upcomingAppointments: futuras?.n ?? 0,
     assistantConversations: conversas?.n ?? 0,
+    symptoms: sintomas?.n ?? 0,
   };
 }
 

@@ -417,6 +417,114 @@ export const appointments = pgTable(
   ],
 );
 
+/**
+ * O diario de sintomas: o que a familia SENTIU.
+ *
+ * O aplicativo ja sabia o que ela toma e para onde vai. Faltava isto, que e o
+ * que responde "ha quanto tempo esta assim, e piorou?" sem depender da
+ * memoria de ninguem no dia da consulta.
+ *
+ * SAO SEIS TIPOS, e pressao e glicemia FICARAM DE FORA de proposito: aquilo
+ * sao medicoes (120/80 mmHg, 95 mg/dL), nao sintomas. Guarda-las como
+ * "intensidade 3 de 5" jogaria fora o numero que o medico quer ver, e nao
+ * daria para converter depois porque o numero nunca teria sido pedido. Elas
+ * viram um dominio proprio, com faixa de referencia.
+ *
+ * LGPD: dado pessoal sensivel de saude (Art. 11). A cascata a partir de
+ * `profiles` e o que faz a exclusao de conta e a de UMA pessoa funcionarem
+ * sem codigo novo. Nao e `set null`: sintoma sem pessoa nao e informacao, e
+ * lixo sensivel orfao.
+ */
+export const symptomEntries = pgTable(
+  'symptom_entries',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    profileId: uuid('profile_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    /**
+     * 'febre' | 'dor' | 'nausea' | 'tosse' | 'humor' | 'sono'
+     *
+     * SEM ACENTO no valor guardado, e isso e licao de casa: `medications.form`
+     * gravou 'cápsula' acentuado e obrigou o aplicativo a normalizar antes de
+     * escolher icone. A chave e ASCII; o acento vive na tela.
+     *
+     * `text` + check em vez de pgEnum pelo motivo ja escrito em
+     * medication_photo_reads: um setimo tipo e plausivel, e acrescentar valor
+     * a um enum do Postgres e ALTER TYPE, que o drizzle-kit gera mal.
+     */
+    kind: text('kind').notNull(),
+    /**
+     * A escala de 1 a 5, a mesma para os seis tipos.
+     *
+     * O ROTULO e que muda na tela — em 'humor' e 'sono' nao se diz
+     * "intensidade", e a direcao se inverte (5 e o melhor, nao o pior). Isso e
+     * decisao de tela: O SERVIDOR NAO TEM OPINIAO SOBRE ROTULO, e nao deve
+     * ganhar uma coluna para guardar um.
+     */
+    intensity: smallint('intensity').notNull(),
+    /**
+     * Temperatura em graus Celsius, so quando o tipo e 'febre'.
+     *
+     * Febre e o unico dos seis com um INSTRUMENTO produzindo numero, e e esse
+     * numero que as pessoas anotam ("39,2 ontem a noite"). Continua OPCIONAL
+     * mesmo com febre: nem toda febre e medida, e exigir o termometro
+     * transformaria o registro mais urgente no mais dificil de fazer.
+     *
+     * `numeric` volta como STRING no driver — precisa de serializarSintoma nos
+     * dois caminhos (listagem e POST), e o typecheck nao pega o esquecimento.
+     */
+    temperatureC: numeric('temperature_c', { precision: 4, scale: 1 }),
+    /**
+     * Quando o sintoma aconteceu. SEM defaultNow(), de proposito.
+     *
+     * O aplicativo manda o instante ja resolvido com offset. Um default aqui
+     * seria o servidor opinando sobre "agora" em UTC — exatamente a decisao
+     * que este projeto tomou de NAO tomar.
+     */
+    occurredAt: timestamp('occurred_at', { withTimezone: true }).notNull(),
+    note: text('note'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    /**
+     * NAO EXISTE `updatedAt`, e nao existe PATCH. A tela cria e apaga;
+     * corrigir e apagar e registrar de novo. Uma coluna que ninguem escreve
+     * mente sobre o que a tabela sabe — por isso a ausencia esta escrita aqui,
+     * senao alguem "conserta" o que nao esta quebrado.
+     */
+  },
+  (t) => [
+    /**
+     * UM indice, e so um.
+     *
+     * Serve as tres consultas que existem: a listagem por pessoa com janela, a
+     * da familia (o planejador chega pelos profile_id do join com profiles) e
+     * a ferramenta do assistente. Btree varre para tras, entao a ordenacao
+     * desc nao pede indice proprio.
+     *
+     * NAO copiar o appointments_scheduled_idx global: aquele existe porque
+     * consulta tem consumidor por instante independente de pessoa. Nada aqui
+     * pergunta "todos os sintomas do mundo depois de X". Indice sem consulta e
+     * custo de escrita e pista falsa para quem ler o schema depois.
+     */
+    index('symptom_entries_profile_occurred_idx').on(t.profileId, t.occurredAt),
+    check(
+      'symptom_entries_kind',
+      sql`${t.kind} in ('febre', 'dor', 'nausea', 'tosse', 'humor', 'sono')`,
+    ),
+    check('symptom_entries_intensity', sql`${t.intensity} between 1 and 5`),
+    /**
+     * Duas regras numa expressao: a FAIXA (30 a 45 graus, fora disso e erro de
+     * digitacao) e a EXCLUSIVIDADE (so febre tem temperatura). E a ultima
+     * linha de defesa; o contrato recusa antes, com mensagem por campo. Se
+     * ESTA checagem disparar, alguem escreveu no banco por fora da API.
+     */
+    check(
+      'symptom_entries_temperature',
+      sql`${t.temperatureC} IS NULL OR (${t.kind} = 'febre' AND ${t.temperatureC} >= 30 AND ${t.temperatureC} <= 45)`,
+    ),
+  ],
+);
+
 export const medications = pgTable(
   'medications',
   {

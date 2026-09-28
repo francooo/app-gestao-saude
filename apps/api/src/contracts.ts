@@ -133,7 +133,11 @@ export type ApiErrorCode = (typeof API_ERROR)[keyof typeof API_ERROR];
 /**
  * Versao da politica de privacidade aceita no cadastro. Gravada junto do
  * consentimento: a LGPD exige saber a QUAL texto a pessoa consentiu.
- * Ao mudar o texto da politica, suba esta versao nos DOIS arquivos.
+ * Ao mudar o texto da politica, suba esta versao nos TRES lugares: este
+ * arquivo, packages/shared/src/auth.ts e a linha `Versao` do
+ * public/privacidade.html. O comentario dizia DOIS e estava incompleto —
+ * quem seguisse ao pe da letra deixaria o packages/shared para tras, e todo
+ * cadastro novo ja nasceria pedindo reaceite.
  */
 export const POLICY_VERSION = '2026-09-28';
 
@@ -628,6 +632,72 @@ export const assistantAskSchema = z.object({
   agora: z.iso.datetime({ offset: true }).optional(),
   fusoHorario: z.string().max(60).optional(),
 });
+
+// ---------------------------------------------------------------------------
+// Diario de sintomas
+//
+// Um sintoma pertence a um PERFIL, nao a conta — mesma regra das consultas, e
+// mesma consequencia: toda verificacao de dono passa por um join com profiles.
+//
+// ESTREIA SAI DE GRACA. Nenhum aplicativo publicado conhece estas URLs, entao
+// todos os campos que precisam ser obrigatorios ja nascem obrigatorios, sem
+// default de compatibilidade. A partir do primeiro bundle no ar isso vira
+// migracao — e o comentario do `agora` do assistente, logo acima, explica por
+// que.
+// ---------------------------------------------------------------------------
+
+export const symptomKindValues = ['febre', 'dor', 'nausea', 'tosse', 'humor', 'sono'] as const;
+
+/**
+ * Um registro do diario.
+ *
+ * O `.superRefine` e seguro AQUI, ao contrario do medicationBaseSchema, que
+ * precisou ficar plano porque o PATCH dele exige `.partial()` e um ZodEffects
+ * nao tem esse metodo. Este dominio NAO TEM PATCH: cria e apaga.
+ */
+export const symptomEntryInputSchema = z
+  .object({
+    profileId: z.uuid({ message: 'Escolha de quem é o registro' }),
+    kind: z.enum(symptomKindValues),
+    /** A escala e a mesma para os seis tipos; o rotulo e que muda na tela. */
+    intensity: z.number().int().min(1).max(5),
+    /** ISO 8601 com fuso. O aplicativo manda o instante que ele mesmo montou. */
+    occurredAt: z.iso.datetime({ offset: true, message: 'Data ou hora inválida' }),
+    temperatureC: z.number().min(30).max(45).optional().nullable(),
+    note: z.string().trim().max(500).optional().nullable(),
+  })
+  .superRefine((valor, ctx) => {
+    /**
+     * Temperatura so existe em febre, e o servidor RECUSA em vez de ignorar.
+     *
+     * Ignorar em silencio faria a tela achar que salvou algo que nao salvou —
+     * e um 37,8 pendurado numa tosse seria uma medicao sem coisa medida, que
+     * daqui a um mes ninguem saberia se foi digitada no registro errado.
+     */
+    if (valor.temperatureC != null && valor.kind !== 'febre') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['temperatureC'],
+        message: 'A temperatura só se aplica à febre',
+      });
+    }
+  });
+
+/** Janela obrigatoria, como na listagem de doses: quem sabe o dia e o aparelho. */
+export const symptomQuerySchema = z.object({
+  profileId: z.uuid().optional(),
+  from: z.iso.datetime({ offset: true }),
+  to: z.iso.datetime({ offset: true }),
+});
+
+/**
+ * O id vai na querystring porque o roteador ocupa o segmento do caminho.
+ *
+ * Validar o uuid ANTES da consulta de dono nao e zelo: `eq(uuid, 'abc')` faz o
+ * Postgres levantar, e o withErrorHandling transforma isso em 500. E o que
+ * acontece hoje em /api/appointments/abc.
+ */
+export const symptomIdQuerySchema = z.object({ id: z.uuid() });
 
 export const assistantHistorySchema = z.object({
   profileId: z.uuid().optional(),

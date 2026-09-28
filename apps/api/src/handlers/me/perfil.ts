@@ -11,6 +11,7 @@ import {
   medicationDoses,
   medications,
   profiles,
+  symptomEntries,
   users,
 } from '../../db/schema';
 import type { AuthContext } from '../../lib/auth';
@@ -92,7 +93,7 @@ export default async function perfil(
     policyVersion: POLICY_VERSION,
   };
 
-  // So a tela de apagar a conta pede. Cinco agregacoes nao tem por que rodar a
+  // So a tela de apagar a conta pede. Sete agregacoes nao tem por que rodar a
   // cada abertura do aplicativo.
   if (req.query.counts === 'true') corpo.counts = await contagens(auth.userId);
 
@@ -124,7 +125,8 @@ async function contagens(userId: string) {
     .from(medications)
     .where(inArray(medications.profileId, perfisDaConta));
 
-  const [[pessoas], [remedios], [doses], [receitas], [consultas], [conversas]] = await Promise.all([
+  const [[pessoas], [remedios], [doses], [receitas], [consultas], [conversas], [sintomas]] =
+    await Promise.all([
     db.select({ n: count() }).from(profiles).where(eq(profiles.userId, userId)),
     db.select({ n: count() }).from(medications).where(inArray(medications.profileId, perfisDaConta)),
     db
@@ -157,6 +159,10 @@ async function contagens(userId: string) {
       .select({ n: count() })
       .from(assistantConversations)
       .where(eq(assistantConversations.userId, userId)),
+    db
+      .select({ n: count() })
+      .from(symptomEntries)
+      .where(inArray(symptomEntries.profileId, perfisDaConta)),
   ]);
 
   return {
@@ -166,5 +172,6 @@ async function contagens(userId: string) {
     prescriptions: receitas?.n ?? 0,
     appointments: consultas?.n ?? 0,
     assistantConversations: conversas?.n ?? 0,
+    symptoms: sintomas?.n ?? 0,
   };
 }

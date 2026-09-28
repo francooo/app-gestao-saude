@@ -1,4 +1,4 @@
-import type { medicationDoses, medications, profiles } from '../db/schema';
+import type { medicationDoses, medications, profiles, symptomEntries } from '../db/schema';
 
 /**
  * Conversoes entre o que o driver do Postgres entrega e o que o aplicativo
@@ -22,6 +22,18 @@ export function horaCurta(timeOfDay: string): string {
 
 export function serializarDose(d: typeof medicationDoses.$inferSelect) {
   return { ...d, amount: numero(d.amount) };
+}
+
+/**
+ * A temperatura e `numeric`, e volta como STRING do driver.
+ *
+ * Precisa ser aplicado nos DOIS caminhos, a listagem e o POST — com so um
+ * deles, um devolve numero e o outro texto, e o typecheck NAO PEGA, porque o
+ * servidor responde unknown. E o mesmo defeito que serializarPerfil ja
+ * documenta como vivido.
+ */
+export function serializarSintoma(s: typeof symptomEntries.$inferSelect) {
+  return { ...s, temperatureC: numero(s.temperatureC) };
 }
 
 export function serializarMedicamento(m: typeof medications.$inferSelect) {

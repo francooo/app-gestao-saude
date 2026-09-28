@@ -113,6 +113,13 @@
       "when": 1790557132029,
       "tag": "0015_chief_cable",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1790599527472,
+      "tag": "0016_outgoing_oracle",
+      "breakpoints": true
     }
   ]
 }
