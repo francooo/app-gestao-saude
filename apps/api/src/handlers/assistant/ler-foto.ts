@@ -151,6 +151,7 @@ export default withErrorHandling(async (req: VercelRequest, res: VercelResponse)
     kind: body.kind,
     model: resposta.modelo,
     prescriber: mapeado.prescriber,
+    consultationDate: mapeado.consultationDate,
     items: mapeado.items,
     discarded: mapeado.discarded,
   };

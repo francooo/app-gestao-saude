@@ -44,7 +44,14 @@ export type LeituraMapeada = {
   items: ItemLido[];
   /** Itens que o modelo devolveu e que nao dava para aproveitar (sem nome). */
   discarded: number;
-  prescriber: { nameRead: string | null; professionalId: string | null };
+  prescriber: {
+    nameRead: string | null;
+    professionalId: string | null;
+    /** Especialidade lida da receita, para a ficha do medico novo. */
+    specialtyRead: string | null;
+  };
+  /** Data da consulta, AAAA-MM-DD, para virar consulta cadastrada. null se ilegivel. */
+  consultationDate: string | null;
 };
 
 /** O numero pode vir como texto. `catch` devolve null em vez de lancar. */
@@ -67,6 +74,8 @@ const itemDoModeloSchema = z.object({
 const saidaDoModeloSchema = z.object({
   medicamentos: z.array(itemDoModeloSchema).nullish().catch(null),
   prescritor: z.string().nullish().catch(null),
+  especialidade: z.string().nullish().catch(null),
+  data_da_consulta: z.string().nullish().catch(null),
 });
 
 /**
@@ -143,6 +152,30 @@ function horario(v: string): string | null {
   return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
 }
 
+/**
+ * A data da consulta, AAAA-MM-DD, validada.
+ *
+ * Rejeita o que nao e data de calendario real (2026-02-31), ano implausivel, ou
+ * futuro — a receita ja aconteceu. Nao e sensivel a fuso: compara ao dia, com
+ * um dia de tolerancia. Ilegivel vira null, e a pessoa preenche na revisao.
+ */
+function dataDaConsulta(v: unknown): string | null {
+  const t = texto(v, 10);
+  if (!t) return null;
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(t);
+  if (!m) return null;
+  const ano = Number(m[1]);
+  const mes = Number(m[2]);
+  const dia = Number(m[3]);
+  if (ano < 2015 || ano > new Date().getUTCFullYear() + 1) return null;
+  const d = new Date(Date.UTC(ano, mes - 1, dia));
+  if (d.getUTCFullYear() !== ano || d.getUTCMonth() !== mes - 1 || d.getUTCDate() !== dia) {
+    return null;
+  }
+  if (d.getTime() > Date.now() + 24 * 60 * 60 * 1000) return null;
+  return t;
+}
+
 /** Quantas vezes ao dia cabem num intervalo inteiro de horas. */
 const VEZES_QUE_VIRAM_INTERVALO: Record<number, number> = {
   1: 24,
@@ -217,14 +250,16 @@ function posologia(item: z.infer<typeof itemDoModeloSchema>): Posologia {
 async function casarPrescritor(
   userId: string,
   nomeLido: string | null,
-): Promise<{ nameRead: string | null; professionalId: string | null }> {
-  if (!nomeLido) return { nameRead: null, professionalId: null };
+  especialidadeLida: string | null,
+): Promise<{ nameRead: string | null; professionalId: string | null; specialtyRead: string | null }> {
+  const specialtyRead = texto(especialidadeLida, 60);
+  if (!nomeLido) return { nameRead: null, professionalId: null, specialtyRead };
 
   const alvo = normalizar(nomeLido)
     .replace(/^(dr|dra)\.?\s+/, '')
     .replace(/\s*crm.*$/, '')
     .trim();
-  if (alvo.length < 3) return { nameRead: nomeLido, professionalId: null };
+  if (alvo.length < 3) return { nameRead: nomeLido, professionalId: null, specialtyRead };
 
   const cadastrados = await db
     .select({ id: professionals.id, name: professionals.name })
@@ -241,6 +276,7 @@ async function casarPrescritor(
   return {
     nameRead: nomeLido,
     professionalId: achados.length === 1 ? achados[0]!.id : null,
+    specialtyRead,
   };
 }
 
@@ -304,8 +340,15 @@ export async function mapearLeitura(
 
   const prescriber =
     kind === 'caixa'
-      ? { nameRead: null, professionalId: null }
-      : await casarPrescritor(userId, texto(analisado.data.prescritor, 120));
+      ? { nameRead: null, professionalId: null, specialtyRead: null }
+      : await casarPrescritor(
+          userId,
+          texto(analisado.data.prescritor, 120),
+          analisado.data.especialidade ?? null,
+        );
 
-  return { items, discarded, prescriber };
+  // Zerada para caixa, como o prescritor: uma embalagem nao tem consulta.
+  const consultationDate = kind === 'caixa' ? null : dataDaConsulta(analisado.data.data_da_consulta);
+
+  return { items, discarded, prescriber, consultationDate };
 }

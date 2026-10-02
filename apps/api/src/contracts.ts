@@ -242,12 +242,15 @@ export const appointmentInputSchema = z.object({
   address: z.string().trim().max(300).optional().nullable(),
   reminderMinutesBefore: z.number().int().min(0).max(10080).optional().nullable(),
   notes: z.string().trim().max(1000).optional().nullable(),
+  /**
+   * Ausente nasce 'agendada' (default do banco) — o caso normal, uma consulta
+   * futura. A receita manda 'realizada': a consulta ja aconteceu, entao fica
+   * fora de "Proximas consultas" e nao gera lembrete.
+   */
+  status: z.enum(appointmentStatusValues).optional(),
 });
 
-export const appointmentPatchSchema = appointmentInputSchema
-  .omit({ profileId: true })
-  .partial()
-  .extend({ status: z.enum(appointmentStatusValues).optional() });
+export const appointmentPatchSchema = appointmentInputSchema.omit({ profileId: true }).partial();
 
 // ---------------------------------------------------------------------------
 // Medicamentos

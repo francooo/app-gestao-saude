@@ -97,6 +97,9 @@ async function criar(req: VercelRequest, res: VercelResponse, userId: string) {
       address: body.address ?? null,
       reminderMinutesBefore: body.reminderMinutesBefore ?? null,
       notes: body.notes ?? null,
+      // Ausente deixa o default 'agendada' do banco valer. A receita manda
+      // 'realizada' (consulta passada).
+      ...(body.status ? { status: body.status } : {}),
     })
     .returning();
 
