@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppointmentCard } from '@/components/AppointmentCard';
 import { AssistantCard } from '@/components/AssistantCard';
+import { CartaoLerReceita } from '@/components/CartaoLerReceita';
 import { FamilyMemberStrip } from '@/components/FamilyMemberStrip';
 import { BotaoDeSino } from '@/components/BotaoDeSino';
 import { HomeHeaderCard } from '@/components/HomeHeaderCard';
@@ -183,6 +184,13 @@ export default function InicioScreen() {
             />
           )}
         </SurfaceCard>
+
+        <View style={styles.secao}>
+          <CartaoLerReceita
+            onFotografar={() => router.push('/remedios/novo?receita=camera')}
+            onGaleria={() => router.push('/remedios/novo?receita=galeria')}
+          />
+        </View>
 
         <View style={styles.secao}>
           <AssistantCard onPress={() => router.push('/assistente')} />

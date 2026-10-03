@@ -35,11 +35,13 @@ import { SurfaceCard } from '@/components/SurfaceCard';
 import { SeloDaIA } from '@/components/SeloDaIA';
 import { sincronizarLembretesDeUmMedicamento } from '@/lib/reminders';
 import {
+  atualizarItemDoLote,
   camposVazios,
   consumirRascunho,
   descartarRascunho,
   FORMAS,
   INTERVALOS,
+  lerReceita,
   marcarCadastroConcluido,
   type CampoLido,
 } from '@/lib/rascunhoDeMedicamento';
@@ -54,8 +56,23 @@ const TIPOS: { valor: ScheduleType; rotulo: string; ajuda: string }[] = [
 export default function MedicamentoFormScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { id, rascunho } = useLocalSearchParams<{ id: string; rascunho?: string }>();
+  const { id, rascunho, loteItem } = useLocalSearchParams<{
+    id: string;
+    rascunho?: string;
+    loteItem?: string;
+  }>();
   const novo = id === 'novo';
+
+  /**
+   * Modo "editar um item do lote da receita".
+   *
+   * A tela de revisao abre este form com `?loteItem=<indice>` para reaproveitar
+   * o editor rico (chips, horarios, selos "da foto") em vez de reimplementar a
+   * edicao la. Aqui NAO HA chamada de API: salvar escreve de volta no rascunho
+   * de lote e volta para a revisao, que cadastra tudo de uma vez.
+   */
+  const indiceDoLote = loteItem != null && /^\d+$/.test(loteItem) ? Number(loteItem) : null;
+  const emLote = novo && indiceDoLote != null;
 
   const [carregando, setCarregando] = useState(!novo);
   const [salvando, setSalvando] = useState(false);
@@ -127,6 +144,13 @@ export default function MedicamentoFormScreen() {
   }
 
   useEffect(() => {
+    // No modo lote nao ha "Para quem" nem "Quem receitou" (ambos sao da receita
+    // toda, resolvidos na revisao): poupa duas chamadas e evita um erro de rede
+    // bloquear a edicao de um item ja lido.
+    if (emLote) {
+      setCarregando(false);
+      return;
+    }
     let cancelado = false;
     (async () => {
       try {
@@ -154,7 +178,34 @@ export default function MedicamentoFormScreen() {
     return () => {
       cancelado = true;
     };
-  }, [id, novo]);
+  }, [id, novo, emLote]);
+
+  /**
+   * Carrega o item do lote para edicao.
+   *
+   * Sincrono e proprio, como o efeito do rascunho unico: chegar aqui por
+   * NAVIGATE nao remonta a tela, entao reaplicar depende de [emLote, indice]. Se
+   * o lote venceu ou o indice nao existe, nao da para editar o que sumiu — volta.
+   */
+  useEffect(() => {
+    if (!emLote) return;
+    const item = lerReceita()?.itens[indiceDoLote!];
+    if (!item) {
+      router.back();
+      return;
+    }
+    setNome(item.campos.nome);
+    setConcentracao(item.campos.concentracao);
+    setForma(item.campos.forma);
+    setQuantidade(item.campos.quantidade);
+    setEmbalagem(item.campos.embalagem);
+    setTipo(item.campos.tipo);
+    setIntervalo(item.campos.intervalo);
+    setHorarios(item.campos.horarios);
+    setInstrucoes(item.campos.instrucoes);
+    setFimDoTratamento(item.campos.fimDoTratamento);
+    setCamposDaIA(new Set(item.camposLidos));
+  }, [emLote, indiceDoLote, router]);
 
   /**
    * Consome o rascunho da leitura por foto.
@@ -238,7 +289,8 @@ export default function MedicamentoFormScreen() {
   function validar(): boolean {
     const novos: Record<string, string> = {};
     if (nome.trim().length < 2) novos.nome = 'Informe o nome do remédio';
-    if (!perfilId) novos.perfil = 'Escolha para quem é';
+    // No lote, o membro e escolhido na revisao — este form nem mostra "Para quem".
+    if (!emLote && !perfilId) novos.perfil = 'Escolha para quem é';
 
     if (tipo === 'fixed_times') {
       const validos = horarios.filter((h) => /^([01]\d|2[0-3]):[0-5]\d$/.test(h));
@@ -253,6 +305,23 @@ export default function MedicamentoFormScreen() {
   async function salvar() {
     setErroGeral(null);
     if (!validar()) return;
+
+    /**
+     * No lote NAO ha chamada de API: escreve os campos de volta no rascunho e
+     * volta para a revisao, que cadastra tudo de uma vez. Guardo o estado cru
+     * (CamposDoRascunho) — a conversao para o payload da API mora na revisao,
+     * um lugar so. As marcas "da foto" que sobraram vao junto: a pessoa pode
+     * reabrir o item e ver o que ainda nao conferiu.
+     */
+    if (emLote) {
+      atualizarItemDoLote(
+        indiceDoLote!,
+        { nome, concentracao, forma, quantidade, embalagem, tipo, intervalo, horarios, instrucoes, fimDoTratamento },
+        [...camposDaIA],
+      );
+      router.back();
+      return;
+    }
 
     const quantidadeNumero = Number(quantidade.replace(',', '.'));
 
@@ -386,7 +455,7 @@ export default function MedicamentoFormScreen() {
           showsVerticalScrollIndicator={false}
         >
           <ScreenHeader
-            title={novo ? 'Novo remédio' : 'Editar remédio'}
+            title={novo && !emLote ? 'Novo remédio' : 'Editar remédio'}
             onBack={() => router.back()}
           />
 
@@ -394,6 +463,7 @@ export default function MedicamentoFormScreen() {
             <ActivityIndicator color={colors.accentGreen} style={styles.carregando} />
           ) : (
             <>
+              {!emLote ? (
               <SurfaceCard style={styles.bloco}>
                 <Text style={styles.blocoTitulo}>Para quem</Text>
                 <View style={styles.chips}>
@@ -417,6 +487,7 @@ export default function MedicamentoFormScreen() {
                   </Text>
                 ) : null}
               </SurfaceCard>
+              ) : null}
 
               <SurfaceCard style={styles.bloco}>
                 <FormField
@@ -728,7 +799,9 @@ export default function MedicamentoFormScreen() {
                 {salvando ? (
                   <ActivityIndicator color={colors.onAccent} />
                 ) : (
-                  <Text style={styles.salvarTexto}>{novo ? 'Cadastrar remédio' : 'Salvar'}</Text>
+                  <Text style={styles.salvarTexto}>
+                    {novo && !emLote ? 'Cadastrar remédio' : 'Salvar'}
+                  </Text>
                 )}
               </Pressable>
             </>

@@ -269,8 +269,20 @@ export const leituraDeFotoSchema = z.object({
   /** Itens que o modelo devolveu e nao davam para aproveitar. */
   discarded: z.number().default(0),
   prescriber: z
-    .object({ nameRead: z.string().nullish(), professionalId: z.uuid().nullish() })
+    .object({
+      nameRead: z.string().nullish(),
+      professionalId: z.uuid().nullish(),
+      /** A especialidade lida no cabecalho/carimbo. null quando ilegivel. */
+      specialtyRead: z.string().nullish(),
+    })
     .nullish(),
+  /**
+   * A data da consulta/emissao lida, AAAA-MM-DD, ou null.
+   *
+   * nullish e nao nullable: contra um servidor mais antigo o campo chega
+   * ausente, e nullable() derrubaria a leitura inteira por uma chave que falta.
+   */
+  consultationDate: z.string().nullish(),
 });
 export type LeituraDeFoto = z.infer<typeof leituraDeFotoSchema>;
 
@@ -347,12 +359,20 @@ export type Appointment = z.infer<typeof appointmentSchema>;
 export type AppointmentInput = {
   profileId: string;
   professionalId?: string | null;
+  title?: string | null;
   scheduledAt: string;
+  durationMinutes?: number | null;
   modality: 'presencial' | 'teleconsulta';
   location?: string | null;
   address?: string | null;
   reminderMinutesBefore?: number | null;
   notes?: string | null;
+  /**
+   * Ausente deixa o servidor assumir 'agendada' (consulta futura). A receita
+   * manda 'realizada': a consulta ja aconteceu, entao fica fora de "Proximas
+   * consultas" e nao gera lembrete.
+   */
+  status?: 'agendada' | 'realizada' | 'cancelada' | 'faltou';
 };
 
 // ---------------------------------------------------------------------------

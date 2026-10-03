@@ -116,6 +116,12 @@ export default function AppLayout() {
         name="medicamento/form/[id]"
         options={{ href: null, tabBarStyle: { display: 'none' } }}
       />
+      {/* Revisao do cadastro em lote da receita: tambem e formulario, mesma
+          regra dos de cima — esconde a barra e o voltar devolve a origem. */}
+      <Tabs.Screen
+        name="medicamento/receita"
+        options={{ href: null, tabBarStyle: { display: 'none' } }}
+      />
       <Tabs.Screen
         name="membro/[id]"
         options={{ href: null, tabBarStyle: { display: 'none' } }}

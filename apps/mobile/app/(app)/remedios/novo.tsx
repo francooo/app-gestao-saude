@@ -1,5 +1,5 @@
 import { Feather } from '@expo/vector-icons';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,6 +19,7 @@ import { escolherFotoDeDocumento } from '@/lib/foto';
 import {
   consumirCadastroConcluido,
   guardarRascunho,
+  guardarReceita,
   normalizarLeitura,
   temCadastroConcluido,
 } from '@/lib/rascunhoDeMedicamento';
@@ -54,6 +55,12 @@ type Estado =
 export default function NovoRemedioScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  /**
+   * O cartao "Ler receita com IA" da tela inicial empurra para ca ja pedindo a
+   * camera ou a galeria, para a receita. O parametro so existe nesse caminho;
+   * fotografar caixinha ou receita por dentro desta tela nao o usa.
+   */
+  const { receita } = useLocalSearchParams<{ receita?: string }>();
   const { avisos, parcial, erro: erroDosAvisos, recarregar } = useAvisos();
 
   const [estado, setEstado] = useState<Estado>({ fase: 'repouso' });
@@ -107,6 +114,27 @@ export default function NovoRemedioScreen() {
         setSegundos(0);
       };
     }, [router]),
+  );
+
+  /**
+   * Abrir a camera/galeria direto quando se chega pelo cartao da Home.
+   *
+   * Efeito de foco PROPRIO, com o parametro nas deps: o de cima e memoizado so
+   * em [router] e nao enxergaria um valor novo. Limpo o parametro na hora para
+   * que voltar a esta tela (depois de cancelar) nao reabra a camera sozinho.
+   *
+   * pegarFoto fica FORA das deps de proposito: ela e recriada a cada render e
+   * entraria em laco. A copia capturada so le refs e chama setState/enviar
+   * (estaveis), entao capturar a do primeiro render e correto aqui.
+   */
+  useFocusEffect(
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    useCallback(() => {
+      if (receita !== 'camera' && receita !== 'galeria') return;
+      const origem = receita === 'galeria' ? 'galeria' : 'camera';
+      router.setParams({ receita: undefined });
+      void pegarFoto('receita', origem);
+    }, [receita, router]),
   );
 
   // O contador que muda o texto de espera. So roda enquanto le.
@@ -176,15 +204,28 @@ export default function NovoRemedioScreen() {
       const leitura = await healthApi.lerFoto({ photo: foto.current, kind }, controller.signal);
       if (abandonado.current) return;
 
-      if (leitura.items.length === 0) setEstado({ fase: 'vazio', kind });
-      else
-        setEstado({
-          fase: 'lido',
-          kind,
-          leitura,
-          // Um item so ja vem escolhido; com varios, ninguem escolhe por voce.
-          escolhido: leitura.items.length === 1 ? leitura.items[0]!.index : null,
-        });
+      if (leitura.items.length === 0) {
+        setEstado({ fase: 'vazio', kind });
+        return;
+      }
+
+      /**
+       * A RECEITA diverge aqui: em vez do seletor "um por vez", monta o lote
+       * com todos os remedios e vai para a tela de revisao, onde a pessoa
+       * confere tudo e salva de uma vez. A CAIXINHA segue o fluxo de um so.
+       */
+      if (kind === 'receita') {
+        irParaRevisao(leitura);
+        return;
+      }
+
+      setEstado({
+        fase: 'lido',
+        kind,
+        leitura,
+        // Um item so ja vem escolhido; com varios, ninguem escolhe por voce.
+        escolhido: leitura.items.length === 1 ? leitura.items[0]!.index : null,
+      });
     } catch (e) {
       if (abandonado.current) return;
       // Cancelamento pedido pela pessoa nao e erro: volta ao repouso, calado.
@@ -196,6 +237,29 @@ export default function NovoRemedioScreen() {
     } finally {
       cancelamento.current = null;
     }
+  }
+
+  /**
+   * Guarda a leitura inteira no rascunho de lote e vai para a revisao.
+   *
+   * So a receita passa por aqui. O membro, o medico e a data da consulta sao
+   * resolvidos la, uma vez para a receita toda; aqui so normalizamos cada item.
+   */
+  function irParaRevisao(leitura: LeituraDeFoto) {
+    const itens = leitura.items.map((item) => {
+      const { campos, camposLidos } = normalizarLeitura(item);
+      return { campos, camposLidos, readItem: item.index };
+    });
+    guardarReceita({
+      itens,
+      foto: foto.current ?? '',
+      readId: leitura.readId,
+      prescritorId: leitura.prescriber?.professionalId ?? null,
+      prescriberName: leitura.prescriber?.nameRead ?? null,
+      specialtyRead: leitura.prescriber?.specialtyRead ?? null,
+      consultationDate: leitura.consultationDate ?? null,
+    });
+    router.push('/medicamento/receita');
   }
 
   function continuar(leitura: LeituraDeFoto, item: MedicamentoLido, kind: Kind) {

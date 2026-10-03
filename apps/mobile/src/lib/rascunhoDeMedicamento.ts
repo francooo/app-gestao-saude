@@ -112,6 +112,98 @@ export function descartarRascunho(): void {
   vaga = null;
 }
 
+// ---------------------------------------------------------------------------
+// Rascunho em LOTE (receita inteira)
+//
+// A leitura de uma CAIXA entrega um remedio e vai para o form unico acima. A
+// leitura de uma RECEITA entrega varios, e a pessoa confere TODOS numa tela so
+// antes de salvar — por isso um rascunho proprio, que guarda a leitura inteira
+// e sobrevive ao vaivem de editar um item (ao contrario da vaga de cima, que e
+// lida-e-esvaziada).
+// ---------------------------------------------------------------------------
+
+/** Um remedio dentro do lote, ja normalizado, com o indice da leitura. */
+export type ItemDoLote = {
+  campos: CamposDoRascunho;
+  camposLidos: CampoLido[];
+  /** O indice do item NA LEITURA. Vira photoReadItem no cadastro; preservado
+   * por item para que remover um do meio nao desalinhe os outros. */
+  readItem: number;
+};
+
+export type RascunhoDeReceita = {
+  itens: ItemDoLote[];
+  /** Data URI JPEG da receita, ja preparado por escolherFotoDeDocumento. */
+  foto: string;
+  readId: string;
+  /** Medico ja cadastrado que o servidor reconheceu na receita, se houver. */
+  prescritorId: string | null;
+  /** O nome lido do prescritor — para cadastrar o medico novo ou so mostrar. */
+  prescriberName: string | null;
+  /** A especialidade lida — ficha do medico novo e titulo da consulta. */
+  specialtyRead: string | null;
+  /** AAAA-MM-DD lido, ou null. Vira a consulta cadastrada (status realizada). */
+  consultationDate: string | null;
+};
+
+/**
+ * Validade MAIOR que a do rascunho unico (15 min, nao 1), e o porque.
+ *
+ * Aqui a pessoa confere varios remedios, edita um, volta, edita outro — um
+ * minuto estouraria no meio da revisao. Continua sendo um teto duro para a foto
+ * da receita em memoria, so que dimensionado para a conferencia, nao para um
+ * salto de tela. Ela e apagada na hora em que a receita e salva ou abandonada.
+ */
+const VALIDADE_RECEITA_MS = 15 * 60_000;
+
+let lote: { em: number; receita: RascunhoDeReceita } | null = null;
+
+/** Sobrescreve o que estiver la. Um lote pendente por vez. */
+export function guardarReceita(receita: RascunhoDeReceita): void {
+  lote = { em: Date.now(), receita };
+}
+
+/**
+ * Espia SEM consumir — a tela de revisao le a cada foco, inclusive ao voltar
+ * da edicao de um item. So some por idade (teto duro) ou por descarte
+ * explicito. Vencida, zera e devolve null.
+ */
+export function lerReceita(): RascunhoDeReceita | null {
+  if (!lote) return null;
+  if (Date.now() - lote.em > VALIDADE_RECEITA_MS) {
+    lote = null;
+    return null;
+  }
+  return lote.receita;
+}
+
+/**
+ * Escreve de volta o item editado no form.
+ *
+ * O form e dono das marcas "da foto": ele devolve os campos E a lista de
+ * camposLidos ja reduzida (um campo que a pessoa mexeu deixa de ser "da foto").
+ */
+export function atualizarItemDoLote(
+  index: number,
+  campos: CamposDoRascunho,
+  camposLidos: CampoLido[],
+): void {
+  if (!lote) return;
+  const item = lote.receita.itens[index];
+  if (!item) return;
+  lote.receita.itens[index] = { ...item, campos, camposLidos };
+}
+
+/** Remove um item do lote. A tela garante o minimo de 1. */
+export function removerItemDoLote(index: number): void {
+  if (!lote) return;
+  lote.receita.itens = lote.receita.itens.filter((_, i) => i !== index);
+}
+
+export function descartarReceita(): void {
+  lote = null;
+}
+
 /**
  * O formulario avisa que o cadastro terminou, e a tela de leitura se dispensa.
  *
