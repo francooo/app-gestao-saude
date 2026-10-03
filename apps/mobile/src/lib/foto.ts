@@ -1,5 +1,6 @@
 import { ImageManipulator, SaveFormat, type ImageRef } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
+import { Alert, Linking } from 'react-native';
 
 /**
  * Escolha e preparo de imagens.
@@ -208,6 +209,53 @@ export async function escolherFotoDeDocumento(
   } catch {
     return { ok: false, motivo: 'falha' };
   }
+}
+
+/**
+ * Pede uma foto de documento JA COM OS AVISOS, e devolve so o data URI ou null.
+ *
+ * Reune num lugar o que antes vivia dentro da tela de cadastro: abrir o seletor
+ * e, quando ele falha, dizer o que fazer. Dois pontos usam isto — o cartao da
+ * tela inicial e os botoes de dentro da tela de cadastro —, e uma copia em cada
+ * um seria duas chances de os avisos divergirem.
+ *
+ * Devolve null em TODO desfecho sem foto (cancelou, negou, falhou): o alerta ja
+ * foi mostrado aqui, e quem chama so precisa saber "nao ha foto, nao prossiga".
+ * Negada a camera, oferece a galeria — e a recursao devolve a foto de la, se
+ * houver, pelo mesmo caminho.
+ */
+export async function pedirFotoDeDocumento(origem: 'camera' | 'galeria'): Promise<string | null> {
+  const escolha = await escolherFotoDeDocumento(origem);
+  if (escolha.ok) return escolha.dataUri;
+  if (escolha.motivo === 'cancelado') return null;
+
+  if (escolha.motivo === 'permissao') {
+    return new Promise<string | null>((resolve) => {
+      Alert.alert(
+        'Sem acesso à câmera',
+        'Autorize a câmera nos ajustes do aparelho, ou escolha uma foto que já está na galeria.',
+        [
+          { text: 'Cancelar', style: 'cancel', onPress: () => resolve(null) },
+          { text: 'Escolher da galeria', onPress: () => resolve(pedirFotoDeDocumento('galeria')) },
+          {
+            text: 'Abrir ajustes',
+            onPress: () => {
+              void Linking.openSettings();
+              resolve(null);
+            },
+          },
+        ],
+        { cancelable: true, onDismiss: () => resolve(null) },
+      );
+    });
+  }
+
+  // falha: formato exotico, arquivo corrompido, URI ilegivel do Android.
+  return new Promise<string | null>((resolve) => {
+    Alert.alert('Não consegui usar a foto', 'Tente de novo, ou escolha outra imagem.', [
+      { text: 'OK', onPress: () => resolve(null) },
+    ]);
+  });
 }
 
 /**

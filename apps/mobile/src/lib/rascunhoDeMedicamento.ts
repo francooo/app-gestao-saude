@@ -204,6 +204,40 @@ export function descartarReceita(): void {
   lote = null;
 }
 
+// ---------------------------------------------------------------------------
+// Foto escolhida na Home, a caminho da leitura
+//
+// O cartao "Ler receita com IA" abre o seletor NA PROPRIA Home e so navega
+// quando ha imagem — assim cancelar nao joga ninguem numa tela intermediaria. A
+// foto escolhida (~400 KB) nao cabe em parametro de rota (mesmo motivo do topo),
+// entao viaja por esta vaga ate a tela de leitura consumi-la.
+// ---------------------------------------------------------------------------
+
+let fotoPendente: { em: number; foto: string } | null = null;
+
+/** Sobrescreve o que estiver la. Uma foto a caminho por vez. */
+export function guardarFotoParaLeitura(foto: string): void {
+  fotoPendente = { em: Date.now(), foto };
+}
+
+/** Espia SEM consumir — para a tela de leitura ja nascer em "lendo", sem flash. */
+export function temFotoParaLeitura(): boolean {
+  if (!fotoPendente) return false;
+  if (Date.now() - fotoPendente.em > VALIDADE_MS) {
+    fotoPendente = null;
+    return false;
+  }
+  return true;
+}
+
+/** Le e esvazia. Vencida, devolve null. */
+export function consumirFotoParaLeitura(): string | null {
+  if (!fotoPendente) return null;
+  const { em, foto } = fotoPendente;
+  fotoPendente = null;
+  return Date.now() - em > VALIDADE_MS ? null : foto;
+}
+
 /**
  * O formulario avisa que o cadastro terminou, e a tela de leitura se dispensa.
  *

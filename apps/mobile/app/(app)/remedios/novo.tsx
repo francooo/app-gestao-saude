@@ -1,7 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ApiRequestError } from '@/api/client';
@@ -15,13 +15,15 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { SeletorDeRemedios } from '@/components/SeletorDeRemedios';
 import { SurfaceCard } from '@/components/SurfaceCard';
 import { useAvisos } from '@/lib/avisosContext';
-import { escolherFotoDeDocumento } from '@/lib/foto';
+import { pedirFotoDeDocumento } from '@/lib/foto';
 import {
   consumirCadastroConcluido,
+  consumirFotoParaLeitura,
   guardarRascunho,
   guardarReceita,
   normalizarLeitura,
   temCadastroConcluido,
+  temFotoParaLeitura,
 } from '@/lib/rascunhoDeMedicamento';
 import { API_ERROR, messageForError } from '@gestao/shared';
 import { backgrounds, colors, fonts, radii, spacing } from '@/theme';
@@ -56,14 +58,21 @@ export default function NovoRemedioScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   /**
-   * O cartao "Ler receita com IA" da tela inicial empurra para ca ja pedindo a
-   * camera ou a galeria, para a receita. O parametro so existe nesse caminho;
-   * fotografar caixinha ou receita por dentro desta tela nao o usa.
+   * O cartao "Ler receita com IA" da tela inicial ja escolheu a foto e a deixou
+   * numa vaga de modulo; `fotoPronta` so sinaliza que ha uma esperando. O seletor
+   * NAO e aberto aqui nesse caminho — foi aberto na Home, para cancelar la nao
+   * jogar ninguem nesta tela intermediaria.
    */
-  const { receita } = useLocalSearchParams<{ receita?: string }>();
+  const { fotoPronta } = useLocalSearchParams<{ fotoPronta?: string }>();
   const { avisos, parcial, erro: erroDosAvisos, recarregar } = useAvisos();
 
-  const [estado, setEstado] = useState<Estado>({ fase: 'repouso' });
+  /**
+   * Ja nasce em "lendo" quando ha foto esperando (espiada, nao consumida):
+   * assim o primeiro quadro nao mostra as opcoes de cadastro antes do spinner.
+   */
+  const [estado, setEstado] = useState<Estado>(() =>
+    fotoPronta && temFotoParaLeitura() ? { fase: 'lendo', kind: 'receita' } : { fase: 'repouso' },
+  );
   const [segundos, setSegundos] = useState(0);
 
   /**
@@ -76,6 +85,14 @@ export default function NovoRemedioScreen() {
   const cancelamento = useRef<AbortController | null>(null);
   /** Resposta que chega depois de a pessoa sair nao toca o estado. */
   const abandonado = useRef(false);
+  /**
+   * A leitura veio do cartao da Home (foto ja escolhida la).
+   *
+   * Muda o que o cancelamento faz: nesse fluxo esta tela e so a hospedeira da
+   * leitura, entao abortar o spinner volta para a Home, nao para as opcoes de
+   * cadastro — que a pessoa nunca pediu para ver.
+   */
+  const autoLeitura = useRef(false);
 
   /**
    * A tela se dispensa sozinha depois que o cadastro termina.
@@ -110,6 +127,7 @@ export default function NovoRemedioScreen() {
         cancelamento.current?.abort();
         cancelamento.current = null;
         foto.current = null;
+        autoLeitura.current = false;
         setEstado({ fase: 'repouso' });
         setSegundos(0);
       };
@@ -117,24 +135,27 @@ export default function NovoRemedioScreen() {
   );
 
   /**
-   * Abrir a camera/galeria direto quando se chega pelo cartao da Home.
+   * Consome a foto que a Home deixou e comeca a leitura, sem reabrir seletor.
    *
-   * Efeito de foco PROPRIO, com o parametro nas deps: o de cima e memoizado so
-   * em [router] e nao enxergaria um valor novo. Limpo o parametro na hora para
-   * que voltar a esta tela (depois de cancelar) nao reabra a camera sozinho.
+   * O estado inicial (acima) ja espiou a vaga e nasceu em "lendo", sem flash; o
+   * efeito faz o trabalho de verdade e cobre tambem o caso raro de a tela ja
+   * estar montada. Limpa o parametro para voltar aqui nao reler nada.
    *
-   * pegarFoto fica FORA das deps de proposito: ela e recriada a cada render e
-   * entraria em laco. A copia capturada so le refs e chama setState/enviar
-   * (estaveis), entao capturar a do primeiro render e correto aqui.
+   * enviar fica FORA das deps de proposito: e recriada a cada render e entraria
+   * em laco. A copia capturada so le refs e chama setState (estaveis), entao a
+   * do primeiro render serve.
    */
   useFocusEffect(
     // eslint-disable-next-line react-hooks/exhaustive-deps
     useCallback(() => {
-      if (receita !== 'camera' && receita !== 'galeria') return;
-      const origem = receita === 'galeria' ? 'galeria' : 'camera';
-      router.setParams({ receita: undefined });
-      void pegarFoto('receita', origem);
-    }, [receita, router]),
+      if (!fotoPronta) return;
+      router.setParams({ fotoPronta: undefined });
+      const img = consumirFotoParaLeitura();
+      if (!img) return;
+      foto.current = img;
+      autoLeitura.current = true;
+      void enviar('receita');
+    }, [fotoPronta, router]),
   );
 
   // O contador que muda o texto de espera. So roda enquanto le.
@@ -168,26 +189,11 @@ export default function NovoRemedioScreen() {
   }
 
   async function pegarFoto(kind: Kind, origem: 'camera' | 'galeria') {
-    const escolha = await escolherFotoDeDocumento(origem);
-    if (!escolha.ok) {
-      if (escolha.motivo === 'cancelado') return;
-      if (escolha.motivo === 'permissao') {
-        Alert.alert(
-          'Sem acesso à câmera',
-          'Autorize a câmera nos ajustes do aparelho, ou escolha uma foto que já está na galeria.',
-          [
-            { text: 'Cancelar', style: 'cancel' },
-            { text: 'Escolher da galeria', onPress: () => void pegarFoto(kind, 'galeria') },
-            { text: 'Abrir ajustes', onPress: () => void Linking.openSettings() },
-          ],
-        );
-        return;
-      }
-      Alert.alert('Não consegui usar a foto', 'Tente de novo, ou escolha outra imagem.');
-      return;
-    }
-
-    foto.current = escolha.dataUri;
+    // O seletor e os avisos de permissao/falha moram no helper, compartilhados
+    // com o cartao da Home. Aqui so resta o que esta tela faz com a foto.
+    const img = await pedirFotoDeDocumento(origem);
+    if (!img) return;
+    foto.current = img;
     await enviar(kind);
   }
 
@@ -230,6 +236,13 @@ export default function NovoRemedioScreen() {
       if (abandonado.current) return;
       // Cancelamento pedido pela pessoa nao e erro: volta ao repouso, calado.
       if (controller.signal.aborted && e instanceof Error && e.name === 'AbortError') {
+        // No fluxo da Home esta tela so hospeda a leitura — cancelar volta para
+        // a Home, nao para as opcoes de cadastro que a pessoa nunca pediu.
+        if (autoLeitura.current) {
+          autoLeitura.current = false;
+          router.back();
+          return;
+        }
         setEstado({ fase: 'repouso' });
         return;
       }

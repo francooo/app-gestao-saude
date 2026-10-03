@@ -17,7 +17,9 @@ import { MedicationCard } from '@/components/MedicationCard';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SurfaceCard } from '@/components/SurfaceCard';
 import { healthApi, type Appointment, type Medication, type Profile } from '@/api/health';
+import { pedirFotoDeDocumento } from '@/lib/foto';
 import { hora, vigenteHoje } from '@/lib/posologia';
+import { guardarFotoParaLeitura } from '@/lib/rascunhoDeMedicamento';
 import { reconciliarLembretes } from '@/lib/reminders';
 import { colors, fonts, radii, spacing } from '@/theme';
 
@@ -38,6 +40,21 @@ export default function InicioScreen() {
    * dose" poderia mudar no meio de um quadro e a tela discordaria de si mesma.
    */
   const [agora, setAgora] = useState(() => new Date());
+
+  /**
+   * Abre o seletor AQUI, na Home, e so navega para a leitura quando ha imagem.
+   *
+   * Inverter a ordem (abrir antes de navegar) e o que faz cancelar o seletor
+   * nao jogar ninguem na tela "Adicionar medicamento": sem foto, nada acontece
+   * e a pessoa continua na Home. Com foto, ela viaja pela vaga de modulo e a
+   * tela de leitura ja nasce lendo.
+   */
+  async function abrirLeituraDeReceita(origem: 'camera' | 'galeria') {
+    const foto = await pedirFotoDeDocumento(origem);
+    if (!foto) return;
+    guardarFotoParaLeitura(foto);
+    router.push('/remedios/novo?fotoPronta=1');
+  }
 
   /**
    * Reconcilia os lembretes deste aparelho a cada vez que a tela inicial
@@ -187,8 +204,8 @@ export default function InicioScreen() {
 
         <View style={styles.secao}>
           <CartaoLerReceita
-            onFotografar={() => router.push('/remedios/novo?receita=camera')}
-            onGaleria={() => router.push('/remedios/novo?receita=galeria')}
+            onFotografar={() => void abrirLeituraDeReceita('camera')}
+            onGaleria={() => void abrirLeituraDeReceita('galeria')}
           />
         </View>
 
