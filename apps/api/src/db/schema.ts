@@ -651,7 +651,7 @@ export const medicationTimes = pgTable(
  *
  * O QUE MUDOU, e que este paragrafo precisa dizer para nao mentir: existe
  * agora um caminho DELIBERADO. O `POST /api/assistant/ler-foto` envia uma foto
- * de receita ao Claude (Anthropic), fora do Brasil, para extrair os campos do medicamento.
+ * de receita ao Groq, fora do Brasil, para extrair os campos do medicamento.
  * Ele NAO passa por esta tabela — le o data URI do corpo da requisicao e nao
  * grava imagem nenhuma. Quem grava continua sendo o PATCH, depois, se a pessoa
  * pedir. Ou seja: esta tabela nunca e ORIGEM de envio para fora; ela e so
