@@ -57,9 +57,10 @@ const PROMPT_RECEITA = [
   '',
   'OS OUTROS CAMPOS',
   'nome: só o remédio, sem a concentração junto.',
-  'dose_por_vez: quantas unidades por tomada. "1 comprimido" → 1. "10 ml" → 10.',
-  'duracao_dias: "por 7 dias" → 7. Sem prazo escrito, null.',
-  'orientacoes: o que sobrou em texto livre, ao pé da letra — "tomar com água", "após as refeições".',
+  'forma: cápsula, comprimido, ml, gotas, jato ou outro. INALADOR/BOMBINHA (spray, aerossol, "HFA", "inalatório", dose em "jatos") → forma "jato".',
+  'dose_por_vez: quantas unidades por tomada. "1 comprimido" → 1. "10 ml" → 10. "4 jatos" → 4.',
+  'duracao_dias: SÓ número de dias. "por 7 dias" → 7. "por 3 dias" → 3. Prazo SEM número de dias ("até sábado", "até acabar", "enquanto tiver febre") → duracao_dias null E a frase vai em orientacoes, ao pé da letra.',
+  'orientacoes: o que sobrou em texto livre, ao pé da letra — "com espaçador", "após as refeições", "até sábado".',
   'quantidade_na_embalagem: quase sempre null numa receita.',
   '',
 'DADOS DA RECEITA (uma vez, no topo — não por remédio)',
@@ -89,7 +90,7 @@ const PROMPT_CAIXA = [
   'O QUE VOCÊ PROCURA',
   'nome: o que está escrito em maior destaque. Se houver nome comercial e princípio ativo, use o comercial — é como a pessoa chama o remédio em casa. Transcreva sem corrigir.',
   'concentracao: "500mg", "20mg/ml".',
-  'forma: cápsula, comprimido, ml ou gotas.',
+  'forma: cápsula, comprimido, ml, gotas ou jato (inalador/bombinha).',
   'quantidade_na_embalagem: quantas unidades vêm na caixa. "21 cápsulas" → 21. "com 30 comprimidos revestidos" → 30. "frasco 100ml" → 100.',
   '',
   'Quase sempre é UM remédio por caixa: devolva um item só, a não ser que a embalagem traga mais de um produto de verdade.',
@@ -131,7 +132,7 @@ export const ESQUEMA_DA_LEITURA = {
               concentracao: { type: ['string', 'null'] },
               forma: {
                 type: ['string', 'null'],
-                enum: ['cápsula', 'comprimido', 'ml', 'gotas', 'outro', null],
+                enum: ['cápsula', 'comprimido', 'ml', 'gotas', 'jato', 'outro', null],
               },
               quantidade_na_embalagem: { type: ['integer', 'null'] },
               dose_por_vez: { type: ['number', 'null'] },
@@ -175,3 +176,12 @@ export const ESQUEMA_DA_LEITURA = {
     },
   },
 } as const;
+
+/**
+ * O MESMO esquema, sem o envelope do Groq — para usar como `input_schema` da
+ * ferramenta que o Claude é obrigado a chamar (tool_choice). JSON Schema aceita
+ * `type: ['x','null']` e enums com `null`, então nada muda no conteúdo; só se
+ * descarta a casca `json_schema`. Reaproveita o objeto para não haver duas
+ * cópias para manter em dia.
+ */
+export const SCHEMA_DA_LEITURA = ESQUEMA_DA_LEITURA.json_schema.schema;

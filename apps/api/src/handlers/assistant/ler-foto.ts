@@ -11,9 +11,9 @@ import { db } from '../../db/client';
 import { medicationPhotoReads } from '../../db/schema';
 import { requireAuth } from '../../lib/auth';
 import { consentimentoEstaAtual } from '../../lib/consentimento';
-import { MODELO_DE_VISAO, perguntarAoGroq } from '../../lib/groq';
+import { lerFotoComClaude, MODELO_DE_VISAO_CLAUDE } from '../../lib/claude';
 import { extrairJson, mapearLeitura } from '../../lib/leitura-de-foto';
-import { ESQUEMA_DA_LEITURA, promptDaLeitura } from '../../lib/leitura-prompt';
+import { promptDaLeitura, SCHEMA_DA_LEITURA } from '../../lib/leitura-prompt';
 import { fail, json, parseBody, requireMethod, withErrorHandling } from '../../lib/http';
 import { perfilDaConta } from '../../lib/ownership';
 
@@ -88,37 +88,18 @@ export default withErrorHandling(async (req: VercelRequest, res: VercelResponse)
       userId: auth.userId,
       profileId: body.profileId ?? null,
       kind: body.kind,
-      model: MODELO_DE_VISAO,
+      model: MODELO_DE_VISAO_CLAUDE,
       outcome: 'enviada',
     })
     .returning({ id: medicationPhotoReads.id });
 
-  const resposta = await perguntarAoGroq(
-    [
-      { role: 'system', content: promptDaLeitura(body.kind) },
-      {
-        role: 'user',
-        content: [
-          {
-            type: 'text',
-            text:
-              body.kind === 'receita'
-                ? 'Leia esta receita médica.'
-                : 'Leia esta caixa de remédio.',
-          },
-          // `detail` fica de fora de proposito: e o unico parametro capaz de
-          // tornar letra manuscrita ilegivel em silencio.
-          { type: 'image_url', image_url: { url: body.photo } },
-        ],
-      },
-    ],
-    {
-      timeoutMs: PRAZO_DA_LEITURA_MS,
-      modelo: MODELO_DE_VISAO,
-      tetoDeSaida: 900,
-      formatoDeResposta: ESQUEMA_DA_LEITURA,
-    },
-  );
+  const resposta = await lerFotoComClaude({
+    prompt: promptDaLeitura(body.kind),
+    instrucao: body.kind === 'receita' ? 'Leia esta receita médica.' : 'Leia esta caixa de remédio.',
+    fotoDataUri: body.photo,
+    timeoutMs: PRAZO_DA_LEITURA_MS,
+    inputSchema: SCHEMA_DA_LEITURA,
+  });
 
   if (!resposta.ok) {
     await encerrar(leitura!.id, 'falha', null, null);

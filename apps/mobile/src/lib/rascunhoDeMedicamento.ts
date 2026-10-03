@@ -20,10 +20,11 @@ import type { ScheduleType } from '@/api/health';
  */
 
 /** As formas que o servidor aceita. Precisa bater com medicationFormValues. */
-export const FORMAS = ['cápsula', 'comprimido', 'ml', 'gotas', 'outro'] as const;
+export const FORMAS = ['cápsula', 'comprimido', 'ml', 'gotas', 'jato', 'outro'] as const;
 
-/** Intervalos oferecidos. Cobrem a receita comum sem virar campo livre. */
-export const INTERVALOS = [4, 6, 8, 12, 24] as const;
+/** Intervalos oferecidos. Cobrem a receita comum sem virar campo livre. O 3h
+ * entrou para os inaladores ("de 3/3 h"), que não caíam em nenhum degrau. */
+export const INTERVALOS = [3, 4, 6, 8, 12, 24] as const;
 
 /**
  * Quais campos vieram MESMO da leitura.
@@ -284,6 +285,18 @@ function forma(v: string | null | undefined): (typeof FORMAS)[number] | null {
   if (n.startsWith('comprimido')) return 'comprimido';
   if (n.startsWith('gota')) return 'gotas';
   if (n === 'ml') return 'ml';
+  // Inalador: dose em "jatos" (puffs). spray/aerossol/inalador/HFA caem aqui.
+  if (
+    n.startsWith('jato') ||
+    n.startsWith('spray') ||
+    n.startsWith('aeross') ||
+    n.startsWith('inalad') ||
+    n.startsWith('inalat') ||
+    n === 'puff' ||
+    n === 'hfa'
+  ) {
+    return 'jato';
+  }
   return null;
 }
 

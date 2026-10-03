@@ -139,7 +139,7 @@ export type ApiErrorCode = (typeof API_ERROR)[keyof typeof API_ERROR];
  * quem seguisse ao pe da letra deixaria o packages/shared para tras, e todo
  * cadastro novo ja nasceria pedindo reaceite.
  */
-export const POLICY_VERSION = '2026-09-29';
+export const POLICY_VERSION = '2026-10-03';
 
 export const fullNameSchema = z
   .string()
@@ -276,7 +276,7 @@ export const scheduleTypeValues = ['interval', 'fixed_times', 'as_needed'] as co
  * A coluna no banco e texto livre, e o seed gravou 'cápsula' e 'gotas' COM
  * acento — o aplicativo normaliza antes de escolher o icone.
  */
-export const medicationFormValues = ['cápsula', 'comprimido', 'ml', 'gotas', 'outro'] as const;
+export const medicationFormValues = ['cápsula', 'comprimido', 'ml', 'gotas', 'jato', 'outro'] as const;
 
 /** Horario de parede, HH:MM. O Postgres completa os segundos. */
 export const horarioSchema = z

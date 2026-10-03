@@ -222,7 +222,7 @@ export function resumoDoDia(medicamentos: Medication[], agora: Date) {
 // Apresentacao
 // ---------------------------------------------------------------------------
 
-export type FormaVisual = 'capsula' | 'comprimido' | 'gotas' | 'ml';
+export type FormaVisual = 'capsula' | 'comprimido' | 'gotas' | 'ml' | 'jato';
 
 /**
  * A coluna `form` e texto livre e o seed gravou com acento ('cápsula'), entao
@@ -239,6 +239,7 @@ export function formaVisual(form: string | null | undefined): FormaVisual {
   if (limpo.startsWith('comprimido')) return 'comprimido';
   if (limpo.startsWith('gota')) return 'gotas';
   if (limpo === 'ml') return 'ml';
+  if (limpo.startsWith('jato')) return 'jato';
   return 'capsula';
 }
 
@@ -249,6 +250,7 @@ const PLURAIS: Record<string, string> = {
   gota: 'gotas',
   gotas: 'gotas',
   ml: 'ml',
+  jato: 'jatos',
   dose: 'doses',
 };
 

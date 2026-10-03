@@ -68,6 +68,8 @@ export const LADRILHO_POR_FORMA: Record<
   comprimido: { fundo: colors.pillTablet, traco: colors.pillTabletIcon, icone: 'circle' },
   gotas: { fundo: colors.surfaceWarm, traco: colors.accent, icone: 'droplet' },
   ml: { fundo: colors.pillTablet, traco: colors.pillTabletIcon, icone: 'thermometer' },
+  // Inalador: "wind" é a aproximação do Feather para spray/bombinha.
+  jato: { fundo: colors.surfaceWarm, traco: colors.accent, icone: 'wind' },
 };
 
 /** Ladrilho neutro, para quando o elemento nao pede atencao. */

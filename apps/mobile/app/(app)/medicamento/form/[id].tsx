@@ -45,6 +45,7 @@ import {
   marcarCadastroConcluido,
   type CampoLido,
 } from '@/lib/rascunhoDeMedicamento';
+import { dataDeFimParaISO, formatarData, isoParaData } from '@/lib/pessoa';
 import { backgrounds, colors, fonts, radii, spacing } from '@/theme';
 
 const TIPOS: { valor: ScheduleType; rotulo: string; ajuda: string }[] = [
@@ -100,7 +101,8 @@ export default function MedicamentoFormScreen() {
   const [horarios, setHorarios] = useState<string[]>(inicial.horarios);
   const [instrucoes, setInstrucoes] = useState(inicial.instrucoes);
   const [prescritorId, setPrescritorId] = useState<string | null>(null);
-  const [fimDoTratamento, setFimDoTratamento] = useState<string | null>(null);
+  /** Fim do tratamento como o texto do campo (dd/mm/aaaa); vira ISO ao salvar. */
+  const [fimTexto, setFimTexto] = useState('');
 
   /**
    * Quais campos vieram da leitura por foto e AINDA NAO FORAM CONFERIDOS.
@@ -203,7 +205,7 @@ export default function MedicamentoFormScreen() {
     setIntervalo(item.campos.intervalo);
     setHorarios(item.campos.horarios);
     setInstrucoes(item.campos.instrucoes);
-    setFimDoTratamento(item.campos.fimDoTratamento);
+    setFimTexto(isoParaData(item.campos.fimDoTratamento));
     setCamposDaIA(new Set(item.camposLidos));
   }, [emLote, indiceDoLote, router]);
 
@@ -235,7 +237,7 @@ export default function MedicamentoFormScreen() {
     setIntervalo(r.campos.intervalo);
     setHorarios(r.campos.horarios);
     setInstrucoes(r.campos.instrucoes);
-    setFimDoTratamento(r.campos.fimDoTratamento);
+    setFimTexto(isoParaData(r.campos.fimDoTratamento));
     setCamposDaIA(new Set(r.camposLidos));
     if (r.prescritorId) setPrescritorId(r.prescritorId);
     setOrigemDaLeitura({ readId: r.readId, item: r.readItem });
@@ -271,7 +273,7 @@ export default function MedicamentoFormScreen() {
     setInstrucoes(m.instructions ?? '');
     setPrescritorId(m.prescriberId ?? null);
     setEmbalagem(m.packageAmount != null ? String(m.packageAmount) : '');
-    setFimDoTratamento(m.endsAt ?? null);
+    setFimTexto(isoParaData(m.endsAt));
     // Um remedio que veio do banco nao tem campo pendente de conferencia.
     setCamposDaIA(new Set());
     setReceita(null);
@@ -298,6 +300,11 @@ export default function MedicamentoFormScreen() {
       else if (new Set(validos).size !== validos.length) novos.horarios = 'Há horários repetidos';
     }
 
+    // Fim de tratamento é opcional; se preenchido, precisa ser uma data futura.
+    if (fimTexto.trim() && !dataDeFimParaISO(fimTexto)) {
+      novos.endsAt = 'Use uma data futura, como 20/10/2026';
+    }
+
     setErros(novos);
     return Object.keys(novos).length === 0;
   }
@@ -305,6 +312,9 @@ export default function MedicamentoFormScreen() {
   async function salvar() {
     setErroGeral(null);
     if (!validar()) return;
+
+    // Texto do campo → ISO (ou null se em branco). Validado acima.
+    const fimISO = fimTexto.trim() ? dataDeFimParaISO(fimTexto) : null;
 
     /**
      * No lote NAO ha chamada de API: escreve os campos de volta no rascunho e
@@ -316,7 +326,7 @@ export default function MedicamentoFormScreen() {
     if (emLote) {
       atualizarItemDoLote(
         indiceDoLote!,
-        { nome, concentracao, forma, quantidade, embalagem, tipo, intervalo, horarios, instrucoes, fimDoTratamento },
+        { nome, concentracao, forma, quantidade, embalagem, tipo, intervalo, horarios, instrucoes, fimDoTratamento: fimISO },
         [...camposDaIA],
       );
       router.back();
@@ -337,7 +347,7 @@ export default function MedicamentoFormScreen() {
         Number.isFinite(embalagemNumero) && embalagemNumero > 0
           ? Math.round(embalagemNumero)
           : null,
-      endsAt: fimDoTratamento,
+      endsAt: fimISO,
       scheduleType: tipo,
       // Campos de um tipo precisam ser LIMPOS ao trocar de tipo, senao o
       // servidor recusa com "horários fixos só valem para esse tipo".
@@ -572,7 +582,7 @@ export default function MedicamentoFormScreen() {
               </SurfaceCard>
 
               <SurfaceCard style={styles.bloco}>
-                <Text style={styles.blocoTitulo}>Quando tomar</Text>
+                <Text style={styles.blocoTitulo}>{forma === 'jato' ? 'Quando aplicar' : 'Quando tomar'}</Text>
 
                 {/*
                   Este campo morava no bloco do remedio, com o rotulo
@@ -582,7 +592,7 @@ export default function MedicamentoFormScreen() {
                   "Quantidade" ficou para o campo da embalagem.
                 */}
                 <FormField
-                  label="Quanto tomar por vez"
+                  label={forma === 'jato' ? 'Quanto aplicar por vez' : 'Quanto tomar por vez'}
                   value={quantidade}
                   onChangeText={(v) => {
                     conferido('quantidade');
@@ -590,7 +600,7 @@ export default function MedicamentoFormScreen() {
                   }}
                   placeholder="1"
                   keyboardType="decimal-pad"
-                  hint={forma === 'outro' ? undefined : `Em ${forma}`}
+                  hint={forma === 'outro' ? undefined : forma === 'jato' ? 'Em jatos' : `Em ${forma}`}
                   error={erros.doseAmount}
                   selo={camposDaIA.has('quantidade') ? <SeloDaIA /> : undefined}
                   editable={!salvando}
@@ -694,6 +704,24 @@ export default function MedicamentoFormScreen() {
                     ) : null}
                   </>
                 ) : null}
+
+                {/*
+                  Fim do tratamento: opcional e editável. Antes só existia a
+                  conversão automática de "por N dias"; um prazo relativo ("até
+                  sábado") ficava sem data. Aqui a pessoa digita e os lembretes
+                  param no dia.
+                */}
+                <FormField
+                  label="Fim do tratamento"
+                  value={fimTexto}
+                  onChangeText={(v) => setFimTexto(formatarData(v))}
+                  placeholder="20/10/2026"
+                  keyboardType="number-pad"
+                  maxLength={10}
+                  hint="Opcional. Quando o tratamento termina — os lembretes param nesse dia."
+                  error={erros.endsAt}
+                  editable={!salvando}
+                />
               </SurfaceCard>
 
               {fotoDaCaixa ? (

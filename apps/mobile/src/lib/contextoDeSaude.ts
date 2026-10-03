@@ -2,7 +2,7 @@ import { isSameDay, startOfDay } from 'date-fns';
 
 import type { Appointment, Medication, Profile } from '@/api/health';
 import { idadeDescrita } from '@/lib/pessoa';
-import { hora, posologia, proximaDose, vigenteHoje } from '@/lib/posologia';
+import { formaVisual, hora, posologia, proximaDose, vigenteHoje } from '@/lib/posologia';
 
 /**
  * Monta o bloco de texto que o assistente recebe sobre a pessoa.
@@ -81,7 +81,7 @@ export function montarContexto(
             : `Próxima dose amanhã ${hora(proxima)}.`,
         );
       } else if (m.scheduleType === 'as_needed') {
-        partes.push('Tomar só se necessário.');
+        partes.push(formaVisual(m.form) === 'jato' ? 'Aplicar só se necessário.' : 'Tomar só se necessário.');
       }
 
       const tomadasHoje = m.doses.filter(

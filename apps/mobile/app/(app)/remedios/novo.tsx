@@ -455,9 +455,10 @@ export default function NovoRemedioScreen() {
           <Feather name="lock" size={14} color={colors.textSecondary} style={styles.cadeado} />
           <View style={styles.rodapeTextos}>
             <Text style={styles.rodapeTexto}>
-              A leitura é feita pela Groq, um parceiro com servidores fora do Brasil. A foto não
-              treina nenhum modelo e não fica guardada lá. Na sua conta, a foto da caixinha fica
-              guardada no cadastro do remédio, e dá para removê-la; a da receita, só se você pedir.
+              A leitura é feita pela Anthropic (Claude), um parceiro com servidores fora do Brasil.
+              A foto não treina nenhum modelo e não fica guardada lá. Na sua conta, a foto da
+              caixinha fica guardada no cadastro do remédio, e dá para removê-la; a da receita, só
+              se você pedir.
             </Text>
             <Pressable
               onPress={() => router.push('/conta/privacidade')}

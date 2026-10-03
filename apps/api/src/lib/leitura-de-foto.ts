@@ -139,6 +139,19 @@ function forma(v: unknown): (typeof medicationFormValues)[number] | null {
   if (n === 'ml' || n.startsWith('solucao') || n.startsWith('xarope') || n.startsWith('suspensao')) {
     return 'ml';
   }
+  // Inaladores: a dose vem em "jatos" (puffs). "spray", "aerossol", "inalador",
+  // "inalatorio" e "HFA" sao as grafias que aparecem nas receitas.
+  if (
+    n.startsWith('jato') ||
+    n.startsWith('spray') ||
+    n.startsWith('aeross') ||
+    n.startsWith('inalad') ||
+    n.startsWith('inalat') ||
+    n === 'puff' ||
+    n === 'hfa'
+  ) {
+    return 'jato';
+  }
   return null;
 }
 

@@ -56,6 +56,28 @@ export function dataParaISO(texto: string): string | null {
   return `${ano}-${mm}-${dd}`;
 }
 
+/**
+ * "20/10/2026" -> ISO, para o FIM DE TRATAMENTO.
+ *
+ * Diferente de dataParaISO, que recusa data futura (foi feita para nascimento):
+ * aqui a data e no futuro de proposito. Recusa data no passado (fim antes de
+ * hoje nao faz sentido) e anos absurdos. Meio-dia local, como o fim calculado
+ * da leitura, para o dia nao "voltar" um ao virar UTC.
+ */
+export function dataDeFimParaISO(texto: string): string | null {
+  if (somenteDigitos(texto).length !== 8) return null;
+
+  const d = parse(texto, 'dd/MM/yyyy', new Date());
+  if (!isValid(d)) return null;
+
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  if (d < hoje) return null;
+  if (d.getFullYear() > hoje.getFullYear() + 5) return null;
+
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0).toISOString();
+}
+
 /** "1990-01-01" -> "01/01/1990", para preencher o campo na edicao. */
 export function isoParaData(iso: string | null | undefined): string {
   if (!iso) return '';

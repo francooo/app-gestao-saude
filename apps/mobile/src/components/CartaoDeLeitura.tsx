@@ -2,6 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { MedicamentoLido } from '@/api/health';
+import { formaVisual } from '@/lib/posologia';
 import { IconTile, LADRILHO_NEUTRO } from '@/components/IconTile';
 import { SurfaceCard } from '@/components/SurfaceCard';
 import { colors, fonts, radii, spacing } from '@/theme';
@@ -72,7 +73,12 @@ export function CartaoDeLeitura(props: Props) {
         <Campo rotulo="Quantas vêm na caixa" valor={`${item.packageAmount} ${item.form ?? ''}`.trim()} />
       ) : null}
 
-      {item.scheduleType ? <Campo rotulo="Como tomar" valor={comoTomar(item)} /> : null}
+      {item.scheduleType ? (
+        <Campo
+          rotulo={formaVisual(item.form) === 'jato' ? 'Como aplicar' : 'Como tomar'}
+          valor={comoTomar(item)}
+        />
+      ) : null}
 
       <View style={[styles.chip, !completo && styles.chipIncompleto]}>
         <Feather name={completo ? 'check' : 'edit-3'} size={14} color={colors.onAccent} />
