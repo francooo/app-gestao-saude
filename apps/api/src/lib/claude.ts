@@ -17,8 +17,8 @@ import type { RespostaGroq } from './groq';
 const URL_CLAUDE = 'https://api.anthropic.com/v1/messages';
 const VERSAO_API = '2023-06-01';
 
-/** Sonnet atual. Constante para trocar por Haiku 4.5 se o custo pesar. */
-export const MODELO_DE_VISAO_CLAUDE = 'claude-sonnet-5-5';
+/** Sonnet atual na API. Constante para trocar por Haiku se o custo pesar. */
+export const MODELO_DE_VISAO_CLAUDE = 'claude-sonnet-5';
 
 /** Teto de saída: o JSON do cadastro é pequeno; cabe folgado em 900. */
 const TETO_DE_SAIDA = 900;
