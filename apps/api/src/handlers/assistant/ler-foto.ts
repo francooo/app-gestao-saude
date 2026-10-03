@@ -195,10 +195,17 @@ async function encerrar(
 /**
  * Os dois tetos numa consulta so, em janela deslizante.
  *
- * Conta TODAS as linhas, inclusive as que falharam: ver o comentario do insert
- * acima. O teto por minuto e nosso e fica abaixo do que o provedor aguenta —
- * serve para dizer a verdade rapido, sem ida ao Groq, e para um cliente
- * travado parar de bater la fora.
+ * O teto DIARIO conta TODAS as linhas, inclusive as que falharam: e a protecao
+ * dura contra laco travado (ver o comentario do insert acima).
+ *
+ * Ja o teto POR MINUTO ignora as FALHAS, e isso conserta o efeito cascata que o
+ * usuario sentia: o limite por minuto modela o ITPM do Groq (~2.300 cobrados
+ * POR FOTO LIDA), mas um 429 do Groq — ou qualquer falha — nao processa a
+ * imagem e NAO consome esse balde. Contar essas falhas prendia a pessoa por um
+ * minuto depois de duas ou tres tentativas frustradas, sem nenhuma leitura ter
+ * acontecido. Agora, so o que esta em voo ('enviada') ou deu certo
+ * ('lida'/'vazia') conta por minuto — entao, depois de um "congestionada", da
+ * para tentar de novo assim que o balde do Groq encher (~20s).
  */
 async function usoRecente(userId: string): Promise<{ dia: number; minuto: number }> {
   const agora = Date.now();
@@ -208,7 +215,7 @@ async function usoRecente(userId: string): Promise<{ dia: number; minuto: number
   const [linha] = await db
     .select({
       dia: sql<number>`count(*)::int`,
-      minuto: sql<number>`count(*) filter (where ${medicationPhotoReads.createdAt} >= ${desdeUmMinuto})::int`,
+      minuto: sql<number>`count(*) filter (where ${medicationPhotoReads.createdAt} >= ${desdeUmMinuto} and ${medicationPhotoReads.outcome}::text <> 'falha')::int`,
     })
     .from(medicationPhotoReads)
     .where(
