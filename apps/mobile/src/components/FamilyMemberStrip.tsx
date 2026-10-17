@@ -14,8 +14,12 @@ export type FamilyMember = {
 
 type Props = {
   membros: FamilyMember[];
-  /** Abre a ficha da pessoa. */
-  onAbrir: (id: string) => void;
+  /** Quem esta filtrando a tela. null = a familia inteira. */
+  selecionadoId: string | null;
+  /** TOQUE: filtra a tela por essa pessoa (quem chama decide desmarcar). */
+  onSelecionar: (id: string) => void;
+  /** PRESSIONAR E SEGURAR: abre a ficha para editar. */
+  onEditar: (id: string) => void;
   onAdicionar: () => void;
   /** Primeira carga: mostra circulos cinzas em vez de familia vazia. */
   carregando?: boolean;
@@ -45,7 +49,9 @@ const AVATAR = 52;
 
 export function FamilyMemberStrip({
   membros,
-  onAbrir,
+  selecionadoId,
+  onSelecionar,
+  onEditar,
   onAdicionar,
   carregando = false,
 }: Props) {
@@ -70,26 +76,43 @@ export function FamilyMemberStrip({
                 <View style={styles.esqueleto} />
               </View>
             ))
-          : membros.map((membro) => (
-              <Pressable
-                key={membro.id}
-                onPress={() => onAbrir(membro.id)}
-                style={styles.item}
-                accessibilityRole="button"
-                accessibilityLabel={`Abrir ficha de ${membro.nome}`}
-              >
-                <Avatar
-                  nome={membro.nome}
-                  color={membro.cor ?? undefined}
-                  photo={membro.foto}
-                  recyclingKey={membro.id}
-                  size={AVATAR}
-                />
-                <Text style={styles.nome} numberOfLines={1}>
-                  {rotuloCurto(membro, membros)}
-                </Text>
-              </Pressable>
-            ))}
+          : membros.map((membro) => {
+              const ativo = membro.id === selecionadoId;
+              return (
+                <Pressable
+                  key={membro.id}
+                  onPress={() => onSelecionar(membro.id)}
+                  // Editar e o gesto menos frequente, por isso o mais caro.
+                  onLongPress={() => onEditar(membro.id)}
+                  delayLongPress={400}
+                  style={styles.item}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: ativo }}
+                  accessibilityLabel={
+                    ativo ? `Mostrando dados de ${membro.nome}` : `Mostrar dados de ${membro.nome}`
+                  }
+                  accessibilityHint="Toque duas vezes e segure para editar"
+                  // Leitor de tela nao tem "segurar" confiavel: a edicao vira
+                  // uma acao do menu de acessibilidade.
+                  accessibilityActions={[{ name: 'editar', label: 'Editar membro' }]}
+                  onAccessibilityAction={(e) => {
+                    if (e.nativeEvent.actionName === 'editar') onEditar(membro.id);
+                  }}
+                >
+                  <Avatar
+                    nome={membro.nome}
+                    color={membro.cor ?? undefined}
+                    photo={membro.foto}
+                    recyclingKey={membro.id}
+                    size={AVATAR}
+                    selected={ativo}
+                  />
+                  <Text style={[styles.nome, ativo && styles.nomeAtivo]} numberOfLines={1}>
+                    {rotuloCurto(membro, membros)}
+                  </Text>
+                </Pressable>
+              );
+            })}
 
         <Pressable
           onPress={onAdicionar}
@@ -144,6 +167,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSecondary,
     marginTop: spacing.sm,
+  },
+  nomeAtivo: {
+    fontFamily: fonts.bold,
+    color: colors.sectionTitle,
   },
   esqueleto: {
     width: AVATAR,

@@ -238,7 +238,12 @@ async function agendarDoMedicamento(
   const corpo = `Está na hora${quem}: ${[quantidadeComUnidade(m.doseAmount ?? null, m.doseUnit ?? null), titulo].filter(Boolean).join(' de ')}.`;
   const criados: string[] = [];
 
-  if (m.scheduleType === 'fixed_times') {
+  // Gatilho DIARIO so serve quando todo dia e igual. "Dia sim, dia nao", dias
+  // da semana ou um total de doses precisam pular dias e parar — isso o
+  // gatilho diario nao sabe, entao esses caem na estrategia de ocorrencias
+  // concretas das proximas 48 h, a mesma do "a cada N horas".
+  const todoDiaIgual = !m.dayInterval && !m.weekdays && !m.totalDoses;
+  if (m.scheduleType === 'fixed_times' && todoDiaIgual) {
     for (const hhmm of m.times) {
       if (criados.length >= teto) break;
       const [h, min] = hhmm.split(':').map(Number);

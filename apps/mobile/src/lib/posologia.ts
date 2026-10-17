@@ -1,4 +1,12 @@
-import { addDays, addHours, endOfDay, isSameDay, set, startOfDay } from 'date-fns';
+import {
+  addDays,
+  addHours,
+  differenceInCalendarDays,
+  endOfDay,
+  isSameDay,
+  set,
+  startOfDay,
+} from 'date-fns';
 
 import type { Dose, Medication } from '@/api/health';
 
@@ -34,6 +42,74 @@ const DIAS_A_FRENTE = 2;
  * sentido definido e o card de resumo nao poderia existir.
  */
 export function slotsDoDia(m: Medication, dia: Date): Date[] {
+  return slotsCrusDoDia(m, dia).filter((s) => {
+    const ultimo = ultimoSlot(m);
+    return !ultimo || s <= ultimo;
+  });
+}
+
+/** Onde a grade comeca: startsAt, com createdAt de reserva. */
+function ancoraDe(m: Medication): Date {
+  return new Date(m.startsAt ?? m.createdAt);
+}
+
+/**
+ * O dia entra na grade?
+ *
+ * "A cada N dias" conta DIAS DE CALENDARIO desde o dia da ancora (dia sim,
+ * dia nao = 0, 2, 4...). "Dias da semana" olha o bit do dia (bit 0 = domingo).
+ */
+function diaValido(m: Medication, dia: Date): boolean {
+  if (m.scheduleType !== 'fixed_times') return true;
+  if (m.weekdays) return ((m.weekdays >> dia.getDay()) & 1) === 1;
+  if (m.dayInterval && m.dayInterval > 1) {
+    const dias = differenceInCalendarDays(dia, ancoraDe(m));
+    return dias >= 0 && dias % m.dayInterval === 0;
+  }
+  return true;
+}
+
+/** Freio do laco: 500 doses de 1x por semana cabem com folga em 10 anos. */
+const DIAS_MAXIMOS_DE_CONTAGEM = 3650;
+
+const cacheUltimoSlot = new WeakMap<Medication, Date | null>();
+
+/**
+ * O horario da ULTIMA dose quando ha `totalDoses`, ou null se nao ha limite.
+ *
+ * Conta as doses AGENDADAS desde a ancora, nao as tomadas: "6 doses" e o que
+ * a receita manda, e uma dose esquecida nao estica o tratamento.
+ */
+export function ultimoSlot(m: Medication): Date | null {
+  if (!m.totalDoses || m.scheduleType === 'as_needed') return null;
+  if (cacheUltimoSlot.has(m)) return cacheUltimoSlot.get(m)!;
+
+  const ancora = ancoraDe(m);
+  let resultado: Date | null = null;
+
+  if (m.scheduleType === 'interval') {
+    const passo = m.intervalHours ?? 0;
+    resultado = passo > 0 ? addHours(ancora, (m.totalDoses - 1) * passo) : null;
+  } else {
+    let contadas = 0;
+    for (let i = 0; i < DIAS_MAXIMOS_DE_CONTAGEM && !resultado; i++) {
+      for (const s of slotsCrusDoDia(m, addDays(ancora, i))) {
+        if (s < ancora) continue;
+        contadas += 1;
+        if (contadas === m.totalDoses) {
+          resultado = s;
+          break;
+        }
+      }
+    }
+  }
+
+  cacheUltimoSlot.set(m, resultado);
+  return resultado;
+}
+
+/** A grade do dia SEM o corte do total de doses (que depende dela). */
+function slotsCrusDoDia(m: Medication, dia: Date): Date[] {
   if (m.scheduleType === 'as_needed') return [];
 
   const inicioDoDia = startOfDay(dia);
@@ -41,6 +117,7 @@ export function slotsDoDia(m: Medication, dia: Date): Date[] {
   const slots: Date[] = [];
 
   if (m.scheduleType === 'fixed_times') {
+    if (!diaValido(m, dia)) return [];
     for (const hhmm of m.times) {
       const [h, min] = hhmm.split(':').map(Number);
       slots.push(set(inicioDoDia, { hours: h, minutes: min, seconds: 0, milliseconds: 0 }));
@@ -183,6 +260,9 @@ export function vigenteHoje(m: Medication, agora: Date): boolean {
   if (!m.isActive) return false;
   if (m.startsAt && new Date(m.startsAt) > endOfDay(agora)) return false;
   if (m.endsAt && new Date(m.endsAt) < startOfDay(agora)) return false;
+  // Total de doses ja cumprido: o tratamento acabou, mesmo sem data de fim.
+  const ultimo = ultimoSlot(m);
+  if (ultimo && ultimo < startOfDay(agora)) return false;
   return true;
 }
 
@@ -265,18 +345,36 @@ export function quantidadeComUnidade(amount: number | null, unit: string | null)
   return `${numero} ${texto}`;
 }
 
-/** "a cada 8 horas", "1x ao dia", "2x ao dia", "se necessário". */
+const NOMES_DOS_DIAS = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+
+/** Bitmask dom..sab → "seg, qua e sex". */
+export function diasDaSemana(mascara: number): string {
+  const nomes = NOMES_DOS_DIAS.filter((_, i) => ((mascara >> i) & 1) === 1);
+  if (nomes.length <= 1) return nomes[0] ?? '';
+  return `${nomes.slice(0, -1).join(', ')} e ${nomes.at(-1)}`;
+}
+
+/** "a cada 8 horas", "1x ao dia", "dia sim, dia não às 08:00", "seg, qua e sex às 08:00". */
 export function descricaoDoHorario(m: Medication): string {
   if (m.scheduleType === 'as_needed') return 'se necessário';
+
+  let base: string;
   if (m.scheduleType === 'interval') {
     const h = m.intervalHours ?? 0;
-    if (h === 24) return '1x ao dia';
-    return `a cada ${h} ${h === 1 ? 'hora' : 'horas'}`;
+    base = h === 24 ? '1x ao dia' : `a cada ${h} ${h === 1 ? 'hora' : 'horas'}`;
+  } else {
+    const n = m.times.length;
+    const quando =
+      m.weekdays ? diasDaSemana(m.weekdays)
+      : m.dayInterval === 2 ? 'dia sim, dia não'
+      : m.dayInterval && m.dayInterval > 2 ? `a cada ${m.dayInterval} dias`
+      : 'todo dia';
+    if (n === 0) base = 'horários a definir';
+    else if (n === 1) base = `${quando} às ${m.times[0]}`;
+    else base = quando === 'todo dia' ? `${n}x ao dia` : `${n}x ao dia, ${quando}`;
   }
-  const n = m.times.length;
-  if (n === 0) return 'horários a definir';
-  if (n === 1) return `todo dia às ${m.times[0]}`;
-  return `${n}x ao dia`;
+
+  return m.totalDoses ? `${base} · ${m.totalDoses} doses no total` : base;
 }
 
 /** A segunda linha do card: "1 cápsula · a cada 8 horas". */

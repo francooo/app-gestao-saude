@@ -168,6 +168,14 @@ export const medicationSchema = z.object({
   packageAmount: z.number().nullish(),
   scheduleType: scheduleTypeSchema,
   intervalHours: z.number().nullish(),
+  /**
+   * Padroes de dias (so horarios fixos) e total de doses. `nullish` pelo motivo
+   * de sempre: contra um servidor antigo chegam AUSENTES.
+   */
+  dayInterval: z.number().nullish(),
+  /** Bitmask dom..sab (bit 0 = domingo). */
+  weekdays: z.number().nullish(),
+  totalDoses: z.number().nullish(),
   startsAt: z.string().nullish(),
   endsAt: z.string().nullish(),
   instructions: z.string().nullish(),
@@ -217,6 +225,9 @@ export type MedicationInput = {
   scheduleType: ScheduleType;
   intervalHours?: number | null;
   times?: string[];
+  dayInterval?: number | null;
+  weekdays?: number | null;
+  totalDoses?: number | null;
   startsAt?: string | null;
   endsAt?: string | null;
   instructions?: string | null;
@@ -285,6 +296,22 @@ export const leituraDeFotoSchema = z.object({
   consultationDate: z.string().nullish(),
 });
 export type LeituraDeFoto = z.infer<typeof leituraDeFotoSchema>;
+
+/** O que a IA propoe a partir de "Descreva como tomar". Tudo pode vir nulo. */
+export const propostaDePosologiaSchema = z.object({
+  // String frouxa, como na leitura de foto: um valor novo nao derruba o parse.
+  scheduleType: z.string().nullish(),
+  intervalHours: z.number().nullish(),
+  times: z.array(z.string()).default([]),
+  dayInterval: z.number().nullish(),
+  weekdays: z.number().nullish(),
+  totalDoses: z.number().nullish(),
+  doseAmount: z.number().nullish(),
+  /** Vira data AQUI, com o relogio do aparelho. */
+  durationDays: z.number().nullish(),
+  instructions: z.string().nullish(),
+});
+export type PropostaDePosologia = z.infer<typeof propostaDePosologiaSchema>;
 
 // ---------------------------------------------------------------------------
 // Diario de sintomas
@@ -561,6 +588,20 @@ export const healthApi = {
       '/api/assistant/ler-foto',
       { method: 'POST', body: input, authenticated: true, timeoutMs: LEITURA_TIMEOUT_MS, signal },
       (data) => leituraDeFotoSchema.parse(data),
+    );
+  },
+
+  /**
+   * "Descreva como tomar": a IA converte a frase em posologia.
+   *
+   * So PROPOE: nada e gravado. O formulario preenche com o selo "da IA" e a
+   * pessoa confere antes de salvar.
+   */
+  interpretarPosologia(input: { texto: string; forma?: string | null }): Promise<PropostaDePosologia> {
+    return request(
+      '/api/assistant/posologia',
+      { method: 'POST', body: input, authenticated: true, timeoutMs: ASSISTANT_TIMEOUT_MS },
+      (data) => z.object({ proposta: propostaDePosologiaSchema }).parse(data).proposta,
     );
   },
 

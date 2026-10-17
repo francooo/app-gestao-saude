@@ -42,7 +42,11 @@ export type CampoLido =
   | 'tipo'
   | 'intervalo'
   | 'horarios'
-  | 'instrucoes';
+  | 'instrucoes'
+  /** Padrao de dias (a cada N dias / dias da semana). */
+  | 'repetir'
+  /** Total de doses. */
+  | 'total';
 
 export type CamposDoRascunho = {
   nome: string;
@@ -56,6 +60,12 @@ export type CamposDoRascunho = {
   instrucoes: string;
   /** Calculado AQUI a partir de durationDays, com o relogio do aparelho. */
   fimDoTratamento: string | null;
+  /** A cada N dias (so horarios fixos). null = todo dia. */
+  diasIntervalo: number | null;
+  /** Bitmask dom..sab (so horarios fixos). null = todo dia. */
+  diasSemana: number | null;
+  /** Para depois de N doses. null = sem limite. */
+  totalDoses: number | null;
 };
 
 export type RascunhoDeMedicamento = {
@@ -301,13 +311,16 @@ function forma(v: string | null | undefined): (typeof FORMAS)[number] | null {
 }
 
 /**
- * Encaixa no degrau mais proximo dos INTERVALOS oferecidos.
+ * O intervalo que a tela vai mostrar.
  *
- * Nao e preciosismo: se o modelo devolver 5 e a tela so oferece 4/6/8/12/24,
- * NENHUM chip fica aceso — e uma tela sem nada selecionado le-se como defeito,
- * nao como "a IA nao soube".
+ * Desde que o formulario ganhou o chip "Outro" (intervalo livre, 1–72h), um
+ * valor fora dos degraus NAO e mais empurrado para o vizinho: "de 5 em 5 horas"
+ * fica 5h, que e o que a receita disse. So o que esta fora de 1–72 — que o
+ * servidor recusaria — ainda encaixa no degrau mais proximo.
  */
-function encaixarIntervalo(horas: number): number {
+export function encaixarIntervalo(horas: number): number {
+  const inteiro = Math.round(horas);
+  if (inteiro >= 1 && inteiro <= 72) return inteiro;
   return INTERVALOS.reduce((melhor, atual) => {
     const d = Math.abs(atual - horas);
     const dMelhor = Math.abs(melhor - horas);
@@ -337,6 +350,9 @@ export function camposVazios(): CamposDoRascunho {
     horarios: ['08:00'],
     instrucoes: '',
     fimDoTratamento: null,
+    diasIntervalo: null,
+    diasSemana: null,
+    totalDoses: null,
   };
 }
 

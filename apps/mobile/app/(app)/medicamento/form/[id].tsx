@@ -39,6 +39,7 @@ import {
   camposVazios,
   consumirRascunho,
   descartarRascunho,
+  encaixarIntervalo,
   FORMAS,
   INTERVALOS,
   lerReceita,
@@ -47,6 +48,22 @@ import {
 } from '@/lib/rascunhoDeMedicamento';
 import { dataDeFimParaISO, formatarData, isoParaData } from '@/lib/pessoa';
 import { backgrounds, colors, fonts, radii, spacing } from '@/theme';
+
+const REPETIR: { valor: 'todo' | 'dias' | 'semana'; rotulo: string }[] = [
+  { valor: 'todo', rotulo: 'Todo dia' },
+  { valor: 'dias', rotulo: 'A cada N dias' },
+  { valor: 'semana', rotulo: 'Dias da semana' },
+];
+
+/** Ordem do bitmask: indice 0 = domingo. */
+const DIAS_DA_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+/** "17/10/2026" no fuso do aparelho (toISOString viraria o dia depois das 21h). */
+function dataLocalTexto(d: Date): string {
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  return `${dd}/${mm}/${d.getFullYear()}`;
+}
 
 const TIPOS: { valor: ScheduleType; rotulo: string; ajuda: string }[] = [
   { valor: 'interval', rotulo: 'A cada X horas', ajuda: 'Ex.: de 8 em 8 horas' },
@@ -103,6 +120,24 @@ export default function MedicamentoFormScreen() {
   const [prescritorId, setPrescritorId] = useState<string | null>(null);
   /** Fim do tratamento como o texto do campo (dd/mm/aaaa); vira ISO ao salvar. */
   const [fimTexto, setFimTexto] = useState('');
+
+  /**
+   * Intervalo LIVRE: o chip "Outro" abre um campo de 1 a 72 horas. O servidor
+   * sempre aceitou qualquer valor nessa faixa; so a tela limitava aos chips.
+   */
+  const [intervaloOutro, setIntervaloOutro] = useState(false);
+  const [intervaloTexto, setIntervaloTexto] = useState('');
+  /** Padrao de dias (so horarios fixos). */
+  const [repetir, setRepetir] = useState<'todo' | 'dias' | 'semana'>('todo');
+  const [diasIntervaloTexto, setDiasIntervaloTexto] = useState('');
+  /** Bitmask dom..sab. */
+  const [diasSemana, setDiasSemana] = useState<number | null>(null);
+  const [totalTexto, setTotalTexto] = useState('');
+
+  /** "Descreva como tomar": o texto livre que a IA converte em posologia. */
+  const [descricao, setDescricao] = useState('');
+  const [interpretando, setInterpretando] = useState(false);
+  const [erroIA, setErroIA] = useState<string | null>(null);
 
   /**
    * Quais campos vieram da leitura por foto e AINDA NAO FORAM CONFERIDOS.
@@ -206,6 +241,12 @@ export default function MedicamentoFormScreen() {
     setHorarios(item.campos.horarios);
     setInstrucoes(item.campos.instrucoes);
     setFimTexto(isoParaData(item.campos.fimDoTratamento));
+    aplicarPadroes({
+      intervalo: item.campos.intervalo,
+      diasIntervalo: item.campos.diasIntervalo,
+      diasSemana: item.campos.diasSemana,
+      totalDoses: item.campos.totalDoses,
+    });
     setCamposDaIA(new Set(item.camposLidos));
   }, [emLote, indiceDoLote, router]);
 
@@ -238,6 +279,12 @@ export default function MedicamentoFormScreen() {
     setHorarios(r.campos.horarios);
     setInstrucoes(r.campos.instrucoes);
     setFimTexto(isoParaData(r.campos.fimDoTratamento));
+    aplicarPadroes({
+      intervalo: r.campos.intervalo,
+      diasIntervalo: r.campos.diasIntervalo,
+      diasSemana: r.campos.diasSemana,
+      totalDoses: r.campos.totalDoses,
+    });
     setCamposDaIA(new Set(r.camposLidos));
     if (r.prescritorId) setPrescritorId(r.prescritorId);
     setOrigemDaLeitura({ readId: r.readId, item: r.readItem });
@@ -274,6 +321,12 @@ export default function MedicamentoFormScreen() {
     setPrescritorId(m.prescriberId ?? null);
     setEmbalagem(m.packageAmount != null ? String(m.packageAmount) : '');
     setFimTexto(isoParaData(m.endsAt));
+    aplicarPadroes({
+      intervalo: m.intervalHours ?? 8,
+      diasIntervalo: m.dayInterval ?? null,
+      diasSemana: m.weekdays ?? null,
+      totalDoses: m.totalDoses ?? null,
+    });
     // Um remedio que veio do banco nao tem campo pendente de conferencia.
     setCamposDaIA(new Set());
     setReceita(null);
@@ -288,6 +341,107 @@ export default function MedicamentoFormScreen() {
     setHorarios((atual) => atual.map((h, i) => (i === indice ? texto : h)));
   }
 
+  /**
+   * Leva intervalo, padrao de dias e total para os estados da tela.
+   *
+   * Um ponto so para os quatro caminhos que preenchem o formulario (remedio
+   * existente, rascunho da foto, item do lote e a IA), para nenhum esquecer de
+   * ligar o "Outro" quando o intervalo nao e um dos chips.
+   */
+  function aplicarPadroes(p: {
+    intervalo: number;
+    diasIntervalo: number | null;
+    diasSemana: number | null;
+    totalDoses: number | null;
+  }) {
+    setIntervaloOutro(!(INTERVALOS as readonly number[]).includes(p.intervalo));
+    setIntervaloTexto(String(p.intervalo));
+    setRepetir(p.diasSemana ? 'semana' : p.diasIntervalo && p.diasIntervalo > 1 ? 'dias' : 'todo');
+    setDiasSemana(p.diasSemana);
+    setDiasIntervaloTexto(p.diasIntervalo && p.diasIntervalo > 1 ? String(p.diasIntervalo) : '');
+    setTotalTexto(p.totalDoses ? String(p.totalDoses) : '');
+  }
+
+  /** O que os campos novos viram no cadastro. Limpa o que nao vale para o tipo. */
+  function padroesParaSalvar() {
+    return {
+      dayInterval: tipo === 'fixed_times' && repetir === 'dias' ? Number(diasIntervaloTexto) : null,
+      weekdays: tipo === 'fixed_times' && repetir === 'semana' ? diasSemana : null,
+      totalDoses: tipo !== 'as_needed' && totalTexto.trim() ? Number(totalTexto) : null,
+    };
+  }
+
+  function alternarDia(indice: number) {
+    conferido('repetir');
+    setDiasSemana((atual) => {
+      const mascara = (atual ?? 0) ^ (1 << indice);
+      return mascara === 0 ? null : mascara;
+    });
+  }
+
+  /**
+   * "Descreva como tomar" → a IA propoe, a tela preenche, a pessoa confere.
+   *
+   * Nada e salvo aqui. Os campos preenchidos ganham o selo "da IA" (o mesmo da
+   * leitura de foto), e o selo some quando a pessoa mexe no campo.
+   */
+  async function preencherComIA() {
+    const texto = descricao.trim();
+    if (texto.length < 3) {
+      setErroIA('Escreva como deve ser tomado, por exemplo "1 comprimido a cada 8 horas por 7 dias".');
+      return;
+    }
+    setErroIA(null);
+    setInterpretando(true);
+    try {
+      const p = await healthApi.interpretarPosologia({ texto, forma });
+      const lidos = new Set(camposDaIA);
+
+      const tipoLido = TIPOS.find((t) => t.valor === p.scheduleType)?.valor;
+      if (tipoLido) {
+        setTipo(tipoLido);
+        lidos.add('tipo');
+      }
+      const novoIntervalo = p.intervalHours ? encaixarIntervalo(p.intervalHours) : intervalo;
+      if (p.intervalHours) {
+        setIntervalo(novoIntervalo);
+        lidos.add('intervalo');
+      }
+      if (p.times.length > 0) {
+        setHorarios(p.times.slice(0, 8));
+        lidos.add('horarios');
+      }
+      aplicarPadroes({
+        intervalo: novoIntervalo,
+        diasIntervalo: p.dayInterval ?? null,
+        diasSemana: p.weekdays ?? null,
+        totalDoses: p.totalDoses ?? null,
+      });
+      if (p.dayInterval || p.weekdays) lidos.add('repetir');
+      if (p.totalDoses) lidos.add('total');
+      if (p.doseAmount) {
+        setQuantidade(String(p.doseAmount).replace('.', ','));
+        lidos.add('quantidade');
+      }
+      // "Por 7 dias" vira data AQUI, com o relogio do aparelho.
+      if (p.durationDays) {
+        const fim = new Date();
+        fim.setDate(fim.getDate() + p.durationDays);
+        setFimTexto(dataLocalTexto(fim));
+      }
+      // Nao atropela orientacao que a pessoa ja escreveu.
+      if (p.instructions && !instrucoes.trim()) {
+        setInstrucoes(p.instructions);
+        lidos.add('instrucoes');
+      }
+      setCamposDaIA(lidos);
+    } catch (e) {
+      setErroIA(messageForError(e instanceof ApiRequestError ? e.code : undefined));
+    } finally {
+      setInterpretando(false);
+    }
+  }
+
   function validar(): boolean {
     const novos: Record<string, string> = {};
     if (nome.trim().length < 2) novos.nome = 'Informe o nome do remédio';
@@ -298,6 +452,25 @@ export default function MedicamentoFormScreen() {
       const validos = horarios.filter((h) => /^([01]\d|2[0-3]):[0-5]\d$/.test(h));
       if (validos.length === 0) novos.horarios = 'Informe ao menos um horário, como 08:00';
       else if (new Set(validos).size !== validos.length) novos.horarios = 'Há horários repetidos';
+    }
+
+    if (tipo === 'interval' && !(Number.isInteger(intervalo) && intervalo >= 1 && intervalo <= 72)) {
+      novos.intervalHours = 'Informe um intervalo entre 1 e 72 horas';
+    }
+
+    if (tipo === 'fixed_times' && repetir === 'dias') {
+      const n = Number(diasIntervaloTexto);
+      if (!Number.isInteger(n) || n < 2 || n > 60) {
+        novos.dayInterval = 'Informe de quantos em quantos dias (2 a 60)';
+      }
+    }
+    if (tipo === 'fixed_times' && repetir === 'semana' && !diasSemana) {
+      novos.weekdays = 'Escolha ao menos um dia da semana';
+    }
+
+    if (tipo !== 'as_needed' && totalTexto.trim()) {
+      const n = Number(totalTexto);
+      if (!Number.isInteger(n) || n < 1 || n > 500) novos.totalDoses = 'Use um número de 1 a 500';
     }
 
     // Fim de tratamento é opcional; se preenchido, precisa ser uma data futura.
@@ -323,10 +496,26 @@ export default function MedicamentoFormScreen() {
      * um lugar so. As marcas "da foto" que sobraram vao junto: a pessoa pode
      * reabrir o item e ver o que ainda nao conferiu.
      */
+    const padroes = padroesParaSalvar();
+
     if (emLote) {
       atualizarItemDoLote(
         indiceDoLote!,
-        { nome, concentracao, forma, quantidade, embalagem, tipo, intervalo, horarios, instrucoes, fimDoTratamento: fimISO },
+        {
+          nome,
+          concentracao,
+          forma,
+          quantidade,
+          embalagem,
+          tipo,
+          intervalo,
+          horarios,
+          instrucoes,
+          fimDoTratamento: fimISO,
+          diasIntervalo: padroes.dayInterval,
+          diasSemana: padroes.weekdays,
+          totalDoses: padroes.totalDoses,
+        },
         [...camposDaIA],
       );
       router.back();
@@ -353,6 +542,9 @@ export default function MedicamentoFormScreen() {
       // servidor recusa com "horários fixos só valem para esse tipo".
       intervalHours: tipo === 'interval' ? intervalo : null,
       times: tipo === 'fixed_times' ? horarios.filter((h) => /^([01]\d|2[0-3]):[0-5]\d$/.test(h)) : [],
+      // Sempre explicitos (inclusive null): trocar "dia sim, dia nao" por
+      // "todo dia" precisa APAGAR o padrao no servidor, e ausente o preservaria.
+      ...padroes,
       instructions: instrucoes.trim() || null,
       prescriberId: prescritorId,
     };
@@ -585,6 +777,45 @@ export default function MedicamentoFormScreen() {
                 <Text style={styles.blocoTitulo}>{forma === 'jato' ? 'Quando aplicar' : 'Quando tomar'}</Text>
 
                 {/*
+                  "Descreva como tomar": a pessoa escreve do jeito dela e a IA
+                  preenche os campos abaixo. NAO SALVA: os campos ganham o selo
+                  "da IA" e a pessoa confere, como na leitura de foto.
+                */}
+                <View style={styles.ia}>
+                  <FormField
+                    label="Descreva como tomar"
+                    value={descricao}
+                    onChangeText={(v) => {
+                      setErroIA(null);
+                      setDescricao(v);
+                    }}
+                    placeholder="Ex.: 1 comprimido a cada 8 horas por 7 dias"
+                    multiline
+                    maxLength={500}
+                    hint="A IA preenche os campos abaixo. Você confere antes de salvar."
+                    editable={!salvando && !interpretando}
+                  />
+                  <Pressable
+                    onPress={() => void preencherComIA()}
+                    disabled={salvando || interpretando}
+                    accessibilityRole="button"
+                    accessibilityLabel="Preencher com IA"
+                    accessibilityState={{ busy: interpretando }}
+                    style={({ pressed }) => [styles.botaoIA, pressed && styles.pressionado]}
+                  >
+                    {interpretando ? (
+                      <ActivityIndicator color={colors.accentGreen} />
+                    ) : (
+                      <>
+                        <Feather name="zap" size={17} color={colors.accentGreen} />
+                        <Text style={styles.botaoIATexto}>Preencher com IA</Text>
+                      </>
+                    )}
+                  </Pressable>
+                  {erroIA ? <Text style={styles.erroCampo}>{erroIA}</Text> : null}
+                </View>
+
+                {/*
                   Este campo morava no bloco do remedio, com o rotulo
                   "Quantidade por dose". Mudou de lugar e de nome porque
                   quantidade por dose E posologia — le-se junto com o intervalo
@@ -645,15 +876,45 @@ export default function MedicamentoFormScreen() {
                         <Chip
                           key={h}
                           rotulo={h === 24 ? '1x ao dia' : `${h}h`}
-                          ativo={h === intervalo}
+                          ativo={h === intervalo && !intervaloOutro}
                           desabilitado={salvando}
                           onPress={() => {
                             conferido('intervalo');
+                            setIntervaloOutro(false);
                             setIntervalo(h);
                           }}
                         />
                       ))}
+                      {/* Intervalo livre: "a cada 5h", "a cada 36h"... */}
+                      <Chip
+                        rotulo={intervaloOutro ? `Outro: ${intervalo}h` : 'Outro'}
+                        ativo={intervaloOutro}
+                        desabilitado={salvando}
+                        onPress={() => {
+                          conferido('intervalo');
+                          setIntervaloOutro(true);
+                          setIntervaloTexto(String(intervalo));
+                        }}
+                      />
                     </View>
+                    {intervaloOutro ? (
+                      <FormField
+                        label="A cada quantas horas"
+                        value={intervaloTexto}
+                        onChangeText={(v) => {
+                          conferido('intervalo');
+                          const digitos = v.replace(/\D/g, '').slice(0, 2);
+                          setIntervaloTexto(digitos);
+                          const n = Number(digitos);
+                          if (n >= 1 && n <= 72) setIntervalo(n);
+                        }}
+                        placeholder="5"
+                        keyboardType="number-pad"
+                        maxLength={2}
+                        hint="De 1 a 72 horas. Ex.: 48 = a cada 2 dias, no mesmo horário."
+                        editable={!salvando}
+                      />
+                    ) : null}
                     {erros.intervalHours ? (
                       <Text style={styles.erroCampo}>{erros.intervalHours}</Text>
                     ) : null}
@@ -702,7 +963,80 @@ export default function MedicamentoFormScreen() {
                         <Text style={styles.maisHorarioTexto}>Adicionar horário</Text>
                       </Pressable>
                     ) : null}
+
+                    {/*
+                      Padrao de DIAS: so faz sentido com horario fixo. "A cada N
+                      horas" ja cobre 48h/72h pelo intervalo livre.
+                    */}
+                    <View style={styles.linhaDoRotulo}>
+                      <Text style={styles.rotulo}>Repetir</Text>
+                      {camposDaIA.has('repetir') ? <SeloDaIA /> : null}
+                    </View>
+                    <View style={styles.chips}>
+                      {REPETIR.map((r) => (
+                        <Chip
+                          key={r.valor}
+                          rotulo={r.rotulo}
+                          ativo={repetir === r.valor}
+                          desabilitado={salvando}
+                          onPress={() => {
+                            conferido('repetir');
+                            setRepetir(r.valor);
+                          }}
+                        />
+                      ))}
+                    </View>
+                    {repetir === 'dias' ? (
+                      <FormField
+                        label="A cada quantos dias"
+                        value={diasIntervaloTexto}
+                        onChangeText={(v) => {
+                          conferido('repetir');
+                          setDiasIntervaloTexto(v.replace(/\D/g, '').slice(0, 2));
+                        }}
+                        placeholder="2"
+                        keyboardType="number-pad"
+                        maxLength={2}
+                        hint="2 = dia sim, dia não. Conta a partir de hoje."
+                        error={erros.dayInterval}
+                        editable={!salvando}
+                      />
+                    ) : null}
+                    {repetir === 'semana' ? (
+                      <>
+                        <View style={styles.chips}>
+                          {DIAS_DA_SEMANA.map((d, i) => (
+                            <Chip
+                              key={d}
+                              rotulo={d}
+                              ativo={!!diasSemana && ((diasSemana >> i) & 1) === 1}
+                              desabilitado={salvando}
+                              onPress={() => alternarDia(i)}
+                            />
+                          ))}
+                        </View>
+                        {erros.weekdays ? <Text style={styles.erroCampo}>{erros.weekdays}</Text> : null}
+                      </>
+                    ) : null}
                   </>
+                ) : null}
+
+                {tipo !== 'as_needed' ? (
+                  <FormField
+                    label="Total de doses"
+                    value={totalTexto}
+                    onChangeText={(v) => {
+                      conferido('total');
+                      setTotalTexto(v.replace(/\D/g, '').slice(0, 3));
+                    }}
+                    placeholder="Ex.: 6"
+                    keyboardType="number-pad"
+                    maxLength={3}
+                    hint="Opcional. Os lembretes param depois da última dose."
+                    error={erros.totalDoses}
+                    selo={camposDaIA.has('total') ? <SeloDaIA /> : undefined}
+                    editable={!salvando}
+                  />
                 ) : null}
 
                 {/*
@@ -929,6 +1263,20 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
   },
   maisHorarioTexto: { fontFamily: fonts.semibold, fontSize: 15, color: colors.accentGreen },
+  ia: { marginTop: spacing.md, marginBottom: spacing.sm },
+  botaoIA: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.sm,
+    borderWidth: 1.5,
+    borderColor: colors.accentGreen,
+    borderRadius: radii.pill,
+    paddingVertical: spacing.md,
+    minHeight: 48,
+    marginTop: spacing.sm,
+  },
+  botaoIATexto: { fontFamily: fonts.semibold, fontSize: 15, color: colors.accentGreen },
   erroCampo: { fontFamily: fonts.semibold, fontSize: 13, color: colors.textError, marginTop: spacing.sm },
   erroGeral: {
     fontFamily: fonts.semibold,

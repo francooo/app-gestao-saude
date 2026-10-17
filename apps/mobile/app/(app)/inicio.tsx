@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppointmentCard } from '@/components/AppointmentCard';
 import { AssistantCard } from '@/components/AssistantCard';
 import { CartaoLerReceita } from '@/components/CartaoLerReceita';
+import { DoctorCard } from '@/components/DoctorCard';
 import { FamilyMemberStrip } from '@/components/FamilyMemberStrip';
 import { BotaoDeSino } from '@/components/BotaoDeSino';
 import { HomeHeaderCard } from '@/components/HomeHeaderCard';
@@ -16,7 +17,13 @@ import { IconTile, LADRILHO_NEUTRO } from '@/components/IconTile';
 import { MedicationCard } from '@/components/MedicationCard';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SurfaceCard } from '@/components/SurfaceCard';
-import { healthApi, type Appointment, type Medication, type Profile } from '@/api/health';
+import {
+  healthApi,
+  type Appointment,
+  type Medication,
+  type Professional,
+  type Profile,
+} from '@/api/health';
 import { pedirFotoDeDocumento } from '@/lib/foto';
 import { hora, vigenteHoje } from '@/lib/posologia';
 import { guardarFotoParaLeitura } from '@/lib/rascunhoDeMedicamento';
@@ -35,6 +42,15 @@ export default function InicioScreen() {
   const [perfis, setPerfis] = useState<Profile[]>([]);
   const [carregandoPerfis, setCarregandoPerfis] = useState(true);
   const [erroPerfis, setErroPerfis] = useState(false);
+  /**
+   * Quem a Home esta mostrando. null = a familia inteira.
+   *
+   * O FILTRO E EM MEMORIA para remedios e consultas, de proposito: a
+   * reconciliacao de lembretes abaixo precisa da familia inteira. Buscar so a
+   * pessoa selecionada faria o aparelho cancelar os avisos de todo o resto.
+   */
+  const [perfilId, setPerfilId] = useState<string | null>(null);
+  const [medicos, setMedicos] = useState<Professional[]>([]);
   /**
    * Fixado a cada carga, e nao lido a toda renderizacao: sem isso, "proxima
    * dose" poderia mudar no meio de um quadro e a tela discordaria de si mesma.
@@ -143,15 +159,54 @@ export default function InicioScreen() {
     }, []),
   );
 
-  // A home e um resumo: mostra no maximo tres. A lista completa e a aba.
-  const deHoje = useMemo(
-    () => medicamentos.filter((m) => vigenteHoje(m, agora)).slice(0, 3),
-    [medicamentos, agora],
+  /**
+   * Os medicos da pessoa (ou de todos), em carga PROPRIA.
+   *
+   * Aqui o filtro vai ao servidor — medico nao tem lembrete para reconciliar,
+   * e o vinculo medico↔pessoa so o servidor sabe. Falha deixa a lista anterior.
+   */
+  useFocusEffect(
+    useCallback(() => {
+      let cancelado = false;
+      (async () => {
+        try {
+          const lista = await healthApi.listProfessionals({ profileId: perfilId });
+          if (!cancelado) setMedicos(lista);
+        } catch {
+          // A secao e um resumo; a aba Medicos mostra o erro com calma.
+        }
+      })();
+      return () => {
+        cancelado = true;
+      };
+    }, [perfilId]),
   );
 
+  /** Tocar de novo em quem ja esta selecionado volta para a familia. */
+  function selecionarMembro(id: string) {
+    setPerfilId((atual) => (atual === id ? null : id));
+  }
+
+  const selecionado = perfis.find((p) => p.id === perfilId) ?? null;
+  const primeiroNome = selecionado?.fullName.split(' ')[0] ?? null;
+  /** "Medicamentos de hoje · Valentina" quando ha alguem selecionado. */
+  const deQuem = (titulo: string) => (primeiroNome ? `${titulo} · ${primeiroNome}` : titulo);
+
+  // A home e um resumo: mostra no maximo tres. A lista completa e a aba.
+  const deHoje = useMemo(
+    () =>
+      medicamentos
+        .filter((m) => (perfilId ? m.profileId === perfilId : true))
+        .filter((m) => vigenteHoje(m, agora))
+        .slice(0, 3),
+    [medicamentos, agora, perfilId],
+  );
 
   // Tres, como o resto da tela: a lista completa e assunto de outra tela.
-  const consultasVisiveis = consultas.slice(0, 3);
+  const consultasVisiveis = consultas
+    .filter((c) => (perfilId ? c.profileId === perfilId : true))
+    .slice(0, 3);
+  const medicosVisiveis = medicos.slice(0, 3);
 
   return (
     <View style={styles.tela}>
@@ -196,7 +251,9 @@ export default function InicioScreen() {
                 foto: p.photo,
               }))}
               carregando={carregandoPerfis && perfis.length === 0}
-              onAbrir={(idPerfil) => router.push(`/membro/${idPerfil}`)}
+              selecionadoId={perfilId}
+              onSelecionar={selecionarMembro}
+              onEditar={(idPerfil) => router.push(`/membro/${idPerfil}`)}
               onAdicionar={() => router.push('/membro/novo')}
             />
           )}
@@ -245,13 +302,15 @@ export default function InicioScreen() {
 
         <View style={styles.secao}>
           <SectionHeader
-            title="Medicamentos de hoje"
+            title={deQuem('Medicamentos de hoje')}
             onVerTodos={() => router.push('/remedios')}
           />
           {deHoje.length === 0 ? (
             <SurfaceCard style={styles.vazio}>
               <Text style={styles.vazioTexto}>
-                Nenhum remédio para hoje. Toque em Ver todos para cadastrar.
+                {primeiroNome
+                  ? `${primeiroNome} não tem remédio para hoje.`
+                  : 'Nenhum remédio para hoje. Toque em Ver todos para cadastrar.'}
               </Text>
             </SurfaceCard>
           ) : (
@@ -260,7 +319,9 @@ export default function InicioScreen() {
                 key={m.id}
                 medicamento={m}
                 agora={agora}
-                mostrarPerfil
+                // Com uma pessoa selecionada, repetir o nome dela em cada
+                // cartao e ruido — o titulo da secao ja diz de quem e.
+                mostrarPerfil={perfilId === null}
                 onPress={() => router.push(`/remedios/${m.id}`)}
               />
             ))
@@ -268,12 +329,37 @@ export default function InicioScreen() {
         </View>
 
         <View style={styles.secao}>
+          <SectionHeader title={deQuem('Médicos')} onVerTodos={() => router.push('/medicos')} />
+          {medicosVisiveis.length === 0 ? (
+            <Text style={styles.semConsultas}>
+              {primeiroNome ? `Nenhum médico de ${primeiroNome}.` : 'Nenhum médico cadastrado.'}
+            </Text>
+          ) : (
+            medicosVisiveis.map((md) => (
+              <View key={md.id} style={styles.cartaoMedico}>
+                <DoctorCard
+                  doctor={md}
+                  onPress={() => router.push(`/medico/${md.id}`)}
+                  onAction={() =>
+                    router.push({ pathname: '/consulta/nova', params: { professionalId: md.id } })
+                  }
+                />
+              </View>
+            ))
+          )}
+        </View>
+
+        <View style={styles.secao}>
           <SectionHeader
-            title="Próximas consultas"
+            title={deQuem('Próximas consultas')}
             onVerTodos={() => router.push('/medicos')}
           />
           {consultasVisiveis.length === 0 ? (
-            <Text style={styles.semConsultas}>Nenhuma consulta agendada.</Text>
+            <Text style={styles.semConsultas}>
+              {primeiroNome
+                ? `Nenhuma consulta agendada para ${primeiroNome}.`
+                : 'Nenhuma consulta agendada.'}
+            </Text>
           ) : (
             consultasVisiveis.map((c) => (
               <AppointmentCard
@@ -333,6 +419,7 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     paddingVertical: spacing.md,
   },
+  cartaoMedico: { marginBottom: spacing.md },
 
   // zIndex para ficar acima do card; alinhado a direita como nas outras telas.
   sino: { alignItems: 'flex-end', marginBottom: -60, zIndex: 1, paddingRight: spacing.sm },
