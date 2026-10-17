@@ -121,6 +121,9 @@ export const API_ERROR = {
   PHOTO_READ_BUSY: 'PHOTO_READ_BUSY',
   PHOTO_READ_TIMEOUT: 'PHOTO_READ_TIMEOUT',
   PHOTO_READ_FAILED: 'PHOTO_READ_FAILED',
+  /** "Descreva como tomar": a IA interpreta o texto da posologia. */
+  POSOLOGY_BUSY: 'POSOLOGY_BUSY',
+  POSOLOGY_FAILED: 'POSOLOGY_FAILED',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
 } as const;
 
@@ -139,7 +142,7 @@ export type ApiErrorCode = (typeof API_ERROR)[keyof typeof API_ERROR];
  * quem seguisse ao pe da letra deixaria o packages/shared para tras, e todo
  * cadastro novo ja nasceria pedindo reaceite.
  */
-export const POLICY_VERSION = '2026-10-03';
+export const POLICY_VERSION = '2026-10-17';
 
 export const fullNameSchema = z
   .string()
@@ -357,6 +360,12 @@ export const medicationBaseSchema = z.object({
   scheduleType: z.enum(scheduleTypeValues),
   intervalHours: z.number().int().min(1).max(72).optional().nullable(),
   times: z.array(horarioSchema).max(8).default([]),
+  /** A cada N dias (so fixed_times). Espelha o check do banco. */
+  dayInterval: z.number().int().min(1).max(60).optional().nullable(),
+  /** Bitmask dom..sab (so fixed_times). */
+  weekdays: z.number().int().min(1).max(127).optional().nullable(),
+  /** Para depois de N doses agendadas. */
+  totalDoses: z.number().int().min(1).max(500).optional().nullable(),
   startsAt: z.iso.datetime({ offset: true }).optional().nullable(),
   endsAt: z.iso.datetime({ offset: true }).optional().nullable(),
   instructions: z.string().trim().max(1000).optional().nullable(),
@@ -614,6 +623,21 @@ export const PERGUNTAS_POR_DIA = 50;
  * silencio e melhor que uma tela de erro por um teto de custo.
  */
 export const BUSCAS_POR_DIA = 10;
+
+/**
+ * "Descreva como tomar": o texto livre que a IA converte em posologia.
+ *
+ * So a frase e, opcionalmente, a forma (para "4 jatos" virar dose 4 de
+ * inalador). Nada e gravado: a resposta e uma PROPOSTA que a pessoa confere.
+ */
+export const posologiaTextoSchema = z.object({
+  texto: z
+    .string()
+    .trim()
+    .min(3, { message: 'Descreva como tomar' })
+    .max(500, { message: 'Descrição muito longa' }),
+  forma: z.enum(medicationFormValues).optional().nullable(),
+});
 
 export const assistantAskSchema = z.object({
   profileId: z.uuid().optional().nullable(),

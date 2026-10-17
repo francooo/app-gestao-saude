@@ -6,6 +6,7 @@ import { fail, withErrorHandling } from '../../src/lib/http';
 import historico from '../../src/handlers/assistant/historico';
 import lerFoto from '../../src/handlers/assistant/ler-foto';
 import mensagem from '../../src/handlers/assistant/mensagem';
+import posologia from '../../src/handlers/assistant/posologia';
 
 /**
  * Roteador do assistente.
@@ -32,6 +33,9 @@ const ROTAS: Record<string, (req: VercelRequest, res: VercelResponse) => Promise
   mensagem,
   historico,
   'ler-foto': lerFoto,
+  // "Descreva como tomar" no cadastro do remedio. Tambem nao e o assistente:
+  // mora aqui pela vaga, com os proprios codigos POSOLOGY_*.
+  posologia,
 };
 
 export default withErrorHandling(async (req: VercelRequest, res: VercelResponse) => {

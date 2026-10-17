@@ -552,6 +552,17 @@ export const medications = pgTable(
     scheduleType: scheduleTypeEnum('schedule_type').notNull(),
     /** Preenchido apenas quando scheduleType = 'interval'. */
     intervalHours: integer('interval_hours'),
+    /**
+     * Padroes de DIAS, so para 'fixed_times', e mutuamente exclusivos:
+     * - dayInterval: a cada N dias, ancorado no dia de starts_at (2 = dia sim,
+     *   dia nao).
+     * - weekdays: bitmask dom..sab (bit 0 = domingo). 0b0101010 = seg, qua, sex.
+     * Colunas comuns, sem pgEnum: o projeto evita ALTER TYPE.
+     */
+    dayInterval: integer('day_interval'),
+    weekdays: smallint('weekdays'),
+    /** Encerra depois de N doses AGENDADAS desde starts_at (interval ou fixed_times). */
+    totalDoses: integer('total_doses'),
     /** Ancora do intervalo e inicio do tratamento. */
     startsAt: timestamp('starts_at', { withTimezone: true }),
     /** Tratamento com prazo definido. */
@@ -594,6 +605,18 @@ export const medications = pgTable(
     check(
       'medications_interval_requires_hours',
       sql`${t.scheduleType} <> 'interval' OR (${t.intervalHours} IS NOT NULL AND ${t.intervalHours} > 0)`,
+    ),
+    check(
+      'medications_day_interval_range',
+      sql`${t.dayInterval} IS NULL OR (${t.dayInterval} >= 1 AND ${t.dayInterval} <= 60)`,
+    ),
+    check(
+      'medications_weekdays_range',
+      sql`${t.weekdays} IS NULL OR (${t.weekdays} >= 1 AND ${t.weekdays} <= 127)`,
+    ),
+    check(
+      'medications_total_doses_range',
+      sql`${t.totalDoses} IS NULL OR (${t.totalDoses} >= 1 AND ${t.totalDoses} <= 500)`,
     ),
   ],
 );

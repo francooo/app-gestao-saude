@@ -171,6 +171,9 @@ async function atualizar(
     times: body.times ?? horariosAtuais.map((h) => horaCurta(h.timeOfDay)),
     startsAt: body.startsAt !== undefined ? body.startsAt : atual.startsAt,
     endsAt: body.endsAt !== undefined ? body.endsAt : atual.endsAt,
+    dayInterval: body.dayInterval !== undefined ? body.dayInterval : atual.dayInterval,
+    weekdays: body.weekdays !== undefined ? body.weekdays : atual.weekdays,
+    totalDoses: body.totalDoses !== undefined ? body.totalDoses : atual.totalDoses,
   });
   if (erros) return fail(res, 400, API_ERROR.VALIDATION_ERROR, erros);
 
@@ -187,6 +190,9 @@ async function atualizar(
   if (body.packageAmount !== undefined) mudancas.packageAmount = body.packageAmount;
   if (body.scheduleType !== undefined) mudancas.scheduleType = body.scheduleType;
   if (body.intervalHours !== undefined) mudancas.intervalHours = body.intervalHours;
+  if (body.dayInterval !== undefined) mudancas.dayInterval = body.dayInterval;
+  if (body.weekdays !== undefined) mudancas.weekdays = body.weekdays;
+  if (body.totalDoses !== undefined) mudancas.totalDoses = body.totalDoses;
   if (body.startsAt !== undefined) mudancas.startsAt = body.startsAt ? new Date(body.startsAt) : null;
   if (body.endsAt !== undefined) mudancas.endsAt = body.endsAt ? new Date(body.endsAt) : null;
   if (body.instructions !== undefined) mudancas.instructions = body.instructions;

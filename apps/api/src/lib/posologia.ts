@@ -19,6 +19,9 @@ export function validarPosologia(m: {
   times?: string[];
   startsAt?: string | Date | null;
   endsAt?: string | Date | null;
+  dayInterval?: number | null;
+  weekdays?: number | null;
+  totalDoses?: number | null;
 }): Record<string, string> | null {
   const erros: Record<string, string> = {};
   const horarios = m.times ?? [];
@@ -39,6 +42,19 @@ export function validarPosologia(m: {
   // 500. Aqui vira uma mensagem util.
   if (new Set(horarios).size !== horarios.length) {
     erros.times = 'Há horários repetidos';
+  }
+
+  // Padroes de dias so fazem sentido com horario fixo: "a cada N horas" ja
+  // cobre 48h/72h pelo intervalo livre. E os dois padroes nao se somam.
+  const temPadraoDeDias = m.dayInterval != null || m.weekdays != null;
+  if (temPadraoDeDias && m.scheduleType !== 'fixed_times') {
+    erros.dayInterval = 'Repetir em dias só vale para horários fixos';
+  }
+  if (m.dayInterval != null && m.weekdays != null) {
+    erros.weekdays = 'Escolha "a cada N dias" ou "dias da semana", não os dois';
+  }
+  if (m.totalDoses != null && m.scheduleType === 'as_needed') {
+    erros.totalDoses = 'Total de doses não vale para "se necessário"';
   }
 
   if (m.startsAt && m.endsAt && new Date(m.endsAt) <= new Date(m.startsAt)) {

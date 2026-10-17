@@ -150,6 +150,9 @@ export const API_ERROR = {
   PHOTO_READ_BUSY: 'PHOTO_READ_BUSY',
   PHOTO_READ_TIMEOUT: 'PHOTO_READ_TIMEOUT',
   PHOTO_READ_FAILED: 'PHOTO_READ_FAILED',
+  /** "Descreva como tomar": a IA interpreta o texto da posologia. */
+  POSOLOGY_BUSY: 'POSOLOGY_BUSY',
+  POSOLOGY_FAILED: 'POSOLOGY_FAILED',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   /** Erros do lado do cliente, nunca vindos da API. */
   NETWORK_ERROR: 'NETWORK_ERROR',
@@ -196,6 +199,10 @@ export const ERROR_MESSAGES_PT: Record<string, string> = {
   // Diz o que fazer diferente. "Tente novamente" igual daria o mesmo erro.
   [API_ERROR.PHOTO_READ_FAILED]:
     'Não consegui ler esta foto. Tente outra, com mais luz e o papel reto — ou preencha à mão.',
+  [API_ERROR.POSOLOGY_BUSY]:
+    'A interpretação está ocupada neste minuto. Aguarde uns 20 segundos e tente de novo.',
+  [API_ERROR.POSOLOGY_FAILED]:
+    'Não consegui entender essa descrição. Tente escrever de outro jeito — ou preencha à mão.',
   [API_ERROR.INTERNAL_ERROR]: 'Algo deu errado do nosso lado. Tente novamente.',
   [API_ERROR.NETWORK_ERROR]: 'Sem conexão com o servidor. Verifique sua internet.',
   // Nao e problema da pessoa: o app foi publicado sem a URL da API.
@@ -219,7 +226,7 @@ export function messageForError(code: string | undefined): string {
  * versao: a LGPD exige saber a QUAL texto a pessoa consentiu, nao apenas que
  * consentiu. Sem isso, um consentimento antigo vira indefensavel.
  */
-export const POLICY_VERSION = '2026-10-03';
+export const POLICY_VERSION = '2026-10-17';
 
 export const fullNameSchema = z
   .string()

@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { medicationFormValues, scheduleTypeValues } from '../contracts';
 import { db } from '../db/client';
 import { professionals } from '../db/schema';
-import { validarPosologia } from './posologia';
+import { proporPosologia } from './posologia-proposta';
 
 /**
  * Do que o modelo devolveu para os campos do cadastro.
@@ -155,16 +155,6 @@ function forma(v: unknown): (typeof medicationFormValues)[number] | null {
   return null;
 }
 
-/** "8h", "8:00", "08h00" → "08:00". Fora disso, descarta o horario. */
-function horario(v: string): string | null {
-  const m = /^(\d{1,2})\s*[h:]?\s*(\d{2})?/.exec(v.trim());
-  if (!m) return null;
-  const h = Number(m[1]);
-  const min = m[2] ? Number(m[2]) : 0;
-  if (!Number.isInteger(h) || h < 0 || h > 23 || min < 0 || min > 59) return null;
-  return `${String(h).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
-}
-
 /**
  * A data da consulta, AAAA-MM-DD, validada.
  *
@@ -189,17 +179,6 @@ function dataDaConsulta(v: unknown): string | null {
   return t;
 }
 
-/** Quantas vezes ao dia cabem num intervalo inteiro de horas. */
-const VEZES_QUE_VIRAM_INTERVALO: Record<number, number> = {
-  1: 24,
-  2: 12,
-  3: 8,
-  4: 6,
-  6: 4,
-  8: 3,
-  12: 2,
-};
-
 type Posologia = {
   scheduleType: (typeof scheduleTypeValues)[number] | null;
   intervalHours: number | null;
@@ -216,36 +195,16 @@ type Posologia = {
  * um tipo que nao os aceita.
  */
 function posologia(item: z.infer<typeof itemDoModeloSchema>): Posologia {
-  const vazio: Posologia = { scheduleType: null, intervalHours: null, times: [] };
-
-  const horarios = [...new Set((item.horarios ?? []).map(horario).filter((h): h is string => !!h))]
-    .sort()
-    .slice(0, 8);
-  const tipo = texto(item.tipo_de_horario, 20);
-  const intervalo = inteiro(item.intervalo_horas, 1, 72);
-  const vezes = inteiro(item.vezes_ao_dia, 1, 24);
-
-  let proposta: Posologia = vazio;
-
-  if (tipo === 'fixed_times' && horarios.length > 0) {
-    proposta = { scheduleType: 'fixed_times', intervalHours: null, times: horarios };
-  } else if (tipo === 'as_needed') {
-    proposta = { scheduleType: 'as_needed', intervalHours: null, times: [] };
-  } else if (intervalo) {
-    proposta = { scheduleType: 'interval', intervalHours: intervalo, times: [] };
-  } else if (vezes && VEZES_QUE_VIRAM_INTERVALO[vezes]) {
-    // "3x ao dia" vira 8/8h AQUI, e nao na cabeca do modelo. Uma frequencia
-    // que nao da hora inteira (5x ao dia) fica sem tipo: a frase original
-    // segue em `instructions` e a pessoa decide.
-    proposta = {
-      scheduleType: 'interval',
-      intervalHours: VEZES_QUE_VIRAM_INTERVALO[vezes]!,
-      times: [],
-    };
-  }
-
-  if (!proposta.scheduleType) return vazio;
-  return validarPosologia(proposta as never) ? vazio : proposta;
+  // A regra mora em posologia-proposta.ts, compartilhada com o "Descreva como
+  // tomar". A foto ainda nao traz padrao de dias nem total de doses (o esquema
+  // da leitura nao pede), entao so os tres campos de sempre seguem daqui.
+  const p = proporPosologia({
+    tipo_de_horario: item.tipo_de_horario,
+    intervalo_horas: item.intervalo_horas,
+    vezes_ao_dia: item.vezes_ao_dia,
+    horarios: item.horarios,
+  });
+  return { scheduleType: p.scheduleType, intervalHours: p.intervalHours, times: p.times };
 }
 
 /**
