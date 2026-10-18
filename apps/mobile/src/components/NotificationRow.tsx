@@ -1,5 +1,5 @@
 import { Feather } from '@expo/vector-icons';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { IconTile } from '@/components/IconTile';
 import { colors, fonts, radii, spacing } from '@/theme';
@@ -87,16 +87,22 @@ const styles = StyleSheet.create({
     // flex-start, como no SettingsRow: com fonte grande do sistema o titulo
     // vira tres linhas e um ladrilho centralizado flutuaria no meio do texto.
     alignItems: 'flex-start',
-    backgroundColor: colors.surface,
+    // Translucido como o SurfaceCard, e pelo mesmo motivo sem `elevation` no
+    // Android: com fundo translucido a sombra aparece manchada DENTRO do card.
+    backgroundColor: colors.surfaceCard,
     borderRadius: radii.card,
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.lg,
     minHeight: 88,
-    shadowColor: '#2C3520',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 2,
+    ...Platform.select({
+      android: { borderWidth: 1, borderColor: 'rgba(255,255,255,0.55)' },
+      default: {
+        shadowColor: '#2C3520',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 10,
+      },
+    }),
   },
   pressionada: { opacity: 0.85 },
   textos: { flex: 1, marginLeft: spacing.lg, marginTop: 2 },

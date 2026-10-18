@@ -18,6 +18,9 @@ type Props = {
  * gradiente horizontal. O recorte veio do asset do splash e tem fundo verde
  * proprio; sem essa transicao, apareceria uma borda reta de verde contra o
  * creme, que e exatamente o que o mockup evita com uma silhueta organica.
+ *
+ * O degrade termina no MESMO creme translucido do cartao (surfaceCard): com o
+ * solido, apareceria uma faixa mais clara onde a ilustracao encontra o card.
  */
 export function HomeHeaderCard({ titulo, subtitulo }: Props) {
   return (
@@ -26,14 +29,14 @@ export function HomeHeaderCard({ titulo, subtitulo }: Props) {
         <Image source={ilustracao} contentFit="cover" style={StyleSheet.absoluteFill} />
         {/* Funde a esquerda da imagem no creme do card. */}
         <LinearGradient
-          colors={[colors.surface, 'transparent']}
+          colors={[colors.surfaceCard, 'transparent']}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
           style={styles.fadeHorizontal}
         />
         {/* Funde a base, onde comeca a lista de membros. */}
         <LinearGradient
-          colors={['transparent', colors.surface]}
+          colors={['transparent', colors.surfaceCard]}
           style={styles.fadeVertical}
         />
       </View>

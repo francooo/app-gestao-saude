@@ -56,6 +56,14 @@ export const colors = {
 
   /** Cards da home: creme SOLIDO, ao contrario do cardFill translucido. */
   surface: '#F8F3DE',
+  /**
+   * O mesmo creme a 85%, para os CARTOES: deixa os ramos do fundo aparecerem
+   * de leve atraves deles, que e a continuidade do mockup. 0,85 e o minimo que
+   * mantem textSecondary acima de 4,5:1 com a folha mais escura atras
+   * (calculado por assets-source/gerador-folhas/gerar_folhas.py). Campos,
+   * avatares e a barra de abas seguem no `surface` solido.
+   */
+  surfaceCard: 'rgba(248,243,222,0.85)',
   /** Variante quente, usada no icone do medicamento. */
   surfaceWarm: '#F4E2BE',
 

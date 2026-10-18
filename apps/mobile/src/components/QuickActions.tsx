@@ -127,7 +127,8 @@ const styles = StyleSheet.create({
   cartao: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    // Translucido como o SurfaceCard: as folhas do fundo continuam por tras.
+    backgroundColor: colors.surfaceCard,
     borderRadius: radii.card - 10,
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.xs,

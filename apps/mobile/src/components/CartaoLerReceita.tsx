@@ -3,6 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Icone, ICONES } from '@/components/Icone';
+import { RamoDeCanto } from '@/components/RamoDeCanto';
 import { SeloDeAssinatura } from '@/components/SeloDeAssinatura';
 import { colors, fonts, radii, spacing } from '@/theme';
 
@@ -39,6 +40,7 @@ export function CartaoLerReceita({ onFotografar, onGaleria, bloqueado = false }:
         end={{ x: 1, y: 1 }}
         style={styles.gradiente}
       >
+        <RamoDeCanto />
         <View style={styles.cabecalho}>
           {/*
             Como no mockup: brilho dourado no canto SUPERIOR direito da moldura

@@ -191,7 +191,8 @@ const styles = StyleSheet.create({
   barra: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: colors.surface,
+    // Translucido como o SurfaceCard (o painel do modal segue solido).
+    backgroundColor: colors.surfaceCard,
     borderRadius: radii.pill,
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.xl,

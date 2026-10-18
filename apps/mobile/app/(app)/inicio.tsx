@@ -228,7 +228,7 @@ export default function InicioScreen() {
         mais as folhas laterais. O degrade antigo de duas paradas
         (homeBackgroundTop/Bottom) nao clareava embaixo como a referencia.
       */}
-      <ScreenBackground colors={backgrounds.home} />
+      <ScreenBackground colors={backgrounds.home} arranjo="home" />
 
       <ScrollView
         contentContainerStyle={[
