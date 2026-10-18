@@ -166,6 +166,14 @@ export default function AppLayout() {
         name="conta/privacidade"
         options={{ href: null, tabBarStyle: { display: 'none' } }}
       />
+      <Tabs.Screen
+        name="conta/whatsapp"
+        options={{ href: null, tabBarStyle: { display: 'none' } }}
+      />
+      <Tabs.Screen
+        name="conta/acompanhante"
+        options={{ href: null, tabBarStyle: { display: 'none' } }}
+      />
     </Tabs>
     </AvisosProvider>
   );

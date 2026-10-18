@@ -253,6 +253,13 @@ export default function AjustesScreen() {
               desabilitado={!notificacoes}
               motivoDesabilitado="Ative as notificações para usar"
             />
+            {/* Fora da chave de notificacoes: o WhatsApp chega no celular de
+                OUTRA pessoa, e silenciar este aparelho nao deve cala-lo. */}
+            <SettingsRow
+              marcador={<IconTile icone={ICONES.whatsapp} {...VERDE} />}
+              rotulo="Lembretes por WhatsApp"
+              onPress={() => router.push('/conta/whatsapp')}
+            />
             <SettingsRow
               marcador={<IconTile icone={ICONES.escudoCheck} {...TERRACOTA} />}
               rotulo="Privacidade e segurança"

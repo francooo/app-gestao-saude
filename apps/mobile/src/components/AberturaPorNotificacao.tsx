@@ -48,7 +48,7 @@ export function AberturaPorNotificacao() {
       tratadas.current.add(chave);
 
       const dados = pedido.content.data as
-        | { medicationId?: string; appointmentId?: string }
+        | { medicationId?: string; appointmentId?: string; tela?: string }
         | undefined;
 
       /**
@@ -63,6 +63,8 @@ export function AberturaPorNotificacao() {
       // aviso daquela consulta no topo, com hora, profissional e local — e um
       // destino que EXISTE e e util, em vez de meia tela feita as pressas.
       else if (dados?.appointmentId) rota = '/notificacoes';
+      // O lembrete de compra fala de varios remedios: o destino e o estoque.
+      else if (dados?.tela === 'estoque') rota = '/remedios/estoque';
 
       if (!rota) return;
 

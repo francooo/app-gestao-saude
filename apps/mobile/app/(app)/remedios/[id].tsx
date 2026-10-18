@@ -29,6 +29,7 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SurfaceCard } from '@/components/SurfaceCard';
 import { FotoDaEmbalagem } from '@/components/FotoDaEmbalagem';
+import { dataDeTermino, diaPorExtenso, estoqueBaixo, quantidadeDoEstoque } from '@/lib/estoque';
 import { escolherFotoDeDocumento } from '@/lib/foto';
 import {
   cancelarLembretesDeUmMedicamento,
@@ -393,6 +394,9 @@ export default function MedicamentoDetalheScreen() {
             onAdicionarCaixa={() => anexar('caixa', false)}
             onOpcoesDaCaixa={opcoesDaCaixa}
             onEditar={() => router.push(`/medicamento/form/${m.id}`)}
+            onEstoque={() =>
+              router.push(m.stock ? '/remedios/estoque' : `/remedios/compra?id=${m.id}`)
+            }
             onEncerrar={encerrar}
             onApagar={apagar}
           />
@@ -417,6 +421,8 @@ type ConteudoProps = {
   onAdicionarCaixa: () => void;
   onOpcoesDaCaixa: () => void;
   onEditar: () => void;
+  /** Com estoque, abre o Estoque; sem, a compra ja com este remedio. */
+  onEstoque: () => void;
   onEncerrar: () => void;
   onApagar: () => void;
 };
@@ -436,6 +442,7 @@ function Conteudo({
   onAdicionarCaixa,
   onOpcoesDaCaixa,
   onEditar,
+  onEstoque,
   onEncerrar,
   onApagar,
 }: ConteudoProps) {
@@ -584,6 +591,19 @@ function Conteudo({
             rotulo="Tratamento"
             valor={periodoDoTratamento(m)}
           />
+          <Divisor />
+          {/* A unica linha tocavel do cartao, e por isso leva o chevron. */}
+          <Pressable
+            onPress={onEstoque}
+            accessibilityRole="button"
+            accessibilityHint={m.stock ? 'Abre o estoque' : 'Abre o registro de compra deste remédio'}
+            style={({ pressed }) => [styles.linhaTocavel, pressed && styles.pressionado]}
+          >
+            <View style={styles.flex}>
+              <Info {...linhaDoEstoque(m, agora)} />
+            </View>
+            <Feather name="chevron-right" size={20} color={colors.sectionTitle} />
+          </Pressable>
         </SurfaceCard>
       </View>
 
@@ -834,6 +854,34 @@ function periodoDoTratamento(m: Medication): string {
   return 'Conforme orientação médica';
 }
 
+/**
+ * "Estoque: 8 cápsulas restantes · acaba por volta de 28 de junho", ou o
+ * convite a registrar a compra quando o remedio nao controla estoque.
+ */
+function linhaDoEstoque(
+  m: Medication,
+  agora: Date,
+): { tile: { fundo: string; traco: string; icone: NomeIcone }; rotulo: string; valor: string } {
+  if (!m.stock) {
+    return {
+      tile: { ...LADRILHO_NEUTRO, icone: ICONES.farmacia },
+      rotulo: 'Estoque',
+      valor: 'Registrar compra',
+    };
+  }
+  const baixo = estoqueBaixo(m, m.stock);
+  const termino = dataDeTermino(m, m.stock, agora);
+  const restante = `${quantidadeDoEstoque(m.stock.remaining, m.form)} restantes`;
+  return {
+    tile: { ...(baixo ? LADRILHO_ATENCAO : LADRILHO_NEUTRO), icone: ICONES.farmacia },
+    rotulo: baixo ? 'Estoque baixo' : 'Estoque',
+    valor:
+      termino && m.stock.remaining > 0
+        ? `${restante} · acaba por volta de ${diaPorExtenso(termino, agora)}`
+        : restante,
+  };
+}
+
 function diaRelativo(d: Date, agora: Date): string {
   if (isSameDay(d, agora)) return 'Hoje';
   if (isTomorrow(d)) return 'Amanhã';
@@ -953,6 +1001,8 @@ const styles = StyleSheet.create({
   apagar: { alignItems: 'center', paddingVertical: spacing.lg, marginTop: spacing.lg },
   apagarTexto: { fontFamily: fonts.semibold, fontSize: 15, color: colors.textError },
   pressionado: { opacity: 0.85 },
+  flex: { flex: 1 },
+  linhaTocavel: { flexDirection: 'row', alignItems: 'center' },
 
   aviso: { alignItems: 'center', padding: spacing.xl, marginTop: spacing.xl },
   avisoTexto: {

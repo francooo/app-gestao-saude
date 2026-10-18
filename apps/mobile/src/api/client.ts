@@ -185,6 +185,10 @@ export async function request<T>(
 
   if (!response.ok) throw await parseError(response);
 
+  // 204 nao tem corpo, e json() de corpo vazio lanca SyntaxError — o DELETE
+  // que deu certo apareceria na tela como falha.
+  if (response.status === 204) return parse(undefined);
+
   return parse(await response.json());
 }
 

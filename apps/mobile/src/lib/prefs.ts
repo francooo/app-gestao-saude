@@ -81,6 +81,31 @@ export async function definirLembretesDeDose(ligado: boolean): Promise<void> {
   await gravar(LEMBRETES_DOSE, ligado ? 'true' : 'false');
 }
 
+/**
+ * "Lembrete de compra" da tela de Estoque: avisar neste aparelho quando algum
+ * remedio estiver acabando.
+ *
+ * Sub-chave da mestra, como a de dose, e pelo mesmo motivo: a mestra desligada
+ * cala tudo, e religa-la devolve a escolha de antes. O efetivo e a funcao
+ * abaixo; a tela le o valor CRU para desenhar o interruptor.
+ */
+const LEMBRETE_COMPRA = 'pref_lembrete_compra';
+
+/** Valor cru do interruptor. Padrao LIGADO, como os outros avisos. */
+export async function lembreteDeCompraEscolhido(): Promise<boolean> {
+  return (await ler(LEMBRETE_COMPRA)) !== 'false';
+}
+
+/** O efetivo: a mestra E a sub-chave. */
+export async function lembreteDeCompraLigado(): Promise<boolean> {
+  if (!(await notificacoesLigadas())) return false;
+  return lembreteDeCompraEscolhido();
+}
+
+export async function definirLembreteDeCompra(ligado: boolean): Promise<void> {
+  await gravar(LEMBRETE_COMPRA, ligado ? 'true' : 'false');
+}
+
 // ---------------------------------------------------------------------------
 // Estado de "lido" dos avisos
 //

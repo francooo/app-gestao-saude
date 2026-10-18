@@ -18,6 +18,8 @@ import { messageForError } from '@gestao/shared';
 
 import { ApiRequestError } from '@/api/client';
 import { healthApi, type Medication, type Profile } from '@/api/health';
+import { ICONES } from '@/components/Icone';
+import { IconTile, LADRILHO_ATENCAO, LADRILHO_NEUTRO } from '@/components/IconTile';
 import { MedicationCard } from '@/components/MedicationCard';
 import { ProfileSelector } from '@/components/ProfileSelector';
 import { ReminderCard } from '@/components/ReminderCard';
@@ -26,10 +28,15 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SummaryTile } from '@/components/SummaryTile';
 import { SurfaceCard } from '@/components/SurfaceCard';
+import { estoqueBaixo } from '@/lib/estoque';
 import { alternarDose, comDose, semDose } from '@/lib/marcarDose';
-import { definirLembretesDeDose, lembretesDeDoseLigados } from '@/lib/prefs';
+import {
+  definirLembretesDeDose,
+  lembreteDeCompraLigado,
+  lembretesDeDoseLigados,
+} from '@/lib/prefs';
 import { hora, resumoDoDia, tituloDoMedicamento, vigenteHoje } from '@/lib/posologia';
-import { reconciliarLembretesDeDose } from '@/lib/reminders';
+import { reconciliarLembreteDeCompra, reconciliarLembretesDeDose } from '@/lib/reminders';
 import { backgrounds, colors, fonts, radii, spacing } from '@/theme';
 
 /** Altura da barra de abas flutuante. */
@@ -102,6 +109,14 @@ export default function RemediosScreen() {
        * Falhar em agendar e conveniencia perdida, nao erro de tela.
        */
       void reconciliarLembretesDeDose(ligados ? lista : []);
+
+      /**
+       * O lembrete de compra tambem, porque esta e a tela que a pessoa mais
+       * abre — esperar a visita ao Estoque deixaria o aviso das 9h velho. So
+       * sem filtro de pessoa: com filtro a lista e parcial e o aviso
+       * esqueceria os remedios dos outros.
+       */
+      if (perfilId === null) void reconciliarCompra(lista);
     } catch (e) {
       setErro(messageForError(e instanceof ApiRequestError ? e.code : undefined));
     } finally {
@@ -114,6 +129,12 @@ export default function RemediosScreen() {
     useCallback(() => {
       void carregar();
     }, [carregar]),
+  );
+
+  /** Quantos remedios ativos estao acabando — o subtitulo do atalho de Estoque. */
+  const acabando = useMemo(
+    () => medicamentos.filter((m) => m.isActive && m.stock && estoqueBaixo(m, m.stock)).length,
+    [medicamentos],
   );
 
   const visiveis = useMemo(
@@ -255,6 +276,27 @@ export default function RemediosScreen() {
               />
             </View>
 
+            {/* Atalho para o Estoque. Ambar so quando ha remedio acabando:
+                em todo o aplicativo, ambar e "tem coisa para fazer". */}
+            <Pressable
+              onPress={() => router.push('/remedios/estoque')}
+              accessibilityRole="button"
+              accessibilityLabel={`Estoque. ${textoDoEstoque(acabando)}`}
+              style={({ pressed }) => [styles.atalhoPressionavel, pressed && styles.adicionarPressionado]}
+            >
+              <SurfaceCard style={styles.atalho}>
+                <IconTile
+                  {...(acabando > 0 ? LADRILHO_ATENCAO : LADRILHO_NEUTRO)}
+                  icone={ICONES.farmacia}
+                />
+                <View style={styles.atalhoTextos}>
+                  <Text style={styles.atalhoTitulo}>Estoque</Text>
+                  <Text style={styles.atalhoDescricao}>{textoDoEstoque(acabando)}</Text>
+                </View>
+                <Feather name="chevron-right" size={22} color={colors.sectionTitle} />
+              </SurfaceCard>
+            </Pressable>
+
             <View style={styles.secao}>
               <SectionHeader
                 title={verTodos ? 'Todos os medicamentos' : 'Medicamentos de hoje'}
@@ -306,6 +348,23 @@ export default function RemediosScreen() {
   );
 }
 
+function textoDoEstoque(acabando: number): string {
+  if (acabando === 0) return 'Caixas compradas e o que sobra';
+  return acabando === 1 ? '1 remédio acabando' : `${acabando} remédios acabando`;
+}
+
+/** Falhar em agendar e conveniencia perdida, nao erro de tela. */
+async function reconciliarCompra(lista: Medication[]) {
+  try {
+    const ligado = await lembreteDeCompraLigado();
+    await reconciliarLembreteDeCompra(
+      ligado ? lista.filter((m) => m.isActive && m.stock && estoqueBaixo(m, m.stock)) : [],
+    );
+  } catch {
+    // silencio de proposito: ver o comentario acima.
+  }
+}
+
 const styles = StyleSheet.create({
   tela: { flex: 1, backgroundColor: backgrounds.medications[0] },
   conteudo: { paddingHorizontal: spacing.xl },
@@ -313,6 +372,21 @@ const styles = StyleSheet.create({
   carregando: { marginTop: spacing.xxl },
   resumo: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.lg },
   secao: { marginTop: spacing.xl },
+  atalhoPressionavel: { marginTop: spacing.lg },
+  atalho: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.lg,
+    padding: spacing.lg,
+  },
+  atalhoTextos: { flex: 1 },
+  atalhoTitulo: { fontFamily: fonts.bold, fontSize: 16, color: colors.sectionTitle },
+  atalhoDescricao: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginTop: 1,
+  },
   aviso: { alignItems: 'center', padding: spacing.xl },
   avisoTexto: {
     fontFamily: fonts.regular,

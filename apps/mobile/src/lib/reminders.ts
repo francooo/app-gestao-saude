@@ -376,6 +376,78 @@ export async function cancelarTodosOsLembretes(): Promise<void> {
   const ids = [
     ...(await agendadasComPrefixo(PREFIXO_CONSULTA)),
     ...(await agendadasComPrefixo(PREFIXO_DOSE)),
+    // O de compra tambem: sem esta linha, desligar a chave geral deixaria um
+    // "seu remedio esta acabando" para as 9h de amanha.
+    ...(await agendadasComPrefixo(PREFIXO_ESTOQUE)),
   ];
   for (const id of ids) await Notifications.cancelScheduledNotificationAsync(id);
+}
+
+// ---------------------------------------------------------------------------
+// Lembrete de compra (estoque baixo)
+// ---------------------------------------------------------------------------
+
+const PREFIXO_ESTOQUE = 'estoque-';
+
+/**
+ * UM aviso so, com identificador FIXO, e nao um por remedio.
+ *
+ * Tres remedios acabando na mesma semana viram uma notificacao ("3 remedios
+ * acabando"), nao tres apitos as 9h. E o identificador fixo faz cada
+ * reconciliacao substituir a anterior em vez de somar.
+ */
+const ID_COMPRA = `${PREFIXO_ESTOQUE}compra`;
+
+/** A hora do aviso. A mesma do alerta de estoque por WhatsApp (HORA_DO_ESTOQUE). */
+const HORA_DA_COMPRA = 9;
+
+/**
+ * Reconcilia o lembrete de compra com a lista de remedios com estoque baixo.
+ *
+ * Quem chama ja filtrou os baixos (lib/estoque.ts, `estoqueBaixo`) e ja
+ * consultou a preferencia — mesma convencao da dose: lista vazia desliga.
+ *
+ * LIMITACAO CONHECIDA, e a escolha foi consciente: o aviso e agendado para as
+ * 9h do DIA SEGUINTE a ultima vez que o app foi aberto, e e um so. Quem nao
+ * abre o app por uma semana recebe um aviso, nao sete. Repetir todo dia exigiria
+ * gatilho diario — que continuaria apitando depois de a pessoa comprar, ate ela
+ * abrir o app. Aviso que mente e pior que aviso que falta, e o WhatsApp (do
+ * servidor) cobre quem quer insistencia.
+ */
+export async function reconciliarLembreteDeCompra(
+  baixos: Pick<Medication, 'name' | 'strength' | 'profileName'>[],
+): Promise<void> {
+  // Cancela ANTES de pedir permissao, pelo motivo documentado em
+  // reconciliarLembretes: permissao revogada nao pode impedir de calar.
+  const jaAgendadas = await agendadasComPrefixo(PREFIXO_ESTOQUE);
+  for (const id of jaAgendadas) await Notifications.cancelScheduledNotificationAsync(id);
+
+  if (baixos.length === 0) return;
+  if (!(await pedirPermissao())) return;
+
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('estoque', {
+      name: 'Lembrete de compra',
+      importance: Notifications.AndroidImportance.DEFAULT,
+    });
+  }
+
+  const amanha = addDays(new Date(), 1);
+  amanha.setHours(HORA_DA_COMPRA, 0, 0, 0);
+
+  const primeiro = baixos[0]!;
+  const corpo =
+    baixos.length === 1
+      ? `${[primeiro.name, primeiro.strength].filter(Boolean).join(' ')}${primeiro.profileName ? `, de ${primeiro.profileName.split(' ')[0]},` : ''} está acabando. Que tal comprar?`
+      : `${baixos.length} remédios estão acabando: ${baixos.map((m) => m.name).join(', ')}.`;
+
+  await Notifications.scheduleNotificationAsync({
+    identifier: ID_COMPRA,
+    content: { title: 'Lembrete de compra', body: corpo, data: { tela: 'estoque' } },
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: amanha,
+      channelId: Platform.OS === 'android' ? 'estoque' : undefined,
+    },
+  });
 }

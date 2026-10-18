@@ -1,7 +1,7 @@
 /**
  * Os textos das mensagens de WhatsApp. Num lugar so, e o app mostra as mesmas
- * frases como "previa" — se mudar aqui, mudar a previa em
- * apps/mobile/app/(app)/conta/whatsapp.tsx e conta/acompanhante.tsx.
+ * frases como "previa" — se mudar aqui, mudar a copia em
+ * apps/mobile/src/lib/mensagensWhatsapp.ts.
  *
  * Primeiro nome do paciente, nunca o completo: a mensagem fica na tela de
  * bloqueio do celular do acompanhante, e quanto menos dado de saude ela

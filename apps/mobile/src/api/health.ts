@@ -151,6 +151,47 @@ export const doseSchema = z.object({
 });
 export type Dose = z.infer<typeof doseSchema>;
 
+/**
+ * O estoque de um remedio, DERIVADO no servidor: compras menos doses tomadas.
+ * Ver apps/api/src/lib/estoque.ts. Nulo quer dizer "nao controlo estoque
+ * deste" — nenhuma compra registrada —, que e diferente de "acabou".
+ */
+export const stockSchema = z.object({
+  purchased: z.number(),
+  /** Nunca negativo. Pode ter decimal (meia dose de 0,5 ml). */
+  remaining: z.number(),
+  /** Validade mais proxima ainda futura, AAAA-MM-DD. */
+  expiresOn: z.string().nullish(),
+  /** Local da compra mais recente. */
+  place: z.string().nullish(),
+  lastPurchaseAt: z.string().nullish(),
+  /** Unidades da compra mais recente — a "caixa cheia" da barra de nivel. */
+  lastPurchaseUnits: z.number(),
+});
+export type Stock = z.infer<typeof stockSchema>;
+
+/** Uma compra registrada. So o detalhe do remedio devolve a lista. */
+export const stockEntrySchema = z.object({
+  id: z.uuid(),
+  units: z.number(),
+  expiresOn: z.string().nullish(),
+  place: z.string().nullish(),
+  purchasedAt: z.string(),
+});
+export type StockEntry = z.infer<typeof stockEntrySchema>;
+
+/** Espelha compraDeEstoqueSchema de apps/api/src/contracts.ts. */
+export type CompraInput = {
+  /** Inteiro de 1 a 99999. */
+  units: number;
+  /** AAAA-MM-DD. */
+  expiresOn?: string | null;
+  /** Ate 120 caracteres. */
+  place?: string | null;
+  /** ISO com fuso. Ausente: o servidor carimba agora. */
+  purchasedAt?: string | null;
+};
+
 export const medicationSchema = z.object({
   id: z.uuid(),
   profileId: z.uuid(),
@@ -211,6 +252,13 @@ export const medicationSchema = z.object({
    * remedio "a cada N horas" pode estar fora dela.
    */
   lastDoseAt: z.string().nullish(),
+  /**
+   * `nullish`, e nao so `nullable`: contra um servidor anterior a Fase 2 o
+   * campo chega AUSENTE, e a tela trata ausente igual a "sem controle".
+   */
+  stock: stockSchema.nullish(),
+  /** So no detalhe. default([]) para a tela nunca checar nulo. */
+  stockEntries: z.array(stockEntrySchema).default([]),
 });
 export type Medication = z.infer<typeof medicationSchema>;
 
@@ -698,6 +746,31 @@ export const healthApi = {
       `/api/medications/${medicationId}?doseId=${doseId}`,
       { method: 'DELETE', authenticated: true },
       () => undefined,
+    );
+  },
+
+  /**
+   * Registra uma compra (entrada de estoque) e devolve o remedio ja com o
+   * estoque recalculado e a lista de compras.
+   *
+   * POST no MEDICAMENTO com `?recurso=estoque`, pelo mesmo motivo da dose: o
+   * plano Hobby da Vercel limita as funcoes. Sem cache para invalidar aqui —
+   * o aplicativo nao usa react-query; quem chama troca o estado com o retorno.
+   */
+  registrarCompra(medicationId: string, input: CompraInput): Promise<Medication> {
+    return request(
+      `/api/medications/${medicationId}?recurso=estoque`,
+      { method: 'POST', body: input, authenticated: true },
+      (data) => z.object({ medication: medicationSchema }).parse(data).medication,
+    );
+  },
+
+  /** Desfaz uma compra lancada errada. Devolve o remedio recalculado. */
+  removerCompra(medicationId: string, entradaId: string): Promise<Medication> {
+    return request(
+      `/api/medications/${medicationId}?recurso=estoque&entrada=${entradaId}`,
+      { method: 'DELETE', authenticated: true },
+      (data) => z.object({ medication: medicationSchema }).parse(data).medication,
     );
   },
 
