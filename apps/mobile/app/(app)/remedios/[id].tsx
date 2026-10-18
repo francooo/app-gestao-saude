@@ -19,7 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { messageForError } from '@gestao/shared';
 
 import { ApiRequestError } from '@/api/client';
-import { healthApi, type Dose, type Medication } from '@/api/health';
+import { healthApi, type Medication } from '@/api/health';
 import { Avatar } from '@/components/Avatar';
 import { DoseButton } from '@/components/DoseButton';
 import { IconTile, LADRILHO_ATENCAO, LADRILHO_NEUTRO, LADRILHO_POR_FORMA } from '@/components/IconTile';
@@ -29,6 +29,7 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SurfaceCard } from '@/components/SurfaceCard';
 import { FotoDaEmbalagem } from '@/components/FotoDaEmbalagem';
+import { HistoricoDeDoses, type Periodo } from '@/components/HistoricoDeDoses';
 import { dataDeTermino, diaPorExtenso, estoqueBaixo, quantidadeDoEstoque } from '@/lib/estoque';
 import { escolherFotoDeDocumento } from '@/lib/foto';
 import {
@@ -59,9 +60,6 @@ import { ICONES, Icone, type NomeIcone } from '@/components/Icone';
  */
 const ESPACO_BARRA = 96;
 
-/** Quantas doses aparecem antes de "Ver todas". */
-const DOSES_VISIVEIS = 8;
-
 /**
  * Detalhe do medicamento.
  *
@@ -90,7 +88,6 @@ export default function MedicamentoDetalheScreen() {
    * aparecer nas duas fotos ao mexer numa so.
    */
   const [fotoCaixa, setFotoCaixa] = useState<'enviando' | 'removendo' | null>(null);
-  const [todasAsDoses, setTodasAsDoses] = useState(false);
 
   /**
    * Fixado a cada carga, e nao lido a cada renderizacao.
@@ -384,8 +381,11 @@ export default function MedicamentoDetalheScreen() {
             agora={agora}
             enviando={enviando}
             anexando={anexando}
-            todasAsDoses={todasAsDoses}
-            onVerTodasAsDoses={() => setTodasAsDoses((v) => !v)}
+            onVerHistorico={(periodo) =>
+              router.push(
+                `/remedios/historico?id=${m.id}&periodo=${periodo}&nome=${encodeURIComponent(m.name)}`,
+              )
+            }
             onMarcar={() => void marcar()}
             onAdicionarReceita={() => anexar('receita', false)}
             onTrocarReceita={() => anexar('receita', true)}
@@ -411,8 +411,7 @@ type ConteudoProps = {
   agora: Date;
   enviando: boolean;
   anexando: boolean;
-  todasAsDoses: boolean;
-  onVerTodasAsDoses: () => void;
+  onVerHistorico: (periodo: Periodo) => void;
   onMarcar: () => void;
   onAdicionarReceita: () => void;
   onTrocarReceita: () => void;
@@ -432,8 +431,7 @@ function Conteudo({
   agora,
   enviando,
   anexando,
-  todasAsDoses,
-  onVerTodasAsDoses,
+  onVerHistorico,
   onMarcar,
   onAdicionarReceita,
   onTrocarReceita,
@@ -476,11 +474,6 @@ function Conteudo({
   const semAcao =
     estado.tipo === 'inativo' || estado.tipo === 'encerrado' || estado.tipo === 'nao_comecou';
 
-  // Mais recente primeiro: a dose que a pessoa acabou de marcar tem que
-  // aparecer no topo, senao marcar no cartao de cima nao produz resposta
-  // visivel nenhuma.
-  const doses = [...m.doses].sort((a, b) => quando(b) - quando(a));
-  const visiveis = todasAsDoses ? doses : doses.slice(0, DOSES_VISIVEIS);
 
   return (
     <>
@@ -638,25 +631,15 @@ function Conteudo({
         />
       </View>
 
-      <View style={styles.secao}>
-        <SectionHeader
-          title="Histórico de doses"
-          onVerTodos={doses.length > DOSES_VISIVEIS ? onVerTodasAsDoses : undefined}
-          verTodosLabel={todasAsDoses ? 'Ver menos' : 'Ver todas'}
-        />
-        <SurfaceCard style={styles.cartao}>
-          {visiveis.length === 0 ? (
-            <Text style={styles.ajuda}>Nenhuma dose registrada ainda.</Text>
-          ) : (
-            visiveis.map((d, i) => (
-              <View key={d.id}>
-                {i > 0 ? <Divisor /> : null}
-                <LinhaDeDose dose={d} agora={agora} />
-              </View>
-            ))
-          )}
-        </SurfaceCard>
-      </View>
+      {/*
+        A chave muda quando uma dose e marcada ou desfeita aqui: e o que faz a
+        contagem (que vem do servidor) acompanhar o botao de dose.
+      */}
+      <HistoricoDeDoses
+        medicationId={m.id}
+        chave={m.doses.map((d) => `${d.id}:${d.status}`).join(',')}
+        onVerTudo={onVerHistorico}
+      />
 
       <View style={styles.acoes}>
         <Pressable
@@ -719,38 +702,6 @@ function Divisor() {
   return <View style={styles.divisor} />;
 }
 
-function LinhaDeDose({ dose, agora }: { dose: Dose; agora: Date }) {
-  const pulada = dose.status === 'pulada';
-  const instante = dose.takenAt ?? dose.scheduledFor;
-  const data = instante ? new Date(instante) : null;
-
-  const texto = data ? `${diaRelativo(data, agora)} às ${hora(data)}` : 'Sem data';
-
-  return (
-    <View
-      style={styles.dose}
-      accessible
-      accessibilityLabel={`${texto}, ${pulada ? 'pulada' : 'tomada'}`}
-    >
-      <View
-        style={[
-          styles.doseMarca,
-          { backgroundColor: pulada ? colors.pillTablet : colors.doseTaken },
-        ]}
-      >
-        <Feather
-          name={pulada ? 'slash' : 'check'}
-          size={14}
-          color={pulada ? colors.pillTabletIcon : colors.onAccent}
-        />
-      </View>
-      <View style={styles.infoTextos}>
-        <Text style={styles.doseTexto}>{texto}</Text>
-        {pulada ? <Text style={styles.ajuda}>pulada</Text> : null}
-      </View>
-    </View>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // Textos derivados do estado. Nada aqui inventa regra: tudo sai de estadoHoje,
@@ -888,11 +839,6 @@ function diaRelativo(d: Date, agora: Date): string {
   return diaCurto(d);
 }
 
-function quando(d: Dose): number {
-  const iso = d.takenAt ?? d.scheduledFor;
-  return iso ? new Date(iso).getTime() : 0;
-}
-
 function rotuloDaDose(titulo: string, estado: EstadoHoje, repetivel: boolean): string {
   if (repetivel) return `Registrar uma dose de ${titulo} agora`;
   if (estado.tipo === 'tomado') return `Dose de ${titulo}, tomada às ${hora(estado.quando)}`;
@@ -966,15 +912,6 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
   },
 
-  dose: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.md },
-  doseMarca: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  doseTexto: { fontFamily: fonts.semibold, fontSize: 15, color: colors.textPrimary },
   ajuda: { fontFamily: fonts.regular, fontSize: 13, color: colors.textSecondary },
 
   acoes: { marginTop: spacing.xxl },

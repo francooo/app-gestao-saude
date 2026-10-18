@@ -151,6 +151,31 @@ export const doseSchema = z.object({
 });
 export type Dose = z.infer<typeof doseSchema>;
 
+const historicoSchema = z.object({
+  resumo: z.object({
+    tomadas: z.number().default(0),
+    puladas: z.number().default(0),
+    atrasadas: z.number().default(0),
+    primeira: z.string().nullish(),
+    ultima: z.string().nullish(),
+    /** Em quantos cadastros (tratamentos) houve dose no periodo. */
+    tratamentos: z.number().default(0),
+  }),
+  doses: z
+    .array(
+      doseSchema.extend({
+        /** Nome e estado do cadastro de origem — marca "tratamento anterior". */
+        medicationName: z.string().nullish(),
+        medicationActive: z.boolean().nullish(),
+      }),
+    )
+    .default([]),
+  /** Cursor da proxima pagina; null quando acabou. */
+  proximo: z.string().nullish(),
+});
+export type HistoricoDeDoses = z.infer<typeof historicoSchema>;
+export type DoseDoHistorico = HistoricoDeDoses['doses'][number];
+
 /**
  * O estoque de um remedio, DERIVADO no servidor: compras menos doses tomadas.
  * Ver apps/api/src/lib/estoque.ts. Nulo quer dizer "nao controlo estoque
@@ -615,6 +640,24 @@ export const healthApi = {
   getMedication(id: string): Promise<Medication> {
     return request(`/api/medications/${id}`, { authenticated: true }, (data) =>
       z.object({ medication: medicationSchema }).parse(data).medication,
+    );
+  },
+
+  /**
+   * Quantas vezes a pessoa tomou este remedio e uma pagina das doses. O
+   * servidor SOMA os outros tratamentos dela com o mesmo nome (a Amoxicilina
+   * encerrada em 2025 entra na contagem da de 2026).
+   */
+  historicoDoRemedio(
+    id: string,
+    filtros: { desde?: string; antes?: string; limite?: number } = {},
+  ): Promise<HistoricoDeDoses> {
+    const params = new URLSearchParams({ recurso: 'historico' });
+    if (filtros.desde) params.set('desde', filtros.desde);
+    if (filtros.antes) params.set('antes', filtros.antes);
+    if (filtros.limite) params.set('limite', String(filtros.limite));
+    return request(`/api/medications/${id}?${params.toString()}`, { authenticated: true }, (data) =>
+      historicoSchema.parse(data),
     );
   },
 
