@@ -15,6 +15,7 @@ import { requireAuth } from '../../src/lib/auth';
 import { fail, json, parseBody, parseQuery, withErrorHandling } from '../../src/lib/http';
 import { perfilDaConta } from '../../src/lib/ownership';
 import { horaCurta, serializarDose, serializarMedicamento } from '../../src/lib/serialize';
+import { estoquesDe } from '../../src/lib/estoque';
 import { validarPosologia } from '../../src/lib/posologia';
 
 /** Teto da janela. Sem ele, um bug no aplicativo baixa o historico inteiro. */
@@ -86,6 +87,10 @@ async function listar(req: VercelRequest, res: VercelResponse, userId: string) {
   // inArray com lista vazia vira `in ()`, que e erro de sintaxe no Postgres.
   if (ids.length === 0) return json(res, 200, { medications: [] });
 
+  const estoques = await estoquesDe(
+    linhas.map((l) => ({ id: l.medicamento.id, doseAmount: l.medicamento.doseAmount })),
+  );
+
   const [horarios, doses, ultimas] = await Promise.all([
     db
       .select()
@@ -146,6 +151,7 @@ async function listar(req: VercelRequest, res: VercelResponse, userId: string) {
       times: horariosPor.get(l.medicamento.id) ?? [],
       doses: dosesPor.get(l.medicamento.id) ?? [],
       lastDoseAt: ultimaPor.get(l.medicamento.id) ?? null,
+      stock: estoques.get(l.medicamento.id) ?? null,
     })),
   });
 }

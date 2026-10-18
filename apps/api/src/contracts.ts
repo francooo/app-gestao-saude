@@ -625,6 +625,24 @@ export const PERGUNTAS_POR_DIA = 50;
 export const BUSCAS_POR_DIA = 10;
 
 /**
+ * Uma compra de remedio — entra no estoque.
+ *
+ * `units` e o total da compra ja multiplicado (2 caixas de 21 = 42): a tela
+ * faz a conta com o packageAmount e manda o resultado, para o servidor nao
+ * precisar saber de "caixa". Validade e AAAA-MM-DD (data de calendario).
+ */
+export const compraDeEstoqueSchema = z.object({
+  units: z.number().int().min(1).max(99999),
+  expiresOn: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, { message: 'Use a data no formato AAAA-MM-DD' })
+    .optional()
+    .nullable(),
+  place: z.string().trim().max(120).optional().nullable(),
+  purchasedAt: z.iso.datetime({ offset: true }).optional().nullable(),
+});
+
+/**
  * "Descreva como tomar": o texto livre que a IA converte em posologia.
  *
  * So a frase e, opcionalmente, a forma (para "4 jatos" virar dose 4 de

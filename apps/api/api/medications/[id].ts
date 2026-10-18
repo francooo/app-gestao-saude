@@ -1,11 +1,17 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { and, asc, desc, eq, sql } from 'drizzle-orm';
 
-import { API_ERROR, doseInputSchema, medicationPatchSchema } from '../../src/contracts';
+import {
+  API_ERROR,
+  compraDeEstoqueSchema,
+  doseInputSchema,
+  medicationPatchSchema,
+} from '../../src/contracts';
 import { db } from '../../src/db/client';
 import {
   medicationAttachments,
   medicationDoses,
+  medicationStockEntries,
   medicationTimes,
   medications,
   professionals,
@@ -13,6 +19,7 @@ import {
 } from '../../src/db/schema';
 import { requireAuth } from '../../src/lib/auth';
 import { fail, json, parseBody, withErrorHandling } from '../../src/lib/http';
+import { estoquesDe } from '../../src/lib/estoque';
 import { doseDaConta, medicamentoDaConta } from '../../src/lib/ownership';
 import { validarPosologia } from '../../src/lib/posologia';
 import { horaCurta, serializarDose, serializarMedicamento } from '../../src/lib/serialize';
@@ -41,13 +48,23 @@ export default withErrorHandling(async (req: VercelRequest, res: VercelResponse)
   const atual = await medicamentoDaConta(id, auth.userId);
   if (!atual) return fail(res, 404, API_ERROR.INTERNAL_ERROR);
 
+  // `?recurso=estoque` e o sub-recurso das COMPRAS deste remedio. Mesmo
+  // raciocinio da dose: e algo que se acrescenta ao item, e uma funcao nova
+  // nao cabe nas 12 da Vercel.
+  const estoque = req.query.recurso === 'estoque';
+
   if (req.method === 'GET') return detalhar(res, id);
+  if (req.method === 'POST' && estoque) return registrarCompra(req, res, id);
   if (req.method === 'POST') return registrarDose(req, res, atual, auth.userId);
   if (req.method === 'PATCH') return atualizar(req, res, atual, auth.userId);
 
   if (req.method === 'DELETE') {
     // O mesmo verbo serve duas coisas: sem doseId apaga o remedio, com doseId
     // desfaz uma dose. E a unica sobrecarga do desenho, e cabe em tres linhas.
+    if (estoque) {
+      const entrada = typeof req.query.entrada === 'string' ? req.query.entrada : null;
+      return entrada ? removerCompra(res, entrada, id) : fail(res, 404, API_ERROR.INTERNAL_ERROR);
+    }
     const doseId = typeof req.query.doseId === 'string' ? req.query.doseId : null;
     return doseId ? desfazerDose(res, doseId, id, auth.userId) : remover(res, id);
   }
@@ -83,6 +100,15 @@ async function montar(id: string) {
     .limit(1);
 
   if (!linha) return null;
+
+  const [estoque, compras] = await Promise.all([
+    estoquesDe([{ id, doseAmount: linha.medicamento.doseAmount }]),
+    db
+      .select()
+      .from(medicationStockEntries)
+      .where(eq(medicationStockEntries.medicationId, id))
+      .orderBy(desc(medicationStockEntries.purchasedAt)),
+  ]);
 
   const [horarios, doses, anexos] = await Promise.all([
     db
@@ -128,7 +154,44 @@ async function montar(id: string) {
     times: horarios.map((h) => horaCurta(h.timeOfDay)),
     doses: doses.map(serializarDose),
     lastDoseAt: doses.find((d) => d.status === 'tomada')?.takenAt ?? null,
+    stock: estoque.get(id) ?? null,
+    stockEntries: compras.map((c) => ({
+      id: c.id,
+      units: c.units,
+      expiresOn: c.expiresOn,
+      place: c.place,
+      purchasedAt: c.purchasedAt.toISOString(),
+    })),
   };
+}
+
+/** Registra uma compra (entrada de estoque) e devolve o remedio atualizado. */
+async function registrarCompra(req: VercelRequest, res: VercelResponse, id: string) {
+  const body = parseBody(res, compraDeEstoqueSchema, req.body);
+  if (!body) return;
+
+  await db.insert(medicationStockEntries).values({
+    medicationId: id,
+    units: body.units,
+    expiresOn: body.expiresOn ?? null,
+    place: body.place?.trim() || null,
+    ...(body.purchasedAt ? { purchasedAt: new Date(body.purchasedAt) } : {}),
+  });
+
+  const medication = await montar(id);
+  return json(res, 201, { medication });
+}
+
+/** Desfaz uma compra lancada errada. Compra de outro remedio responde 404. */
+async function removerCompra(res: VercelResponse, entradaId: string, id: string) {
+  const apagadas = await db
+    .delete(medicationStockEntries)
+    .where(and(eq(medicationStockEntries.id, entradaId), eq(medicationStockEntries.medicationId, id)))
+    .returning({ id: medicationStockEntries.id });
+  if (apagadas.length === 0) return fail(res, 404, API_ERROR.INTERNAL_ERROR);
+
+  const medication = await montar(id);
+  return json(res, 200, { medication });
 }
 
 async function detalhar(res: VercelResponse, id: string) {

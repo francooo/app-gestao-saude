@@ -127,6 +127,13 @@
       "when": 1792246185695,
       "tag": "0017_massive_next_avengers",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1792288494632,
+      "tag": "0018_mixed_shatterstar",
+      "breakpoints": true
     }
   ]
 }

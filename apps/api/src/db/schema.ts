@@ -627,6 +627,41 @@ export const medications = pgTable(
  * Tabela separada em vez de array porque "08:00 e 20:00" precisa ser
  * consultavel para gerar lembretes, e array nao se indexa bem para isso.
  */
+/**
+ * Compras de um remedio — a base do ESTOQUE.
+ *
+ * O estoque NAO e um numero guardado: e "o que entrou" menos "o que saiu".
+ * Entrou = soma das compras daqui; saiu = doses marcadas como TOMADAS desde a
+ * primeira compra. Guardar o restante numa coluna exigiria atualiza-la a cada
+ * dose, e duas pessoas marcando a mesma dose em dois celulares desencontrariam
+ * o numero. Derivado, ele nunca diverge do historico.
+ *
+ * Uma linha por compra (e nao so a ultima) porque a validade e a farmacia sao
+ * DA COMPRA: duas caixas compradas em meses diferentes vencem em datas
+ * diferentes.
+ */
+export const medicationStockEntries = pgTable(
+  'medication_stock_entries',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    medicationId: uuid('medication_id')
+      .notNull()
+      .references(() => medications.id, { onDelete: 'cascade' }),
+    /** Unidades na forma do remedio: capsulas, comprimidos, ml, gotas, jatos. */
+    units: integer('units').notNull(),
+    /** Data de validade impressa na caixa. Data de calendario, sem fuso. */
+    expiresOn: date('expires_on'),
+    /** "Farmacia Vida · Sao Paulo, SP" — texto livre, como a pessoa escreve. */
+    place: text('place'),
+    purchasedAt: timestamp('purchased_at', { withTimezone: true }).notNull().defaultNow(),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('medication_stock_entries_medication_idx').on(t.medicationId),
+    check('medication_stock_entries_units_range', sql`${t.units} >= 1 AND ${t.units} <= 99999`),
+  ],
+);
+
 export const medicationTimes = pgTable(
   'medication_times',
   {
