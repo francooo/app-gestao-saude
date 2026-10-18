@@ -41,6 +41,9 @@ export const ICONES = {
   dor: 'mci:head-alert-outline',
   nausea: 'mci:stomach',
   tosse: 'mci:lungs',
+  // Feather, e nao MCI: e o mesmo desenho da aba Assistente, e a tela de
+  // assinatura precisa apontar para ela com o icone que a pessoa ja conhece.
+  assistente: 'message-square',
 } as const satisfies Record<string, NomeIcone>;
 
 type Props = {

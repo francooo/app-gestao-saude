@@ -38,11 +38,31 @@ export const contagensSchema = z.object({
 });
 export type Contagens = z.infer<typeof contagensSchema>;
 
+/**
+ * O nivel de acesso, espelho de apps/api/src/lib/plano.ts.
+ *
+ * So informativo: o aplicativo esconde e explica os recursos de IA, mas quem
+ * bloqueia de verdade e o servidor, com 403 SUBSCRIPTION_REQUIRED.
+ */
+export const planoSchema = z.object({
+  premium: z.boolean(),
+  /** Por que tem acesso; null no gratuito. */
+  motivo: z.enum(['assinatura', 'teste']).nullable(),
+  /** Ate quando o acesso vale (ISO), ou null no gratuito. */
+  ate: z.string().nullable(),
+  /** Fim do teste, mesmo ja vencido — a tela diz "seu teste terminou em...". */
+  testeAte: z.string().nullable(),
+});
+export type Plano = z.infer<typeof planoSchema>;
+
 const perfilDaContaSchema = z.object({
   user: contaSchema,
   consent: consentimentoSchema.nullable(),
   policyVersion: z.string(),
   counts: contagensSchema.optional(),
+  // nullish: o servidor anterior aos niveis de acesso nao manda o campo, e um
+  // parse estrito derrubaria a revalidacao da conta inteira por isso.
+  plano: planoSchema.nullish(),
 });
 
 export const contaApi = {

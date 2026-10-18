@@ -3,11 +3,18 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Icone, ICONES } from '@/components/Icone';
+import { SeloDeAssinatura } from '@/components/SeloDeAssinatura';
 import { colors, fonts, radii, spacing } from '@/theme';
 
 type Props = {
   onFotografar: () => void;
   onGaleria: () => void;
+  /**
+   * Fora do plano da conta. So muda o DESENHO (selo e textos de
+   * acessibilidade); para onde o toque leva continua decidido por quem usa o
+   * cartao, em onFotografar/onGaleria.
+   */
+  bloqueado?: boolean;
 };
 
 /**
@@ -23,7 +30,7 @@ type Props = {
  * embalagem. Os cinco chips sao os campos que a leitura extrai de verdade —
  * nenhum promete o que o fluxo nao entrega.
  */
-export function CartaoLerReceita({ onFotografar, onGaleria }: Props) {
+export function CartaoLerReceita({ onFotografar, onGaleria, bloqueado = false }: Props) {
   return (
     <View style={styles.wrapper}>
       <LinearGradient
@@ -49,24 +56,33 @@ export function CartaoLerReceita({ onFotografar, onGaleria }: Props) {
             <Text style={styles.subtitulo}>
               Tire uma foto e preencha os dados automaticamente
             </Text>
+            {bloqueado ? <SeloDeAssinatura style={styles.seloAssinatura} /> : null}
           </View>
         </View>
 
         <Pressable
           onPress={onFotografar}
           accessibilityRole="button"
-          accessibilityLabel="Fotografar receita"
-          accessibilityHint="Abre a câmera e a IA preenche o cadastro"
+          accessibilityLabel={
+            bloqueado ? 'Fotografar receita. Faz parte da assinatura.' : 'Fotografar receita'
+          }
+          accessibilityHint={
+            bloqueado
+              ? 'Abre a tela de assinatura'
+              : 'Abre a câmera e a IA preenche o cadastro'
+          }
           style={({ pressed }) => [styles.botao, pressed && styles.pressionado]}
         >
-          <Feather name="camera" size={18} color={colors.accentGreen} />
+          <Feather name={bloqueado ? 'lock' : 'camera'} size={18} color={colors.accentGreen} />
           <Text style={styles.botaoTexto}>Fotografar receita</Text>
         </Pressable>
 
         <Pressable
           onPress={onGaleria}
           accessibilityRole="button"
-          accessibilityLabel="Escolher da galeria"
+          accessibilityLabel={
+            bloqueado ? 'Escolher da galeria. Faz parte da assinatura.' : 'Escolher da galeria'
+          }
           hitSlop={8}
           style={({ pressed }) => [styles.galeria, pressed && styles.pressionado]}
         >
@@ -133,6 +149,7 @@ const styles = StyleSheet.create({
   },
   selo_iaTexto: { fontFamily: fonts.extrabold, fontSize: 10, color: colors.onAccent },
   textos: { flex: 1 },
+  seloAssinatura: { marginTop: spacing.sm },
   titulo: { fontFamily: fonts.extrabold, fontSize: 19, color: colors.onAccent },
   subtitulo: {
     fontFamily: fonts.regular,

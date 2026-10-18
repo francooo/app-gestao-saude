@@ -15,7 +15,7 @@ import { ScreenBackground } from '@/components/ScreenBackground';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SeletorDeRemedios } from '@/components/SeletorDeRemedios';
 import { SurfaceCard } from '@/components/SurfaceCard';
-import { useAvisos } from '@/lib/avisosContext';
+import { useAssinaturaExigida, useAvisos, usePlano } from '@/lib/avisosContext';
 import { pedirFotoDeDocumento } from '@/lib/foto';
 import {
   consumirCadastroConcluido,
@@ -66,6 +66,13 @@ export default function NovoRemedioScreen() {
    */
   const { fotoPronta } = useLocalSearchParams<{ fotoPronta?: string }>();
   const { avisos, parcial, erro: erroDosAvisos, recarregar } = useAvisos();
+  /**
+   * Ler foto e recurso de IA: so com assinatura ou no teste gratis. Sem plano
+   * os cartoes viram cadeado e levam a tela de assinatura; o caminho manual,
+   * logo abaixo, continua livre para todo mundo.
+   */
+  const { premium } = usePlano();
+  const tratarAssinatura = useAssinaturaExigida();
 
   /**
    * Ja nasce em "lendo" quando ha foto esperando (espiada, nao consumida):
@@ -235,6 +242,14 @@ export default function NovoRemedioScreen() {
       });
     } catch (e) {
       if (abandonado.current) return;
+      // O plano venceu com o aplicativo aberto: o servidor recusou antes de
+      // gastar nada. Volta ao repouso (com os cadeados, depois da recarga) e
+      // leva a tela de assinatura em vez de mostrar um erro de leitura.
+      if (tratarAssinatura(e)) {
+        autoLeitura.current = false;
+        setEstado({ fase: 'repouso' });
+        return;
+      }
       // Cancelamento pedido pela pessoa nao e erro: volta ao repouso, calado.
       if (controller.signal.aborted && e instanceof Error && e.name === 'AbortError') {
         // No fluxo da Home esta tela so hospeda a leitura — cancelar volta para
@@ -335,7 +350,9 @@ export default function NovoRemedioScreen() {
           </View>
         </SurfaceCard>
 
-        {politicaVelha ? (
+        {/* Sem plano a politica nao e o que impede a leitura: o aviso dela
+            so confundiria quem ve o cadeado logo abaixo. */}
+        {politicaVelha && premium ? (
           <BlocoDeAviso
             tom="atencao"
             icone="shield"
@@ -366,18 +383,24 @@ export default function NovoRemedioScreen() {
               ladrilho={LADRILHO_NEUTRO}
               titulo="Fotografar receita"
               descricao="A IA lê nome, dose e posologia"
-              desabilitado={bloqueado}
+              desabilitado={premium && bloqueado}
               motivoDesabilitado="Disponível depois que você aceitar a política atual"
-              onPress={() => escolherOrigem('receita')}
+              cadeado={!premium}
+              onPress={() =>
+                premium ? escolherOrigem('receita') : router.push('/conta/assinatura')
+              }
             />
             <OpcaoDeFoto
               icone="package"
               ladrilho={LADRILHO_ATENCAO}
               titulo="Fotografar caixinha"
               descricao="Identifique o medicamento automaticamente"
-              desabilitado={bloqueado}
+              desabilitado={premium && bloqueado}
               motivoDesabilitado="Disponível depois que você aceitar a política atual"
-              onPress={() => escolherOrigem('caixa')}
+              cadeado={!premium}
+              onPress={() =>
+                premium ? escolherOrigem('caixa') : router.push('/conta/assinatura')
+              }
             />
           </>
         )}

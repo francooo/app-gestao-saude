@@ -10,8 +10,12 @@ import {
 } from 'react';
 import { AppState } from 'react-native';
 import { addDays, endOfDay, startOfDay } from 'date-fns';
+import { useRouter } from 'expo-router';
 
-import { contaApi, type Consentimento } from '@/api/conta';
+import { API_ERROR } from '@gestao/shared';
+
+import { ApiRequestError } from '@/api/client';
+import { contaApi, type Consentimento, type Plano } from '@/api/conta';
 import { healthApi, type Appointment, type Medication, type Profile } from '@/api/health';
 import { montarAvisos, type Aviso } from '@/lib/avisos';
 import { agoraLocalISO } from '@/lib/horaLocal';
@@ -52,6 +56,32 @@ export type AvisoComLeitura = Aviso & { lido: boolean };
 
 const AvisosContext = createContext<Estado | null>(null);
 
+type EstadoDoPlano = {
+  /** Nulo enquanto nao veio, quando o servidor e antigo ou a chamada falhou. */
+  plano: Plano | null;
+  /**
+   * Se o aplicativo deve liberar os recursos de IA.
+   *
+   * SEM PLANO, LIBERA. Quem decide de verdade e o servidor, a cada chamada; o
+   * aplicativo so explica. Travar a tela por um tropeco de rede (ou por um
+   * servidor que ainda nao manda o campo) castigaria justamente quem paga.
+   * Se a conta nao tiver acesso, o 403 chega na hora de usar e o
+   * `useAssinaturaExigida` leva para a tela de assinatura.
+   */
+  premium: boolean;
+  /** A primeira tentativa de buscar o plano ja terminou, com ou sem sucesso. */
+  carregado: boolean;
+  recarregar: () => Promise<void>;
+};
+
+/**
+ * Contexto proprio para o plano, separado dos avisos.
+ *
+ * O valor dos avisos muda a cada minuto (o relogio do recalculo); quem so quer
+ * saber se mostra um cadeado nao precisa renderizar de novo por isso.
+ */
+const PlanoContext = createContext<EstadoDoPlano | null>(null);
+
 /** Quanto tempo esperar antes de bater no servidor de novo ao voltar. */
 const TRAVA_DE_RECARGA_MS = 60_000;
 /** De quanto em quanto tempo os limiares sao reavaliados, sem rede. */
@@ -62,6 +92,8 @@ export function AvisosProvider({ children }: { children: ReactNode }) {
   const [consultas, setConsultas] = useState<Appointment[]>([]);
   const [perfis, setPerfis] = useState<Profile[]>([]);
   const [consentimento, setConsentimento] = useState<Consentimento | null>(null);
+  const [plano, setPlano] = useState<Plano | null>(null);
+  const [planoCarregado, setPlanoCarregado] = useState(false);
 
   const [agora, setAgora] = useState(() => new Date());
   const [carregando, setCarregando] = useState(true);
@@ -100,7 +132,13 @@ export function AvisosProvider({ children }: { children: ReactNode }) {
     if (r1.status === 'fulfilled') setMedicamentos(r1.value);
     if (r2.status === 'fulfilled') setConsultas(r2.value);
     if (r3.status === 'fulfilled') setPerfis(r3.value);
-    if (r4.status === 'fulfilled') setConsentimento(r4.value.consent);
+    if (r4.status === 'fulfilled') {
+      setConsentimento(r4.value.consent);
+      // Falha de rede NAO apaga o plano que ja estava aqui: so uma resposta
+      // de verdade muda o que a tela mostra.
+      setPlano(r4.value.plano ?? null);
+    }
+    setPlanoCarregado(true);
 
     const falhas = [r1, r2, r3, r4].filter((r) => r.status === 'rejected').length;
 
@@ -108,6 +146,25 @@ export function AvisosProvider({ children }: { children: ReactNode }) {
     setErro(falhas === 4 ? 'rede' : null);
     setAgora(referencia);
     setCarregando(false);
+  }, []);
+
+  /**
+   * So o plano (e o consentimento, que vem na mesma resposta).
+   *
+   * Existe a parte da recarga geral porque e chamada logo depois de um 403 de
+   * assinatura e pelo "Ja assinei": nesses momentos a pergunta e uma so, e
+   * buscar remedios, consultas e perfis junto seria desperdicio.
+   */
+  const recarregarPlano = useCallback(async () => {
+    try {
+      const r = await contaApi.perfil();
+      setConsentimento(r.consent);
+      setPlano(r.plano ?? null);
+    } catch {
+      // Mantem o que havia. Quem chamou ve o resultado no proprio plano.
+    } finally {
+      setPlanoCarregado(true);
+    }
   }, []);
 
   // Primeira carga e estado de lido.
@@ -138,7 +195,7 @@ export function AvisosProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const avisos = useMemo(() => {
-    const crus = montarAvisos({ medicamentos, consultas, perfis, consentimento, agora });
+    const crus = montarAvisos({ medicamentos, consultas, perfis, consentimento, plano, agora });
     const corte = lidoAte ? new Date(lidoAte) : null;
 
     return crus.map((a) => ({
@@ -148,7 +205,7 @@ export function AvisosProvider({ children }: { children: ReactNode }) {
       // so a lista a alcanca.
       lido: idsLidos.has(a.id) || (corte != null && a.surgiuEm != null && a.surgiuEm <= corte),
     }));
-  }, [medicamentos, consultas, perfis, consentimento, agora, lidoAte, idsLidos]);
+  }, [medicamentos, consultas, perfis, consentimento, plano, agora, lidoAte, idsLidos]);
 
   /**
    * O ponto do sino NAO acende durante a primeira carga.
@@ -184,11 +241,67 @@ export function AvisosProvider({ children }: { children: ReactNode }) {
     [avisos, temNaoLido, carregando, erro, parcial, carregar, marcarTodasComoLidas, marcarComoLido],
   );
 
-  return <AvisosContext.Provider value={valor}>{children}</AvisosContext.Provider>;
+  const valorDoPlano = useMemo<EstadoDoPlano>(
+    () => ({
+      plano,
+      premium: plano ? plano.premium : true,
+      carregado: planoCarregado,
+      recarregar: recarregarPlano,
+    }),
+    [plano, planoCarregado, recarregarPlano],
+  );
+
+  return (
+    <AvisosContext.Provider value={valor}>
+      <PlanoContext.Provider value={valorDoPlano}>{children}</PlanoContext.Provider>
+    </AvisosContext.Provider>
+  );
 }
 
 export function useAvisos(): Estado {
   const ctx = useContext(AvisosContext);
   if (!ctx) throw new Error('useAvisos precisa estar dentro de AvisosProvider');
   return ctx;
+}
+
+/**
+ * O nivel de acesso da conta.
+ *
+ * Mora no mesmo provider dos avisos porque a resposta e a mesma chamada
+ * (`/api/me/perfil`) que ele ja fazia para o consentimento — uma requisicao a
+ * mais por troca de aba seria desperdicio puro.
+ */
+export function usePlano(): EstadoDoPlano {
+  const ctx = useContext(PlanoContext);
+  if (!ctx) throw new Error('usePlano precisa estar dentro de AvisosProvider');
+  return ctx;
+}
+
+/** O servidor recusou um recurso de IA por falta de assinatura (ou teste). */
+export function ehAssinaturaExigida(e: unknown): boolean {
+  return e instanceof ApiRequestError && e.code === API_ERROR.SUBSCRIPTION_REQUIRED;
+}
+
+/**
+ * Trata o 403 de assinatura em qualquer chamada de IA.
+ *
+ * Devolve uma funcao para o `catch`: se o erro for de assinatura, recarrega o
+ * plano (o teste pode ter vencido com o aplicativo aberto, e os cadeados
+ * precisam aparecer) e leva a tela de assinatura; devolve true para quem
+ * chamou parar ali. Qualquer outro erro devolve false e segue o caminho normal
+ * da tela.
+ */
+export function useAssinaturaExigida(): (e: unknown) => boolean {
+  const { recarregar } = usePlano();
+  const router = useRouter();
+
+  return useCallback(
+    (e: unknown) => {
+      if (!ehAssinaturaExigida(e)) return false;
+      void recarregar();
+      router.push('/conta/assinatura');
+      return true;
+    },
+    [recarregar, router],
+  );
 }

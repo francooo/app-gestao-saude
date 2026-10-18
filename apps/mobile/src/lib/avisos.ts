@@ -1,7 +1,7 @@
-import { addDays, endOfDay, isSameDay, startOfDay } from 'date-fns';
+import { addDays, differenceInCalendarDays, endOfDay, isSameDay, startOfDay } from 'date-fns';
 
 import type { Appointment, Medication, Profile } from '@/api/health';
-import type { Consentimento } from '@/api/conta';
+import type { Consentimento, Plano } from '@/api/conta';
 import { agoraLocalISO } from '@/lib/horaLocal';
 import { idadeDescrita } from '@/lib/pessoa';
 import {
@@ -35,7 +35,8 @@ export type TipoDeAviso =
   | 'tratamento-terminando'
   | 'tratamento-terminado'
   | 'peso-desatualizado'
-  | 'politica-desatualizada';
+  | 'politica-desatualizada'
+  | 'teste-terminando';
 
 /** Os tres grupos dos chips do mockup. */
 export type CategoriaDeAviso = 'medicamentos' | 'consultas' | 'lembretes';
@@ -128,17 +129,27 @@ const MAXIMO_TERMINADOS = 3;
  */
 const PESO_VELHO_DIAS = 180;
 
+/**
+ * Quantos dias antes do fim do teste gratis o aviso aparece.
+ *
+ * Dois, o mesmo prazo do tratamento terminando: da tempo de a pessoa notar sem
+ * passar metade do teste de sete dias ouvindo que ele vai acabar.
+ */
+const FIM_DO_TESTE_DIAS = 2;
+
 export type EntradaDeAvisos = {
   medicamentos: Medication[];
   consultas: Appointment[];
   perfis: Profile[];
   consentimento: Consentimento | null;
+  /** Nulo quando o servidor nao mandou (antigo, ou a chamada falhou). */
+  plano?: Plano | null;
   /** Fixado por quem chama, para todos os avisos concordarem sobre "agora". */
   agora: Date;
 };
 
 export function montarAvisos(entrada: EntradaDeAvisos): Aviso[] {
-  const { medicamentos, consultas, perfis, consentimento, agora } = entrada;
+  const { medicamentos, consultas, perfis, consentimento, plano, agora } = entrada;
 
   // Com mais de uma pessoa na casa, o nome entra no subtitulo: "a dose" de
   // quem? Com uma so, o nome e ruido.
@@ -150,6 +161,7 @@ export function montarAvisos(entrada: EntradaDeAvisos): Aviso[] {
     ...avisosDeTratamento(medicamentos, agora),
     ...avisosDePeso(perfis, agora),
     ...avisoDePolitica(consentimento),
+    ...avisoDeTeste(plano ?? null, agora),
   ].sort(ordenar);
 }
 
@@ -411,6 +423,42 @@ function avisoDePolitica(consentimento: Consentimento | null): Aviso[] {
       surgiuEm: null,
       prioridade: 20,
       rota: '/conta/privacidade',
+    },
+  ];
+}
+
+// ---------------------------------------------------------------------------
+// Teste gratis
+// ---------------------------------------------------------------------------
+
+function avisoDeTeste(plano: Plano | null, agora: Date): Aviso[] {
+  // So o TESTE avisa. Assinante tem renovacao propria, e quem ja esta no
+  // gratuito nao tem prazo nenhum correndo.
+  if (!plano || plano.motivo !== 'teste' || !plano.ate) return [];
+
+  const fim = new Date(plano.ate);
+  if (Number.isNaN(fim.getTime()) || fim <= agora) return [];
+
+  const dias = differenceInCalendarDays(fim, agora);
+  if (dias > FIM_DO_TESTE_DIAS) return [];
+
+  return [
+    {
+      // O fim do teste entra na id: se um dia o prazo for estendido, o aviso
+      // novo nasce nao lido em vez de herdar o "lido" do antigo.
+      id: `teste-fim:${plano.ate}`,
+      tipo: 'teste-terminando',
+      categoria: 'lembretes',
+      titulo:
+        dias <= 0
+          ? 'Seu teste grátis termina hoje'
+          : dias === 1
+            ? 'Seu teste grátis termina amanhã'
+            : `Seu teste grátis termina em ${dias} dias`,
+      subtitulo: `Até ${diaCurto(fim)} · depois, os recursos de IA ficam na assinatura`,
+      surgiuEm: startOfDay(addDays(fim, -FIM_DO_TESTE_DIAS)),
+      prioridade: 25,
+      rota: '/conta/assinatura',
     },
   ];
 }

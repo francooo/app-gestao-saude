@@ -174,6 +174,10 @@ export default function AppLayout() {
         name="conta/acompanhante"
         options={{ href: null, tabBarStyle: { display: 'none' } }}
       />
+      <Tabs.Screen
+        name="conta/assinatura"
+        options={{ href: null, tabBarStyle: { display: 'none' } }}
+      />
     </Tabs>
     </AvisosProvider>
   );

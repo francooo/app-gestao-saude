@@ -26,6 +26,8 @@ import { SettingsGroup } from '@/components/SettingsGroup';
 import { SettingsRow } from '@/components/SettingsRow';
 import { SurfaceCard } from '@/components/SurfaceCard';
 import { UpdateCard } from '@/components/UpdateCard';
+import { usePlano } from '@/lib/avisosContext';
+import { resumoDoPlano } from '@/lib/plano';
 import {
   definirLembretesDeDose,
   definirNotificacoes,
@@ -57,6 +59,7 @@ export default function AjustesScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, signOut } = useAuth();
+  const { plano } = usePlano();
 
   const [perfis, setPerfis] = useState<Profile[]>([]);
   const [medicos, setMedicos] = useState<Professional[]>([]);
@@ -218,6 +221,15 @@ export default function AjustesScreen() {
               valor={textoDeMembros(perfis, carregando)}
               reservarValor
               onPress={() => router.push('/conta/familia')}
+            />
+            {/* O estado vai na segunda linha, como o e-mail e a contagem acima:
+                e o que responde "ainda estou no teste?" sem abrir a tela. */}
+            <SettingsRow
+              marcador={<IconTile icone={ICONES.brilho} {...VERDE} />}
+              rotulo="Assinatura"
+              valor={resumoDoPlano(plano)}
+              reservarValor
+              onPress={() => router.push('/conta/assinatura')}
             />
           </SettingsGroup>
         </View>

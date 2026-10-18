@@ -1,7 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { addDays, endOfDay, startOfDay } from 'date-fns';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -28,12 +28,14 @@ import {
   type Profile,
 } from '@/api/health';
 import { ChatBubble } from '@/components/ChatBubble';
-import { ICONES } from '@/components/Icone';
+import { Icone, ICONES } from '@/components/Icone';
+import { PrimaryButton } from '@/components/PrimaryButton';
 import { ProfileSelector } from '@/components/ProfileSelector';
 import { QuickActions } from '@/components/QuickActions';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SurfaceCard } from '@/components/SurfaceCard';
+import { useAssinaturaExigida, usePlano } from '@/lib/avisosContext';
 import { montarContexto } from '@/lib/contextoDeSaude';
 import { backgrounds, colors, fonts, radii, spacing } from '@/theme';
 
@@ -44,6 +46,15 @@ import { backgrounds, colors, fonts, radii, spacing } from '@/theme';
  * (ver app/(app)/_layout.tsx), entao o que ela cobre e insets.bottom + 80.
  */
 const ESPACO_BARRA = 80;
+
+/**
+ * Quantas mensagens do historico a tela mostra quando a conta esta sem plano.
+ *
+ * Sem teto, uma familia que usou o assistente por meses despejaria tudo de uma
+ * vez numa rolagem sem fim. Vinte sao as ultimas conversas, que e o que alguem
+ * volta para reler.
+ */
+const HISTORICO_SEM_PLANO = 20;
 
 /**
  * Assistente de Saude.
@@ -61,7 +72,18 @@ const ESPACO_BARRA = 80;
  */
 export default function AssistenteScreen() {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const rolagem = useRef<ScrollView>(null);
+  /** Descarta a resposta do historico de uma carga que ja foi substituida. */
+  const geracao = useRef(0);
+
+  /**
+   * Sem plano a ABA CONTINUA AQUI: perguntar e recurso de IA (o servidor
+   * recusa com 403), mas reler o que ja foi respondido nao e — a rota do
+   * historico segue livre. A caixa de pergunta vira a explicacao.
+   */
+  const { premium } = usePlano();
+  const tratarAssinatura = useAssinaturaExigida();
 
   const [perfis, setPerfis] = useState<Profile[]>([]);
   const [perfilId, setPerfilId] = useState<string | null>(null);
@@ -132,6 +154,22 @@ export default function AssistenteScreen() {
      */
     setMensagens([]);
 
+    /**
+     * Sem plano, a tela NAO comeca limpa: sem poder perguntar, a unica coisa
+     * util aqui e reler as respostas que ja vieram. E uma chamada a parte, e
+     * a falha dela so deixa a tela como estaria de qualquer jeito.
+     */
+    const minha = ++geracao.current;
+    if (!premium) {
+      void healthApi
+        .historicoDoAssistente(perfilId)
+        .then((h) => {
+          // Trocou de pessoa no meio: a conversa da anterior nao entra.
+          if (geracao.current === minha) setMensagens(h.slice(-HISTORICO_SEM_PLANO));
+        })
+        .catch(() => undefined);
+    }
+
     try {
       const [listaPerfis, remedios, agenda] = await Promise.all([
         healthApi.listProfiles(),
@@ -158,7 +196,7 @@ export default function AssistenteScreen() {
     } finally {
       setCarregando(false);
     }
-  }, [perfilId]);
+  }, [perfilId, premium]);
 
   useFocusEffect(
     useCallback(() => {
@@ -192,6 +230,16 @@ export default function AssistenteScreen() {
       setMensagens((atual) => [...atual, ...novas]);
       setTimeout(() => rolagem.current?.scrollToEnd({ animated: true }), 80);
     } catch (e) {
+      /**
+       * O plano venceu com a tela aberta. O servidor recusa ANTES de gravar
+       * qualquer coisa, entao nao ha o que conferir no historico: a pergunta
+       * volta para o campo e a pessoa vai para a assinatura.
+       */
+      if (tratarAssinatura(e)) {
+        setTexto(anterior || limpa);
+        return;
+      }
+
       /**
        * Antes de dizer que falhou, CONFERIR SE NAO FUNCIONOU.
        *
@@ -324,7 +372,12 @@ export default function AssistenteScreen() {
                 <ActivityIndicator color={colors.accentGreen} style={styles.carregando} />
               ) : (
                 <>
-                  {mensagens.length === 0 ? (
+                  {mensagens.length === 0 && !premium ? (
+                    <ChatBubble
+                      autor="assistant"
+                      texto="Quando houver conversas anteriores, elas aparecem aqui para você reler."
+                    />
+                  ) : mensagens.length === 0 ? (
                     <>
                       <ChatBubble
                         autor="assistant"
@@ -358,9 +411,13 @@ export default function AssistenteScreen() {
                     </Text>
                   ) : null}
 
-                  <View style={styles.acoes}>
-                    <QuickActions onPerguntar={(p) => void enviar(p)} desabilitado={enviando} />
-                  </View>
+                  {/* As acoes rapidas SAO perguntas: sem plano, sairiam todas em
+                      403. Somem junto com o campo. */}
+                  {premium ? (
+                    <View style={styles.acoes}>
+                      <QuickActions onPerguntar={(p) => void enviar(p)} desabilitado={enviando} />
+                    </View>
+                  ) : null}
                 </>
               )}
             </View>
@@ -378,42 +435,65 @@ export default function AssistenteScreen() {
             { paddingBottom: tecladoAberto ? spacing.sm : ESPACO_BARRA + insets.bottom },
           ]}
         >
-          <View style={styles.campo}>
-            <TextInput
-              value={texto}
-              onChangeText={setTexto}
-              placeholder="Digite sua dúvida..."
-              placeholderTextColor={colors.textPlaceholder}
-              style={styles.input}
-              editable={!enviando}
-              multiline
-              maxLength={1000}
-              onSubmitEditing={() => void enviar(texto)}
-              accessibilityLabel="Sua dúvida"
-            />
-            <Pressable
-              onPress={() => void enviar(texto)}
-              disabled={enviando || texto.trim().length < 2}
-              accessibilityRole="button"
-              accessibilityLabel="Enviar pergunta"
-              style={({ pressed }) => [
-                styles.enviar,
-                (enviando || texto.trim().length < 2) && styles.enviarApagado,
-                pressed && styles.pressionado,
-              ]}
-            >
-              {enviando ? (
-                <ActivityIndicator size="small" color={colors.onAccent} />
-              ) : (
-                <Feather name="send" size={18} color={colors.onAccent} />
-              )}
-            </Pressable>
-          </View>
+          {premium ? (
+            <>
+              <View style={styles.campo}>
+                <TextInput
+                  value={texto}
+                  onChangeText={setTexto}
+                  placeholder="Digite sua dúvida..."
+                  placeholderTextColor={colors.textPlaceholder}
+                  style={styles.input}
+                  editable={!enviando}
+                  multiline
+                  maxLength={1000}
+                  onSubmitEditing={() => void enviar(texto)}
+                  accessibilityLabel="Sua dúvida"
+                />
+                <Pressable
+                  onPress={() => void enviar(texto)}
+                  disabled={enviando || texto.trim().length < 2}
+                  accessibilityRole="button"
+                  accessibilityLabel="Enviar pergunta"
+                  style={({ pressed }) => [
+                    styles.enviar,
+                    (enviando || texto.trim().length < 2) && styles.enviarApagado,
+                    pressed && styles.pressionado,
+                  ]}
+                >
+                  {enviando ? (
+                    <ActivityIndicator size="small" color={colors.onAccent} />
+                  ) : (
+                    <Feather name="send" size={18} color={colors.onAccent} />
+                  )}
+                </Pressable>
+              </View>
 
-          <View style={styles.aviso}>
-            <Feather name="lock" size={12} color={colors.textSecondary} />
-            <Text style={styles.avisoTexto}>Suas informações são tratadas com cuidado.</Text>
-          </View>
+              <View style={styles.aviso}>
+                <Feather name="lock" size={12} color={colors.textSecondary} />
+                <Text style={styles.avisoTexto}>Suas informações são tratadas com cuidado.</Text>
+              </View>
+            </>
+          ) : (
+            <SurfaceCard style={styles.trancado}>
+              <View style={styles.trancadoLinha}>
+                <View style={styles.trancadoSelo}>
+                  <Icone nome={ICONES.brilho} size={20} color={colors.onAccent} />
+                </View>
+                <View style={styles.trancadoTextos}>
+                  <Text style={styles.trancadoTitulo}>O assistente faz parte da assinatura</Text>
+                  <Text style={styles.trancadoTexto}>
+                    As conversas anteriores continuam aqui para você reler.
+                  </Text>
+                </View>
+              </View>
+              <PrimaryButton
+                title="Ver assinatura"
+                onPress={() => router.push('/conta/assinatura')}
+                style={styles.trancadoBotao}
+              />
+            </SurfaceCard>
+          )}
         </View>
       </KeyboardAvoidingView>
     </View>
@@ -490,4 +570,24 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
   },
   avisoTexto: { fontFamily: fonts.regular, fontSize: 12, color: colors.textSecondary },
+
+  trancado: { padding: spacing.lg },
+  trancadoLinha: { flexDirection: 'row', alignItems: 'center' },
+  trancadoSelo: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    backgroundColor: colors.assistantSend,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  trancadoTextos: { flex: 1, marginLeft: spacing.md },
+  trancadoTitulo: { fontFamily: fonts.bold, fontSize: 15, color: colors.sectionTitle },
+  trancadoTexto: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  trancadoBotao: { marginTop: spacing.md },
 });

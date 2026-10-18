@@ -14,6 +14,17 @@ type Props = {
   desabilitado?: boolean;
   /** Entra no rotulo do leitor de tela. Sem ele, "desabilitado" nao explica nada. */
   motivoDesabilitado?: string;
+  /**
+   * Recurso fora do plano da conta.
+   *
+   * Diferente de `desabilitado`: o cartao CONTINUA tocavel, porque o toque
+   * tem destino (a tela de assinatura, decidido por quem chama em `onPress`).
+   * Um cartao morto nao explicaria nada; este troca a descricao pelo motivo e
+   * o "Tirar foto" por um cadeado.
+   */
+  cadeado?: boolean;
+  /** Texto do cadeado, no lugar da descricao. */
+  motivoCadeado?: string;
   onPress: () => void;
 };
 
@@ -35,6 +46,8 @@ export function OpcaoDeFoto({
   descricao,
   desabilitado = false,
   motivoDesabilitado,
+  cadeado = false,
+  motivoCadeado = 'Faz parte da assinatura',
   onPress,
 }: Props) {
   /**
@@ -55,7 +68,11 @@ export function OpcaoDeFoto({
       accessibilityRole="button"
       accessibilityLabel={titulo}
       accessibilityHint={
-        desabilitado ? motivoDesabilitado : `${descricao}. Abre a escolha entre câmera e galeria.`
+        desabilitado
+          ? motivoDesabilitado
+          : cadeado
+            ? `${motivoCadeado}. Abre a tela de assinatura.`
+            : `${descricao}. Abre a escolha entre câmera e galeria.`
       }
       accessibilityState={{ disabled: desabilitado }}
       style={({ pressed }) => [pressed && !desabilitado && styles.pressionado]}
@@ -67,15 +84,21 @@ export function OpcaoDeFoto({
 
           <View style={[styles.textos, empilhado && styles.textosEmpilhados]}>
             <Text style={styles.titulo}>{titulo}</Text>
-            <Text style={styles.descricao}>{descricao}</Text>
+            <Text style={styles.descricao}>{cadeado ? motivoCadeado : descricao}</Text>
           </View>
 
           <View
             pointerEvents="none"
-            style={[styles.botao, empilhado && styles.botaoLargo]}
+            style={[styles.botao, empilhado && styles.botaoLargo, cadeado && styles.botaoCadeado]}
           >
-            <Feather name="camera" size={16} color={colors.onAccent} />
-            <Text style={styles.botaoTexto}>Tirar foto</Text>
+            <Feather
+              name={cadeado ? 'lock' : 'camera'}
+              size={16}
+              color={cadeado ? colors.accentGreen : colors.onAccent}
+            />
+            <Text style={[styles.botaoTexto, cadeado && styles.botaoCadeadoTexto]}>
+              {cadeado ? 'Assinatura' : 'Tirar foto'}
+            </Text>
           </View>
         </View>
       </SurfaceCard>
@@ -121,4 +144,12 @@ const styles = StyleSheet.create({
   },
   botaoLargo: { marginTop: spacing.md },
   botaoTexto: { fontFamily: fonts.bold, fontSize: 14, color: colors.onAccent },
+  // Contornado verde, e nao ambar: ambar e "tem coisa para fazer agora", e um
+  // recurso fora do plano nao e pendencia.
+  botaoCadeado: {
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: colors.accentGreen,
+  },
+  botaoCadeadoTexto: { color: colors.accentGreen },
 });

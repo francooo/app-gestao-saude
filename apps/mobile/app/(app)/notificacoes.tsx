@@ -50,6 +50,13 @@ const VISUAL: Record<string, { icone: NomeIcone; fundo: string; traco: string }>
       fundo: colors.pillTablet,
       traco: colors.pillTabletIcon,
     },
+    // Neutro, nao ambar: enquanto a compra nao existe no aplicativo, nao ha o
+    // que fazer com este aviso alem de saber.
+    'teste-terminando': {
+      icone: ICONES.brilho,
+      fundo: colors.pillTablet,
+      traco: colors.pillTabletIcon,
+    },
   };
 
 /**

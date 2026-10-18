@@ -24,6 +24,7 @@ import {
   type Professional,
   type Profile,
 } from '@/api/health';
+import { usePlano } from '@/lib/avisosContext';
 import { pedirFotoDeDocumento } from '@/lib/foto';
 import { hora, vigenteHoje } from '@/lib/posologia';
 import { guardarFotoParaLeitura } from '@/lib/rascunhoDeMedicamento';
@@ -58,6 +59,14 @@ export default function InicioScreen() {
   const [agora, setAgora] = useState(() => new Date());
 
   /**
+   * Os dois cartoes de IA sao recursos do plano. Sem ele continuam na tela
+   * (sao a vitrine do que a assinatura traz), com selo, e o toque leva a
+   * assinatura — a camera nem abre, para ninguem fotografar uma receita que o
+   * servidor vai recusar.
+   */
+  const { premium } = usePlano();
+
+  /**
    * Abre o seletor AQUI, na Home, e so navega para a leitura quando ha imagem.
    *
    * Inverter a ordem (abrir antes de navegar) e o que faz cancelar o seletor
@@ -66,6 +75,10 @@ export default function InicioScreen() {
    * tela de leitura ja nasce lendo.
    */
   async function abrirLeituraDeReceita(origem: 'camera' | 'galeria') {
+    if (!premium) {
+      router.push('/conta/assinatura');
+      return;
+    }
     const foto = await pedirFotoDeDocumento(origem);
     if (!foto) return;
     guardarFotoParaLeitura(foto);
@@ -263,13 +276,19 @@ export default function InicioScreen() {
 
         <View style={styles.secao}>
           <CartaoLerReceita
+            bloqueado={!premium}
             onFotografar={() => void abrirLeituraDeReceita('camera')}
             onGaleria={() => void abrirLeituraDeReceita('galeria')}
           />
         </View>
 
         <View style={styles.secao}>
-          <AssistantCard onPress={() => router.push('/assistente')} />
+          {/* A aba do assistente segue aberta sem plano (o historico continua
+              la), mas o atalho daqui ja leva direto para a explicacao. */}
+          <AssistantCard
+            bloqueado={!premium}
+            onPress={() => router.push(premium ? '/assistente' : '/conta/assinatura')}
+          />
         </View>
 
         {/*

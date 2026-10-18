@@ -33,6 +33,7 @@ import { SurfaceCard } from '@/components/SurfaceCard';
 // porque o normalizador da leitura precisa EXATAMENTE da lista que esta tela
 // oferece, e uma segunda copia seria divergencia garantida.
 import { SeloDaIA } from '@/components/SeloDaIA';
+import { useAssinaturaExigida, usePlano } from '@/lib/avisosContext';
 import { sincronizarLembretesDeUmMedicamento } from '@/lib/reminders';
 import {
   atualizarItemDoLote,
@@ -138,6 +139,9 @@ export default function MedicamentoFormScreen() {
   const [descricao, setDescricao] = useState('');
   const [interpretando, setInterpretando] = useState(false);
   const [erroIA, setErroIA] = useState<string | null>(null);
+  /** "Descreva como tomar" e IA: so com assinatura ou no teste gratis. */
+  const { premium } = usePlano();
+  const tratarAssinatura = useAssinaturaExigida();
 
   /**
    * Quais campos vieram da leitura por foto e AINDA NAO FORAM CONFERIDOS.
@@ -436,6 +440,9 @@ export default function MedicamentoFormScreen() {
       }
       setCamposDaIA(lidos);
     } catch (e) {
+      // Plano vencido com o formulario aberto: leva a assinatura em vez de
+      // mostrar um erro embaixo do campo. O que foi digitado continua la.
+      if (tratarAssinatura(e)) return;
       setErroIA(messageForError(e instanceof ApiRequestError ? e.code : undefined));
     } finally {
       setInterpretando(false);
@@ -781,39 +788,64 @@ export default function MedicamentoFormScreen() {
                   preenche os campos abaixo. NAO SALVA: os campos ganham o selo
                   "da IA" e a pessoa confere, como na leitura de foto.
                 */}
-                <View style={styles.ia}>
-                  <FormField
-                    label="Descreva como tomar"
-                    value={descricao}
-                    onChangeText={(v) => {
-                      setErroIA(null);
-                      setDescricao(v);
-                    }}
-                    placeholder="Ex.: 1 comprimido a cada 8 horas por 7 dias"
-                    multiline
-                    maxLength={500}
-                    hint="A IA preenche os campos abaixo. Você confere antes de salvar."
-                    editable={!salvando && !interpretando}
-                  />
+                {/*
+                  Sem plano o campo NAO aparece desabilitado: um campo que aceita
+                  texto e nao faz nada e pior que nenhum. Vira uma linha com
+                  cadeado que explica e leva a assinatura. O preenchimento a mao,
+                  logo abaixo, continua igual para todo mundo.
+                */}
+                {premium ? (
+                  <View style={styles.ia}>
+                    <FormField
+                      label="Descreva como tomar"
+                      value={descricao}
+                      onChangeText={(v) => {
+                        setErroIA(null);
+                        setDescricao(v);
+                      }}
+                      placeholder="Ex.: 1 comprimido a cada 8 horas por 7 dias"
+                      multiline
+                      maxLength={500}
+                      hint="A IA preenche os campos abaixo. Você confere antes de salvar."
+                      editable={!salvando && !interpretando}
+                    />
+                    <Pressable
+                      onPress={() => void preencherComIA()}
+                      disabled={salvando || interpretando}
+                      accessibilityRole="button"
+                      accessibilityLabel="Preencher com IA"
+                      accessibilityState={{ busy: interpretando }}
+                      style={({ pressed }) => [styles.botaoIA, pressed && styles.pressionado]}
+                    >
+                      {interpretando ? (
+                        <ActivityIndicator color={colors.accentGreen} />
+                      ) : (
+                        <>
+                          <Feather name="zap" size={17} color={colors.accentGreen} />
+                          <Text style={styles.botaoIATexto}>Preencher com IA</Text>
+                        </>
+                      )}
+                    </Pressable>
+                    {erroIA ? <Text style={styles.erroCampo}>{erroIA}</Text> : null}
+                  </View>
+                ) : (
                   <Pressable
-                    onPress={() => void preencherComIA()}
-                    disabled={salvando || interpretando}
+                    onPress={() => router.push('/conta/assinatura')}
                     accessibilityRole="button"
-                    accessibilityLabel="Preencher com IA"
-                    accessibilityState={{ busy: interpretando }}
-                    style={({ pressed }) => [styles.botaoIA, pressed && styles.pressionado]}
+                    accessibilityLabel="Descreva como tomar, com IA. Faz parte da assinatura."
+                    accessibilityHint="Abre a tela de assinatura"
+                    style={({ pressed }) => [styles.iaTrancada, pressed && styles.pressionado]}
                   >
-                    {interpretando ? (
-                      <ActivityIndicator color={colors.accentGreen} />
-                    ) : (
-                      <>
-                        <Feather name="zap" size={17} color={colors.accentGreen} />
-                        <Text style={styles.botaoIATexto}>Preencher com IA</Text>
-                      </>
-                    )}
+                    <Feather name="lock" size={18} color={colors.accentGreen} />
+                    <View style={styles.iaTrancadaTextos}>
+                      <Text style={styles.iaTrancadaTitulo}>Descreva como tomar</Text>
+                      <Text style={styles.iaTrancadaTexto}>
+                        A IA preenche os campos abaixo. Faz parte da assinatura.
+                      </Text>
+                    </View>
+                    <Feather name="chevron-right" size={20} color={colors.textSecondary} />
                   </Pressable>
-                  {erroIA ? <Text style={styles.erroCampo}>{erroIA}</Text> : null}
-                </View>
+                )}
 
                 {/*
                   Este campo morava no bloco do remedio, com o rotulo
@@ -1264,6 +1296,27 @@ const styles = StyleSheet.create({
   },
   maisHorarioTexto: { fontFamily: fonts.semibold, fontSize: 15, color: colors.accentGreen },
   ia: { marginTop: spacing.md, marginBottom: spacing.sm },
+  iaTrancada: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+    borderWidth: 1.5,
+    borderColor: colors.accentGreen,
+    borderRadius: radii.card - 10,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    minHeight: 56,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  iaTrancadaTextos: { flex: 1 },
+  iaTrancadaTitulo: { fontFamily: fonts.bold, fontSize: 15, color: colors.sectionTitle },
+  iaTrancadaTexto: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
   botaoIA: {
     flexDirection: 'row',
     alignItems: 'center',

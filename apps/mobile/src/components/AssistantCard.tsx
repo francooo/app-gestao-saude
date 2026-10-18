@@ -3,10 +3,13 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Icone, ICONES } from '@/components/Icone';
+import { SeloDeAssinatura } from '@/components/SeloDeAssinatura';
 import { colors, fonts, radii, spacing } from '@/theme';
 
 type Props = {
   onPress: () => void;
+  /** Fora do plano: mostra o selo. O destino do toque e de quem usa o cartao. */
+  bloqueado?: boolean;
 };
 
 /**
@@ -23,12 +26,16 @@ type Props = {
  * campo de verdade. Dois campos que aceitam digitacao, um dentro do outro,
  * seria pior que um so.
  */
-export function AssistantCard({ onPress }: Props) {
+export function AssistantCard({ onPress, bloqueado = false }: Props) {
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel="Assistente de Saúde. Abre a conversa."
+      accessibilityLabel={
+        bloqueado
+          ? 'Assistente de Saúde. Faz parte da assinatura.'
+          : 'Assistente de Saúde. Abre a conversa.'
+      }
       style={({ pressed }) => [styles.wrapper, pressed && styles.pressionado]}
     >
       <LinearGradient
@@ -44,6 +51,7 @@ export function AssistantCard({ onPress }: Props) {
           <View style={styles.textos}>
             <Text style={styles.titulo}>Assistente de Saúde</Text>
             <Text style={styles.subtitulo}>Tire dúvidas sobre remédios e consultas</Text>
+            {bloqueado ? <SeloDeAssinatura style={styles.seloAssinatura} /> : null}
           </View>
         </View>
 
@@ -53,7 +61,7 @@ export function AssistantCard({ onPress }: Props) {
             Ex.: quando é a próxima dose do Lucas?
           </Text>
           <View style={styles.enviar}>
-            <Feather name="send" size={18} color={colors.onAccent} />
+            <Feather name={bloqueado ? 'lock' : 'send'} size={18} color={colors.onAccent} />
           </View>
         </View>
       </LinearGradient>
@@ -93,6 +101,7 @@ const styles = StyleSheet.create({
   textos: {
     flex: 1,
   },
+  seloAssinatura: { marginTop: spacing.sm },
   titulo: {
     fontFamily: fonts.extrabold,
     fontSize: 19,
