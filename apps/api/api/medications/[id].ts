@@ -5,6 +5,7 @@ import {
   API_ERROR,
   compraDeEstoqueSchema,
   doseInputSchema,
+  historicoQuerySchema,
   medicationPatchSchema,
 } from '../../src/contracts';
 import { db } from '../../src/db/client';
@@ -19,8 +20,9 @@ import {
 } from '../../src/db/schema';
 import { requireAuth } from '../../src/lib/auth';
 import { avisarDoseTomada } from '../../src/lib/avisos-whatsapp';
-import { fail, json, parseBody, withErrorHandling } from '../../src/lib/http';
+import { fail, json, parseBody, parseQuery, withErrorHandling } from '../../src/lib/http';
 import { estoquesDe } from '../../src/lib/estoque';
+import { historicoDoRemedio } from '../../src/lib/historico';
 import { doseDaConta, medicamentoDaConta } from '../../src/lib/ownership';
 import { validarPosologia } from '../../src/lib/posologia';
 import { horaCurta, serializarDose, serializarMedicamento } from '../../src/lib/serialize';
@@ -54,6 +56,13 @@ export default withErrorHandling(async (req: VercelRequest, res: VercelResponse)
   // nao cabe nas 12 da Vercel.
   const estoque = req.query.recurso === 'estoque';
 
+  // `?recurso=historico`: contagem e paginas do historico de doses, somando os
+  // outros tratamentos da mesma pessoa com o mesmo remedio (lib/historico.ts).
+  if (req.method === 'GET' && req.query.recurso === 'historico') {
+    const q = parseQuery(res, historicoQuerySchema, req.query);
+    if (!q) return;
+    return json(res, 200, await historicoDoRemedio({ profileId: atual.profileId, nome: atual.name, ...q }));
+  }
   if (req.method === 'GET') return detalhar(res, id);
   if (req.method === 'POST' && estoque) return registrarCompra(req, res, id);
   if (req.method === 'POST') return registrarDose(req, res, atual, auth.userId);

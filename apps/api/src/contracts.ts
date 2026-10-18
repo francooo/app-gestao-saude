@@ -467,6 +467,19 @@ export const medicationQuerySchema = z.object({
   includeInactive: z.enum(['true', 'false']).optional(),
 });
 
+/**
+ * Historico completo das doses de um remedio (`?recurso=historico`).
+ *
+ * `antes` e um cursor opaco devolvido pela pagina anterior ("<ISO>~<id>"): so
+ * o instante nao basta, porque duas doses podem ter o mesmo takenAt e uma
+ * delas sumiria entre paginas.
+ */
+export const historicoQuerySchema = z.object({
+  desde: z.iso.datetime({ offset: true }).optional(),
+  antes: z.string().max(100).optional(),
+  limite: z.coerce.number().int().min(1).max(50).default(30),
+});
+
 export const doseInputSchema = z.object({
   /** Nulo para 'as_needed'. E a chave da idempotencia: uma dose por horario. */
   scheduledFor: z.iso.datetime({ offset: true }).optional().nullable(),
