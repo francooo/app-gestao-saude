@@ -271,7 +271,7 @@ export default function MembroScreen() {
           <ScreenHeader
             title={deAjustes ? 'Dados pessoais' : novo ? 'Cadastro de membro' : 'Editar membro'}
             onBack={() => router.back()}
-          mostrarSino
+            mostrarSino
           />
 
           {carregando ? (
@@ -289,10 +289,10 @@ export default function MembroScreen() {
                 >
                   <View>
                     {foto ? (
-                      <Avatar nome={nome || '?'} photo={foto} size={96} />
+                      <Avatar nome={nome || '?'} photo={foto} size={112} />
                     ) : (
                       <View style={styles.avatarVazio}>
-                        <Feather name="user" size={52} color={colors.surface} />
+                        <Feather name="user" size={60} color={colors.surface} />
                       </View>
                     )}
 
@@ -332,22 +332,29 @@ export default function MembroScreen() {
                   editable={!salvando}
                 />
 
+                {/*
+                  Nascimento ocupa a linha toda, e Parentesco tambem: o texto
+                  "Selecione o parentesco" do pacote final nao cabe em meia
+                  coluna num aparelho comum e era cortado com reticencias. Peso
+                  e altura, curtos, dividem uma linha. Assim a grade fecha par
+                  com e sem o campo de parentesco (o titular nao o tem).
+                */}
+                <FormField
+                  label="Nascimento"
+                  value={nascimento}
+                  onChangeText={(v) => setNascimento(formatarData(v))}
+                  placeholder="dd/mm/aaaa"
+                  keyboardType="number-pad"
+                  maxLength={10}
+                  // A idade calculada aparece aqui: e o que o mockup queria
+                  // comunicar com "Ex.: 32 anos", sem guardar um numero que
+                  // envelhece sozinho.
+                  hint={idade ?? undefined}
+                  error={erros.birthDate}
+                  editable={!salvando}
+                />
+
                 <View style={styles.linha}>
-                  <FormField
-                    label="Nascimento"
-                    value={nascimento}
-                    onChangeText={(v) => setNascimento(formatarData(v))}
-                    placeholder="dd/mm/aaaa"
-                    keyboardType="number-pad"
-                    maxLength={10}
-                    // A idade calculada aparece aqui: e o que o mockup queria
-                    // comunicar com "Ex.: 32 anos", sem guardar um numero que
-                    // envelhece sozinho.
-                    hint={idade ?? undefined}
-                    error={erros.birthDate}
-                    editable={!salvando}
-                    containerStyle={styles.coluna}
-                  />
                   <FormField
                     label="Peso"
                     value={peso}
@@ -359,9 +366,6 @@ export default function MembroScreen() {
                     editable={!salvando}
                     containerStyle={styles.coluna}
                   />
-                </View>
-
-                <View style={styles.linha}>
                   <FormField
                     label="Altura"
                     value={altura}
@@ -372,28 +376,28 @@ export default function MembroScreen() {
                     editable={!salvando}
                     containerStyle={styles.coluna}
                   />
-                  {/*
-                    Parentesco nao existe para o titular: a lista de opcoes
-                    nao tem "titular", entao o campo so ofereceria rotulos
-                    errados. Campo que so pode ser preenchido errado e pior
-                    que campo nenhum.
-                  */}
-                  {titular ? null : (
-                    <SelectField
-                      label="Parentesco"
-                      value={parentesco}
-                      options={PARENTESCOS}
-                      onChange={setParentesco}
-                      placeholder="Selecione"
-                      tituloDoPainel="Parentesco"
-                      error={erros.relationship}
-                      disabled={salvando}
-                      containerStyle={styles.coluna}
-                    />
-                  )}
                 </View>
 
-                <SectionHeader title="Informações de saúde" icon="leaf" />
+                {/*
+                  Parentesco nao existe para o titular: a lista de opcoes
+                  nao tem "titular", entao o campo so ofereceria rotulos
+                  errados. Campo que so pode ser preenchido errado e pior
+                  que campo nenhum.
+                */}
+                {titular ? null : (
+                  <SelectField
+                    label="Parentesco"
+                    value={parentesco}
+                    options={PARENTESCOS}
+                    onChange={setParentesco}
+                    placeholder="Selecione o parentesco"
+                    tituloDoPainel="Parentesco"
+                    error={erros.relationship}
+                    disabled={salvando}
+                  />
+                )}
+
+                <SectionHeader title="Informações de saúde" icon="leaf" linha />
 
                 <FormField
                   label="Observações"
@@ -490,9 +494,9 @@ const styles = StyleSheet.create({
   cardFoto: { marginTop: spacing.xl, alignItems: 'center', paddingVertical: spacing.xxl },
   cardForm: { marginTop: spacing.lg },
   avatarVazio: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
+    width: 112,
+    height: 112,
+    borderRadius: 56,
     backgroundColor: colors.avatarEmpty,
     alignItems: 'center',
     justifyContent: 'center',

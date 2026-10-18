@@ -45,19 +45,20 @@ export function AppointmentCard({ consulta, onPress }: Props) {
               {consulta.especialidade}
             </Text>
 
+            {/* Como no mockup: o icone fica FORA da pilula, que leva so o texto. */}
             <View style={styles.selos}>
+              <Feather name="calendar" size={15} color={colors.textSecondary} />
               <View style={styles.selo}>
-                <Feather name="calendar" size={13} color={colors.accentGreen} />
                 <Text style={styles.seloTexto}>{consulta.data}</Text>
               </View>
+              <Feather name="clock" size={15} color={colors.textSecondary} style={styles.iconeHora} />
               <View style={styles.selo}>
-                <Feather name="clock" size={13} color={colors.accentGreen} />
                 <Text style={styles.seloTexto}>{consulta.hora}</Text>
               </View>
             </View>
 
             <View style={styles.linhaLocal}>
-              <Feather name="map-pin" size={13} color={colors.textSecondary} />
+              <Feather name="map-pin" size={15} color={colors.accentGreenSoft} />
               <Text style={styles.local} numberOfLines={2}>
                 {consulta.local}
               </Text>
@@ -97,14 +98,13 @@ const styles = StyleSheet.create({
   },
   selos: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.sm,
     marginTop: spacing.sm,
   },
+  iconeHora: { marginLeft: spacing.xs },
   selo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.xs,
-    backgroundColor: colors.surfaceWarm,
+    backgroundColor: colors.pillSage,
     borderRadius: radii.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: 4,
@@ -112,11 +112,11 @@ const styles = StyleSheet.create({
   seloTexto: {
     fontFamily: fonts.semibold,
     fontSize: 13,
-    color: colors.sectionTitle,
+    color: colors.textSecondary,
   },
   linhaLocal: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     gap: spacing.xs,
     marginTop: spacing.sm,
   },

@@ -3,7 +3,7 @@ import { isSameDay, startOfDay, subDays } from 'date-fns';
 
 import type { SymptomEntry, SymptomKind } from '@/api/health';
 import { diaCurto, hora } from '@/lib/posologia';
-import type { NomeIcone } from '@/components/Icone';
+import { ICONES, type NomeIcone } from '@/components/Icone';
 
 /**
  * As regras do diario de sintomas, sem React e sem rede.
@@ -40,15 +40,16 @@ const INTENSIDADE = ['Muito leve', 'Leve', 'Moderada', 'Forte', 'Muito forte'] a
  * 95 mg/dL) e nao cabem numa escala de 1 a 5 — guardar "pressao: 3" jogaria
  * fora o numero que o medico quer ver. Viram dominio proprio.
  *
- * Os icones sao aproximacoes onde o Feather nao tem o desenho exato (`frown`
- * para nausea e a mais fraca das seis). Abrir uma segunda familia de icones
- * por causa de um glifo faria ele destoar no meio dos outros cinco.
+ * Dor, nausea e tosse usam os desenhos do MaterialCommunityIcons (via ICONES):
+ * o Feather nao tem cabeca, estomago nem pulmao, e as aproximacoes antigas
+ * (`zap`, `frown`, `wind`) nao diziam o sintoma. Com o Icone unificado a
+ * segunda familia ja circula pelo aplicativo, entao nao destoa mais.
  */
 export const TIPOS_DE_SINTOMA: readonly DefinicaoDeTipo[] = [
   { chave: 'febre', rotulo: 'Febre', icone: 'thermometer', nomeDaEscala: 'Intensidade', degraus: INTENSIDADE, direcao: 'pior' },
-  { chave: 'dor', rotulo: 'Dor', icone: 'zap', nomeDaEscala: 'Intensidade', degraus: INTENSIDADE, direcao: 'pior' },
-  { chave: 'nausea', rotulo: 'Náusea', icone: 'frown', nomeDaEscala: 'Intensidade', degraus: INTENSIDADE, direcao: 'pior' },
-  { chave: 'tosse', rotulo: 'Tosse', icone: 'wind', nomeDaEscala: 'Intensidade', degraus: INTENSIDADE, direcao: 'pior' },
+  { chave: 'dor', rotulo: 'Dor', icone: ICONES.dor, nomeDaEscala: 'Intensidade', degraus: INTENSIDADE, direcao: 'pior' },
+  { chave: 'nausea', rotulo: 'Náusea', icone: ICONES.nausea, nomeDaEscala: 'Intensidade', degraus: INTENSIDADE, direcao: 'pior' },
+  { chave: 'tosse', rotulo: 'Tosse', icone: ICONES.tosse, nomeDaEscala: 'Intensidade', degraus: INTENSIDADE, direcao: 'pior' },
   {
     chave: 'humor',
     rotulo: 'Humor',

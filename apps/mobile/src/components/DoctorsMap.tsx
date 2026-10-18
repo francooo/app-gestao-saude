@@ -4,6 +4,7 @@ import { useMemo } from 'react';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import type { Doctor } from '@/components/DoctorCard';
+import { ICONES, Icone } from '@/components/Icone';
 import { MAPTILER_KEY } from '@/config';
 import { colors, fonts, radii, spacing } from '@/theme';
 
@@ -15,7 +16,17 @@ import { colors, fonts, radii, spacing } from '@/theme';
  * e extraivel de qualquer APK — a protecao correta e restringi-la ao bundle
  * no painel do MapTiler, nao tentar oculta-la.
  */
-const ESTILO = `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`;
+// Variante clara do Streets (MapStyle.STREETS.LIGHT no SDK do MapTiler): o
+// mockup mostra um mapa desbotado, que nao briga com os alfinetes coloridos.
+const ESTILO = `https://api.maptiler.com/maps/pastel/style.json?key=${MAPTILER_KEY}`;
+
+/**
+ * Cores dos alfinetes, como no mockup: o primeiro da lista (o mais proximo,
+ * porque a tela ordena por distancia) em verde e maior; os demais alternam
+ * ambar e oliva so para se distinguirem entre si — a cor nao codifica nada.
+ */
+const COR_DESTAQUE = colors.accentGreen;
+const CORES_DEMAIS = [colors.accent, colors.tileClock, colors.tileSun];
 
 type Props = {
   doctors: Doctor[];
@@ -69,19 +80,51 @@ export function DoctorsMap({ doctors, onSelectDoctor, height = 140, fullScreen }
           initialViewState={{ center: centro, zoom: comCoordenada.length === 1 ? 14 : 11 }}
         />
 
-        {comCoordenada.map((d) => (
+        {comCoordenada.map((d, i) => (
           <Marker
             key={d.id}
             id={d.id}
             lngLat={[d.longitude, d.latitude]}
+            // A ponta da gota marca o endereco, nao o centro do desenho.
+            anchor="bottom"
             onPress={() => onSelectDoctor?.(d.id)}
           >
-            <View style={styles.alfinete}>
-              <Feather name="map-pin" size={16} color={colors.onAccent} />
-            </View>
+            <Alfinete
+              size={i === 0 ? 44 : 32}
+              cor={i === 0 ? COR_DESTAQUE : CORES_DEMAIS[(i - 1) % CORES_DEMAIS.length]!}
+            />
           </Marker>
         ))}
       </Map>
+    </View>
+  );
+}
+
+/**
+ * Gota cheia com o miolo branco.
+ *
+ * O glifo `map-marker` tem o miolo VAZADO: sem nada atras, o mapa apareceria
+ * pelo furo. O circulo branco fica ATRAS do glifo, um pouco maior que o furo —
+ * o excesso some sob a tinta da gota, e so o miolo fica branco.
+ */
+function Alfinete({ size, cor }: { size: number; cor: string }) {
+  const miolo = size * 0.3;
+  return (
+    <View style={{ width: size, height: size }}>
+      <View
+        style={[
+          styles.miolo,
+          {
+            width: miolo,
+            height: miolo,
+            borderRadius: miolo / 2,
+            left: (size - miolo) / 2,
+            // O furo do glifo fica a 9/24 da altura.
+            top: size * (9 / 24) - miolo / 2,
+          },
+        ]}
+      />
+      <Icone nome={ICONES.pinoCheio} size={size} color={cor} />
     </View>
   );
 }
@@ -117,14 +160,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: spacing.md,
   },
-  alfinete: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: colors.accentGreen,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: colors.onAccent,
+  miolo: {
+    position: 'absolute',
+    backgroundColor: colors.onAccent,
   },
 });

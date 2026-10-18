@@ -76,8 +76,11 @@ export function ProfileSelector({
           </View>
         )}
 
-        <Text style={styles.nome} numberOfLines={1}>
-          {selecionado ? selecionado.fullName.split(' ')[0] : rotulo}
+        {/* Nome completo, como no mockup ("Ana Clara"): o primeiro nome so
+            confundia irmaos de mesmo prenome. Nome longo encolhe ate um ponto
+            e, dali em diante, corta com reticencias numa linha so. */}
+        <Text style={styles.nome} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+          {rotulo}
         </Text>
 
         <Feather name="chevron-down" size={22} color={colors.sectionTitle} />

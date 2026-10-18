@@ -50,7 +50,7 @@ export function Avatar({
 
   const mostrarFoto = !!photo && !falhou;
 
-  return (
+  const circulo = (
     <View
       style={[
         styles.base,
@@ -60,8 +60,8 @@ export function Avatar({
           borderRadius: size / 2,
           backgroundColor: fundo,
         },
-        selected && styles.selected,
-        style,
+        // Selecionado, o `style` de quem chama vai para o anel externo.
+        !selected && style,
       ]}
       // O leitor de tela le o nome; as iniciais sozinhas nao diriam nada, e
       // anunciar "imagem de" quando ha foto tambem nao acrescenta.
@@ -98,7 +98,39 @@ export function Avatar({
       ) : null}
     </View>
   );
+
+  if (!selected) return circulo;
+
+  /**
+   * Anel DUPLO, como no mockup: o circulo cheio, uma folga creme e o anel
+   * verde por fora.
+   *
+   * O anel cresce PARA FORA (margem negativa) em vez de encolher o circulo:
+   * assim selecionar alguem nao empurra o nome para baixo nem desalinha a
+   * faixa. A folga da faixa (spacing.lg) comporta os poucos pontos a mais.
+   */
+  const externo = size + DESLOCAMENTO_ANEL * 2;
+  return (
+    <View
+      style={[
+        styles.anel,
+        {
+          width: externo,
+          height: externo,
+          borderRadius: externo / 2,
+          margin: -DESLOCAMENTO_ANEL,
+        },
+        style,
+      ]}
+    >
+      {circulo}
+    </View>
+  );
 }
+
+const LARGURA_ANEL = 2.5;
+const FOLGA_ANEL = 3;
+const DESLOCAMENTO_ANEL = LARGURA_ANEL + FOLGA_ANEL;
 
 const styles = StyleSheet.create({
   base: {
@@ -106,9 +138,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  selected: {
-    borderWidth: 3,
+  anel: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: LARGURA_ANEL,
     borderColor: colors.accentGreen,
+    // A folga e creme mesmo fora de um cartao creme.
+    backgroundColor: colors.surface,
   },
   iniciais: {
     fontFamily: fonts.bold,

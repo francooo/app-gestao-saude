@@ -1,6 +1,6 @@
-import { Feather } from '@expo/vector-icons';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { ICONES, Icone } from '@/components/Icone';
 import { limparMarkdown } from '@/lib/textoDoAssistente';
 import { colors, fonts, radii, spacing } from '@/theme';
 
@@ -29,7 +29,7 @@ export function ChatBubble({ autor, texto, pensando = false }: Props) {
     >
       {doAssistente ? (
         <View style={styles.faisca}>
-          <Feather name="zap" size={18} color={colors.accentGreen} />
+          <Icone nome={ICONES.brilho} size={18} color={colors.accentGreen} />
         </View>
       ) : null}
 

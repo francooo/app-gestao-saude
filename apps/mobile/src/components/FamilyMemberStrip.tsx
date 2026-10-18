@@ -141,11 +141,14 @@ const styles = StyleSheet.create({
     fontSize: 17,
     color: colors.sectionTitle,
     paddingHorizontal: spacing.xl,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.sm,
   },
   lista: {
     flexDirection: 'row',
     paddingHorizontal: spacing.xl,
+    // O anel do selecionado cresce para fora do circulo; sem esta folga o
+    // ScrollView horizontal corta o topo dele no Android.
+    paddingVertical: spacing.sm,
     gap: spacing.lg,
   },
   item: {
@@ -156,9 +159,10 @@ const styles = StyleSheet.create({
     width: AVATAR,
     height: AVATAR,
     borderRadius: AVATAR / 2,
-    borderWidth: 2,
+    // Tracejado FINO e verde escuro, como no mockup; o de 2pt parecia um botao.
+    borderWidth: 1.5,
     borderStyle: 'dashed',
-    borderColor: colors.accentGreenSoft,
+    borderColor: colors.accentGreen,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -168,9 +172,10 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: spacing.sm,
   },
+  // Verde do anel: nome e circulo leem como uma coisa so, como no mockup.
   nomeAtivo: {
     fontFamily: fonts.bold,
-    color: colors.sectionTitle,
+    color: colors.accentGreen,
   },
   esqueleto: {
     width: AVATAR,

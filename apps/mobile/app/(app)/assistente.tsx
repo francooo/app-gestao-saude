@@ -1,7 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import { addDays, endOfDay, startOfDay } from 'date-fns';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useFocusEffect, useRouter } from 'expo-router';
+import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -28,6 +28,7 @@ import {
   type Profile,
 } from '@/api/health';
 import { ChatBubble } from '@/components/ChatBubble';
+import { ICONES } from '@/components/Icone';
 import { ProfileSelector } from '@/components/ProfileSelector';
 import { QuickActions } from '@/components/QuickActions';
 import { ScreenBackground } from '@/components/ScreenBackground';
@@ -60,7 +61,6 @@ const ESPACO_BARRA = 80;
  */
 export default function AssistenteScreen() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   const rolagem = useRef<ScrollView>(null);
 
   const [perfis, setPerfis] = useState<Profile[]>([]);
@@ -275,12 +275,24 @@ export default function AssistenteScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
+          {/*
+            E uma ABA: sem voltar, como as outras abas principais. O titulo
+            quebra em duas linhas a esquerda, com o coracao antes, como o
+            pacote final desenha.
+          */}
           <ScreenHeader
-            title="Assistente de Saúde"
-            onBack={() => router.replace('/inicio')}
-          mostrarSino
+            title={'Assistente\nde Saúde'}
+            alinhamento="esquerda"
+            titleLines={2}
+            icone={ICONES.coracao}
+            mostrarSino
           />
 
+          {/*
+            Seletor compacto: so o nome e a seta, nao a largura toda. O limite
+            fica aqui, num envoltorio, porque o ProfileSelector e usado em
+            outras telas que querem a barra cheia.
+          */}
           <View style={styles.seletor}>
             <ProfileSelector
               profiles={perfis}
@@ -290,62 +302,68 @@ export default function AssistenteScreen() {
             />
           </View>
 
-          <LinearGradient
-            colors={[colors.assistantGradientFrom, colors.assistantGradientTo]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.saudacao}
-          >
-            <Text style={styles.ola}>
-              {primeiroNome ? `Olá, ${primeiroNome}` : 'Olá'}
-            </Text>
-            <Text style={styles.subtitulo}>Como posso ajudar você hoje?</Text>
-          </LinearGradient>
+          {/*
+            Saudacao e mensagens no MESMO cartao: a faixa colorida e o topo do
+            painel, nao um bloco solto acima dele.
+          */}
+          <SurfaceCard flush style={styles.painel}>
+            <LinearGradient
+              colors={[colors.assistantGradientFrom, colors.assistantGradientTo]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.saudacao}
+            >
+              <Text style={styles.ola}>
+                {primeiroNome ? `Olá, ${primeiroNome}` : 'Olá'}
+              </Text>
+              <Text style={styles.subtitulo}>Como posso ajudar você hoje?</Text>
+            </LinearGradient>
 
-          <SurfaceCard style={styles.painel}>
-            {carregando ? (
-              <ActivityIndicator color={colors.accentGreen} style={styles.carregando} />
-            ) : (
-              <>
-                {mensagens.length === 0 ? (
-                  <>
-                    <ChatBubble
-                      autor="assistant"
-                      texto="Posso ver os remédios, doses e consultas que a sua família cadastrou aqui, e também procurar na internet o que você precisar saber."
-                    />
-                    <ChatBubble
-                      autor="assistant"
-                      texto="Sou uma inteligência artificial e posso errar — confira comigo a fonte e, no que for sério, fale com o médico. Em emergência, ligue 192."
-                    />
-                    {/*
-                      A tela abre limpa, mas o assistente LEMBRA. Sem dizer
-                      isso, a pessoa que perguntasse "e a Valentina?" depois de
-                      voltar levaria um susto com ele sabendo do que nao esta
-                      escrito em lugar nenhum.
-                    */}
-                    <ChatBubble
-                      autor="assistant"
-                      texto="Esta tela sempre começa vazia, mas eu lembro do que conversamos por último — dá para continuar de onde paramos."
-                    />
-                  </>
-                ) : (
-                  mensagens.map((m) => (
-                    <ChatBubble key={m.id} autor={m.role} texto={m.content} />
-                  ))
-                )}
+            <View style={styles.painelCorpo}>
+              {carregando ? (
+                <ActivityIndicator color={colors.accentGreen} style={styles.carregando} />
+              ) : (
+                <>
+                  {mensagens.length === 0 ? (
+                    <>
+                      <ChatBubble
+                        autor="assistant"
+                        texto="Posso ver os remédios, doses e consultas que a sua família cadastrou aqui, e também procurar na internet o que você precisar saber."
+                      />
+                      <ChatBubble
+                        autor="assistant"
+                        texto="Sou uma inteligência artificial e posso errar — confira comigo a fonte e, no que for sério, fale com o médico. Em emergência, ligue 192."
+                      />
+                      {/*
+                        A tela abre limpa, mas o assistente LEMBRA. Sem dizer
+                        isso, a pessoa que perguntasse "e a Valentina?" depois de
+                        voltar levaria um susto com ele sabendo do que nao esta
+                        escrito em lugar nenhum.
+                      */}
+                      <ChatBubble
+                        autor="assistant"
+                        texto="Esta tela sempre começa vazia, mas eu lembro do que conversamos por último — dá para continuar de onde paramos."
+                      />
+                    </>
+                  ) : (
+                    mensagens.map((m) => (
+                      <ChatBubble key={m.id} autor={m.role} texto={m.content} />
+                    ))
+                  )}
 
-                {enviando ? <ChatBubble autor="assistant" texto="" pensando /> : null}
-                {demorando ? (
-                  <Text style={styles.demorando}>
-                    Provavelmente estou procurando na internet. Isso leva alguns segundos.
-                  </Text>
-                ) : null}
+                  {enviando ? <ChatBubble autor="assistant" texto="" pensando /> : null}
+                  {demorando ? (
+                    <Text style={styles.demorando}>
+                      Provavelmente estou procurando na internet. Isso leva alguns segundos.
+                    </Text>
+                  ) : null}
 
-                <View style={styles.acoes}>
-                  <QuickActions onPerguntar={(p) => void enviar(p)} desabilitado={enviando} />
-                </View>
-              </>
-            )}
+                  <View style={styles.acoes}>
+                    <QuickActions onPerguntar={(p) => void enviar(p)} desabilitado={enviando} />
+                  </View>
+                </>
+              )}
+            </View>
           </SurfaceCard>
         </ScrollView>
 
@@ -406,12 +424,15 @@ const styles = StyleSheet.create({
   tela: { flex: 1, backgroundColor: backgrounds.assistant[0] },
   flex: { flex: 1 },
   conteudo: { paddingHorizontal: spacing.xl, paddingBottom: spacing.lg },
-  seletor: { marginTop: spacing.lg },
-  saudacao: {
-    borderRadius: radii.card,
-    padding: spacing.xl,
+  seletor: {
     marginTop: spacing.lg,
+    alignSelf: 'flex-start',
+    width: '62%',
+    minWidth: 220,
+    maxWidth: 300,
   },
+  // Sem raio proprio: o SurfaceCard corta os cantos de cima (overflow hidden).
+  saudacao: { padding: spacing.xl },
   ola: { fontFamily: fonts.extrabold, fontSize: 26, color: colors.onAccent },
   subtitulo: {
     fontFamily: fonts.regular,
@@ -421,6 +442,7 @@ const styles = StyleSheet.create({
     opacity: 0.92,
   },
   painel: { marginTop: spacing.lg, backgroundColor: colors.assistantPanel },
+  painelCorpo: { padding: spacing.xl },
   carregando: { marginVertical: spacing.xl },
   demorando: {
     fontFamily: fonts.regular,

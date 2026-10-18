@@ -2,6 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { Icone, ICONES } from '@/components/Icone';
 import { colors, fonts, radii, spacing } from '@/theme';
 
 type Props = {
@@ -38,7 +39,7 @@ export function AssistantCard({ onPress }: Props) {
       >
         <View style={styles.cabecalho}>
           <View style={styles.selo}>
-            <Feather name="zap" size={20} color={colors.onAccent} />
+            <Icone nome={ICONES.brilho} size={22} color={colors.onAccent} />
           </View>
           <View style={styles.textos}>
             <Text style={styles.titulo}>Assistente de Saúde</Text>
@@ -120,11 +121,12 @@ const styles = StyleSheet.create({
     color: colors.textPlaceholder,
     marginRight: spacing.sm,
   },
+  // Quadrado de cantos arredondados, nao circulo, como no mockup.
   enviar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: colors.accentGreenSoft,
+    width: 44,
+    height: 40,
+    borderRadius: 14,
+    backgroundColor: colors.accentGreenBright,
     alignItems: 'center',
     justifyContent: 'center',
   },

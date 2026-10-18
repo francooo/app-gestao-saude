@@ -19,11 +19,10 @@ import { NotificationRow } from '@/components/NotificationRow';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SectionHeader } from '@/components/SectionHeader';
-import { SettingsGroup } from '@/components/SettingsGroup';
 import { SurfaceCard } from '@/components/SurfaceCard';
 import { useAvisos, type AvisoComLeitura } from '@/lib/avisosContext';
 import { backgrounds, colors, fonts, radii, spacing } from '@/theme';
-import type { NomeIcone } from '@/components/Icone';
+import { ICONES, type NomeIcone } from '@/components/Icone';
 
 const CHIPS: Chip[] = [
   { value: null, label: 'Todas' },
@@ -36,7 +35,7 @@ const CHIPS: Chip[] = [
 const VISUAL: Record<string, { icone: NomeIcone; fundo: string; traco: string }> =
   {
     'dose-atrasada': { icone: 'alert-circle', fundo: colors.surfaceWarm, traco: colors.accent },
-    'dose-agora': { icone: 'aperture', fundo: colors.surfaceWarm, traco: colors.accent },
+    'dose-agora': { icone: ICONES.pilula, fundo: colors.surfaceWarm, traco: colors.accent },
     'consulta-hoje': { icone: 'calendar', fundo: colors.surfaceWarm, traco: colors.accent },
     'consulta-amanha': { icone: 'calendar', fundo: colors.pillTablet, traco: colors.pillTabletIcon },
     'tratamento-terminando': { icone: 'flag', fundo: colors.pillTablet, traco: colors.pillTabletIcon },
@@ -156,7 +155,8 @@ export default function NotificacoesScreen() {
             {hoje.length > 0 ? (
               <View style={styles.secao}>
                 <SectionHeader title="Hoje" />
-                <SettingsGroup>
+                {/* Um cartao por aviso, com espaco entre eles. */}
+                <View style={styles.lista}>
                   {hoje.map((a) => (
                     <NotificationRow
                       key={a.id}
@@ -168,14 +168,15 @@ export default function NotificacoesScreen() {
                       onPress={a.rota ? () => abrir(a) : undefined}
                     />
                   ))}
-                </SettingsGroup>
+                </View>
               </View>
             ) : null}
 
             {anteriores.length > 0 ? (
               <View style={styles.secao}>
                 <SectionHeader title="Anteriores" />
-                <SettingsGroup>
+                {/* Um cartao por aviso, com espaco entre eles. */}
+                <View style={styles.lista}>
                   {anteriores.map((a) => (
                     <NotificationRow
                       key={a.id}
@@ -187,7 +188,7 @@ export default function NotificacoesScreen() {
                       onPress={a.rota ? () => abrir(a) : undefined}
                     />
                   ))}
-                </SettingsGroup>
+                </View>
               </View>
             ) : null}
 
@@ -268,6 +269,7 @@ const styles = StyleSheet.create({
   conteudo: { paddingHorizontal: spacing.xl },
   filtros: { marginTop: spacing.lg },
   secao: { marginTop: spacing.xl },
+  lista: { gap: spacing.md },
   carregando: { marginTop: spacing.xxl },
 
   cartaoCentral: { alignItems: 'center', padding: spacing.xl, marginTop: spacing.xl },

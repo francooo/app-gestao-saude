@@ -54,32 +54,42 @@ export function DoctorCard({ doctor, distanceKm, onPress, onAction }: Props) {
     >
       <SurfaceCard style={styles.card}>
         <View style={styles.linha}>
-          <Avatar nome={doctor.name} photo={doctor.photo} recyclingKey={doctor.id} size={58} />
+          <Avatar nome={doctor.name} photo={doctor.photo} recyclingKey={doctor.id} size={72} />
 
           <View style={styles.meio}>
-            <Text style={styles.nome} numberOfLines={1}>
-              {doctor.name}
-            </Text>
-
-            {doctor.specialty ? (
-              <Text style={styles.especialidade} numberOfLines={1}>
-                {doctor.specialty}
+            {/* O nome ocupa a largura toda, ate o chevron; o botao fica so ao
+                lado das linhas de baixo, como no mockup. Assim o nome nao
+                perde ~110 pt para o botao. */}
+            <View style={styles.topo}>
+              <Text style={styles.nome} numberOfLines={1}>
+                {doctor.name}
               </Text>
-            ) : null}
-
-            <View style={styles.contextoLinha}>
-              <Feather
-                name={teleconsulta ? 'video' : 'map-pin'}
-                size={13}
-                color={colors.textSecondary}
-              />
-              <Text style={styles.contexto} numberOfLines={1}>
-                {contexto}
-              </Text>
+              <Feather name="chevron-right" size={20} color={colors.textSecondary} />
             </View>
 
-            <View style={styles.rodape}>
-              <StarRating value={doctor.myRating} size={15} label="Sem nota" />
+            <View style={styles.corpo}>
+              <View style={styles.dados}>
+                {doctor.specialty ? (
+                  <Text style={styles.especialidade} numberOfLines={1}>
+                    {doctor.specialty}
+                  </Text>
+                ) : null}
+
+                <View style={styles.contextoLinha}>
+                  <Feather
+                    name={teleconsulta ? 'video' : 'map-pin'}
+                    size={14}
+                    color={colors.accentGreenSoft}
+                  />
+                  <Text style={styles.contexto} numberOfLines={1}>
+                    {contexto}
+                  </Text>
+                </View>
+
+                <View style={styles.nota}>
+                  <StarRating value={doctor.myRating} size={15} label="Sem nota" />
+                </View>
+              </View>
 
               <Pressable
                 onPress={onAction}
@@ -100,13 +110,6 @@ export function DoctorCard({ doctor, distanceKm, onPress, onAction }: Props) {
               </Pressable>
             </View>
           </View>
-
-          <Feather
-            name="chevron-right"
-            size={20}
-            color={colors.textSecondary}
-            style={styles.chevron}
-          />
         </View>
       </SurfaceCard>
     </Pressable>
@@ -118,19 +121,30 @@ const styles = StyleSheet.create({
   card: { padding: spacing.lg },
   linha: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   meio: {
     flex: 1,
-    marginLeft: spacing.lg,
-    // Abre espaco para o chevron ancorado no topo direito.
-    marginRight: spacing.lg,
+    marginLeft: spacing.md,
+  },
+  topo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
   },
   nome: {
+    flex: 1,
     fontFamily: fonts.bold,
     fontSize: 17,
     color: colors.sectionTitle,
   },
+  corpo: {
+    flexDirection: 'row',
+    // O botao fica no meio da altura das linhas de baixo.
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  dados: { flex: 1 },
   especialidade: {
     fontFamily: fonts.regular,
     fontSize: 14,
@@ -141,7 +155,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    marginTop: spacing.sm,
+    marginTop: spacing.xs,
   },
   contexto: {
     flex: 1,
@@ -149,26 +163,20 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSecondary,
   },
-  rodape: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: spacing.md,
-    marginTop: spacing.sm,
-  },
+  nota: { marginTop: spacing.xs },
   acao: {
+    alignItems: 'center',
+    justifyContent: 'center',
     borderRadius: radii.pill,
-    paddingHorizontal: spacing.xl,
+    paddingHorizontal: spacing.lg,
+    // minHeight, nunca height: com fonte grande o rotulo cortaria.
+    minHeight: 44,
     paddingVertical: spacing.sm,
   },
   acaoPressionada: { opacity: 0.85 },
   acaoTexto: {
     fontFamily: fonts.bold,
-    fontSize: 14,
+    fontSize: 16,
     color: colors.onAccent,
-  },
-  chevron: {
-    // Alinhado com a primeira linha do nome, como no mockup.
-    marginTop: 2,
   },
 });

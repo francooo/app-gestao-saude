@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/auth/AuthContext';
 import { healthApi, type Professional, type Profile } from '@/api/health';
 import { Avatar } from '@/components/Avatar';
+import { ICONES } from '@/components/Icone';
 import { IconTile } from '@/components/IconTile';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -172,8 +173,13 @@ export default function AjustesScreen() {
           />
         }
       >
-        {/* Sem sino: o mockup nao o desenha nesta tela. */}
-        <ScreenHeader title="Ajustes" onBack={() => router.replace('/inicio')} />
+        {/* Sem sino: o mockup nao o desenha nesta tela. Titulo colado no
+            voltar, como o pacote final desenha. */}
+        <ScreenHeader
+          title="Ajustes"
+          alinhamento="esquerda"
+          onBack={() => router.replace('/inicio')}
+        />
 
         <CartaoDoTitular
           titular={titular}
@@ -184,12 +190,16 @@ export default function AjustesScreen() {
         />
 
         <View style={styles.secao}>
+          {/*
+            Segunda linha so onde ela carrega ESTADO (o e-mail, quantas
+            pessoas). As descricoes fixas sairam: repetiam o rotulo e o pacote
+            final nao as desenha.
+          */}
           <SectionHeader title="Minha conta" />
           <SettingsGroup>
             <SettingsRow
               marcador={<IconTile icone="user" {...VERDE} />}
               rotulo="Dados pessoais"
-              valor="Nome, nascimento, peso e altura"
               onPress={() =>
                 titular ? router.push(`/membro/${titular.id}?origem=ajustes`) : undefined
               }
@@ -230,15 +240,13 @@ export default function AjustesScreen() {
             <SettingsRow
               marcador={<IconTile icone="bell" {...VERDE} />}
               rotulo="Notificações"
-              valor="Avisos de dose e de consulta neste aparelho"
               acessorio="interruptor"
               ligado={notificacoes}
               onChange={(v) => void alternarNotificacoes(v)}
             />
             <SettingsRow
-              marcador={<IconTile icone="aperture" {...AMBAR} />}
+              marcador={<IconTile icone={ICONES.pilula} {...AMBAR} />}
               rotulo="Lembretes de medicamentos"
-              valor="Avisar nos horários das doses"
               acessorio="interruptor"
               ligado={notificacoes && lembretesDose}
               onChange={(v) => void alternarLembretesDose(v)}
@@ -246,9 +254,8 @@ export default function AjustesScreen() {
               motivoDesabilitado="Ative as notificações para usar"
             />
             <SettingsRow
-              marcador={<IconTile icone="shield" {...TERRACOTA} />}
+              marcador={<IconTile icone={ICONES.escudoCheck} {...TERRACOTA} />}
               rotulo="Privacidade e segurança"
-              valor="Política, consentimento e exclusão da conta"
               onPress={() => router.push('/conta/privacidade')}
             />
           </SettingsGroup>
@@ -356,7 +363,7 @@ function CartaoDoTitular({
           pressed && styles.pressionado,
         ]}
       >
-        <Feather name="edit-2" size={20} color={colors.accentGreen} />
+        <Feather name="edit" size={20} color={colors.accentGreen} />
       </Pressable>
     </SurfaceCard>
   );
@@ -383,7 +390,7 @@ function Profissionais({
         {[0, 1].map((i) => (
           <SurfaceCard key={i} style={styles.medicoCartao}>
             <View style={styles.esqueletoAvatarMedio} />
-            <View style={[styles.esqueletoBarra, { width: 90, marginTop: spacing.sm }]} />
+            <View style={[styles.esqueletoBarra, { flex: 1, marginLeft: spacing.md }]} />
           </SurfaceCard>
         ))}
       </View>
@@ -430,15 +437,19 @@ function Profissionais({
               style={({ pressed }) => [styles.medicoEnvolucro, pressed && styles.pressionado]}
             >
               <SurfaceCard style={styles.medicoCartao}>
+                {/* Em linha: avatar a esquerda, nome e especialidade ao lado,
+                    como o pacote final desenha. */}
                 <Avatar nome={m.name} photo={m.photo} recyclingKey={m.id} size={52} />
-                <Text style={styles.medicoNome} numberOfLines={2}>
-                  {m.name}
-                </Text>
-                {m.specialty ? (
-                  <Text style={styles.medicoEspecialidade} numberOfLines={1}>
-                    {m.specialty}
+                <View style={styles.medicoTextos}>
+                  <Text style={styles.medicoNome} numberOfLines={2}>
+                    {m.name}
                   </Text>
-                ) : null}
+                  {m.specialty ? (
+                    <Text style={styles.medicoEspecialidade} numberOfLines={1}>
+                      {m.specialty}
+                    </Text>
+                  ) : null}
+                </View>
               </SurfaceCard>
             </Pressable>
           ))}
@@ -507,20 +518,23 @@ const styles = StyleSheet.create({
 
   medicos: { flexDirection: 'row', gap: spacing.md },
   medicoEnvolucro: { flex: 1 },
-  medicoCartao: { flex: 1, padding: spacing.lg, alignItems: 'center' },
+  medicoCartao: {
+    flex: 1,
+    padding: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  medicoTextos: { flex: 1, marginLeft: spacing.sm },
   medicoNome: {
     fontFamily: fonts.bold,
-    fontSize: 15,
+    fontSize: 14,
     color: colors.sectionTitle,
-    textAlign: 'center',
-    marginTop: spacing.sm,
   },
   medicoEspecialidade: {
     fontFamily: fonts.regular,
     fontSize: 13,
     color: colors.accentGreenSoft,
-    textAlign: 'center',
-    marginTop: 1,
+    marginTop: 2,
   },
 
   vazio: { padding: spacing.xl, alignItems: 'center' },

@@ -1,8 +1,7 @@
-import { Feather } from '@expo/vector-icons';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, fonts, radii, spacing } from '@/theme';
-import { Icone, type NomeIcone } from '@/components/Icone';
+import { ICONES, Icone, type NomeIcone } from '@/components/Icone';
 
 type Props = {
   /** Preenche o campo com uma pergunta pronta. */
@@ -22,21 +21,21 @@ const ACOES: Acao[] = [
   {
     chave: 'remedios',
     rotulo: 'Meus remédios',
-    icone: 'thermometer',
+    icone: ICONES.pilula,
     cor: colors.quickMeds,
     pergunta: 'Quais remédios estão cadastrados e quando é a próxima dose?',
   },
   {
     chave: 'sintomas',
     rotulo: 'Sintomas',
-    icone: 'activity',
+    icone: ICONES.termometro,
     cor: colors.quickSymptoms,
     pergunta: 'Quero falar sobre um sintoma que apareceu. O que você precisa saber para me ajudar?',
   },
   {
     chave: 'consultas',
     rotulo: 'Consultas',
-    icone: 'calendar',
+    icone: ICONES.calendarioMais,
     cor: colors.quickAppointments,
     pergunta: 'Quando é a próxima consulta e com quem?',
   },
@@ -106,7 +105,7 @@ export function QuickActions({ onPerguntar, desabilitado = false }: Props) {
           style={({ pressed }) => [styles.cartao, pressed && styles.pressionado]}
         >
           <View style={[styles.circulo, { backgroundColor: colors.terracotta }]}>
-            <Feather name="plus" size={24} color={colors.onAccent} />
+            <Icone nome={ICONES.cruzMedica} size={22} color={colors.onAccent} />
           </View>
           <Text style={styles.rotulo} numberOfLines={2}>
             Emergência

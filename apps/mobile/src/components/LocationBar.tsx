@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 
 import { FormField } from '@/components/FormField';
+import { ICONES, Icone } from '@/components/Icone';
 import { buscarCep, formatarCep, montarEndereco, somenteDigitos } from '@/lib/cep';
 import { colors, fonts, radii, spacing } from '@/theme';
 
@@ -92,9 +93,10 @@ export function LocationBar({ location, onSetAddress, onUseCurrent, saving }: Pr
   return (
     <>
       <View style={styles.barra}>
-        <Feather
-          name="map-pin"
-          size={20}
+        {/* Pino cheio, como no mockup. */}
+        <Icone
+          nome={ICONES.pinoCheio}
+          size={24}
           color={temReferencia ? colors.accentGreen : colors.textPlaceholder}
         />
         <Text style={[styles.rotulo, !temReferencia && styles.rotuloVazio]} numberOfLines={1}>

@@ -1,5 +1,4 @@
 import { Feather } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { addDays, endOfDay, startOfDay } from 'date-fns';
 import { useCallback, useMemo, useState } from 'react';
@@ -15,6 +14,7 @@ import { BotaoDeSino } from '@/components/BotaoDeSino';
 import { HomeHeaderCard } from '@/components/HomeHeaderCard';
 import { IconTile, LADRILHO_NEUTRO } from '@/components/IconTile';
 import { MedicationCard } from '@/components/MedicationCard';
+import { ScreenBackground } from '@/components/ScreenBackground';
 import { SectionHeader } from '@/components/SectionHeader';
 import { SurfaceCard } from '@/components/SurfaceCard';
 import {
@@ -28,7 +28,7 @@ import { pedirFotoDeDocumento } from '@/lib/foto';
 import { hora, vigenteHoje } from '@/lib/posologia';
 import { guardarFotoParaLeitura } from '@/lib/rascunhoDeMedicamento';
 import { reconciliarLembretes } from '@/lib/reminders';
-import { colors, fonts, radii, spacing } from '@/theme';
+import { backgrounds, colors, fonts, radii, spacing } from '@/theme';
 
 /** Altura da barra de abas flutuante, para o conteudo nao terminar embaixo dela. */
 const ESPACO_BARRA = 96;
@@ -210,10 +210,12 @@ export default function InicioScreen() {
 
   return (
     <View style={styles.tela}>
-      <LinearGradient
-        colors={[colors.homeBackgroundTop, colors.homeBackgroundBottom]}
-        style={StyleSheet.absoluteFill}
-      />
+      {/*
+        Mesmo fundo das outras telas logadas: degrade medido do mockup da home
+        mais as folhas laterais. O degrade antigo de duas paradas
+        (homeBackgroundTop/Bottom) nao clareava embaixo como a referencia.
+      */}
+      <ScreenBackground colors={backgrounds.home} />
 
       <ScrollView
         contentContainerStyle={[
@@ -389,16 +391,28 @@ export default function InicioScreen() {
  */
 function paraCartao(c: Appointment) {
   const quando = new Date(c.scheduledAt);
-  const onde = c.location ?? (c.modality === 'teleconsulta' ? 'Teleconsulta' : 'Presencial');
+  // "Consulta presencial · Clinica Vida", como no mockup. Sem local, so o tipo.
+  const tipo = c.modality === 'teleconsulta' ? 'Teleconsulta' : 'Consulta presencial';
+  const onde = c.location?.trim() ? `${tipo} · ${c.location.trim()}` : tipo;
 
   return {
     id: c.id,
     medico: c.professionalName ?? c.title ?? 'Consulta',
     especialidade: c.professionalSpecialty ?? c.profileName ?? '',
-    data: quando.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
+    data: dataCurta(quando),
     hora: hora(quando),
     local: onde,
   };
+}
+
+const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
+/**
+ * "23 jun". Montado a mao: o toLocaleDateString do pt-BR devolve "23 de jun."
+ * (com "de" e ponto), e o Hermes de algumas versoes nem respeita o formato.
+ */
+function dataCurta(d: Date): string {
+  return `${d.getDate()} ${MESES[d.getMonth()]}`;
 }
 
 const styles = StyleSheet.create({
@@ -424,7 +438,7 @@ const styles = StyleSheet.create({
   // zIndex para ficar acima do card; alinhado a direita como nas outras telas.
   sino: { alignItems: 'flex-end', marginBottom: -60, zIndex: 1, paddingRight: spacing.sm },
 
-  tela: { flex: 1, backgroundColor: colors.homeBackgroundTop },
+  tela: { flex: 1, backgroundColor: backgrounds.home[0] },
   conteudo: {
     paddingHorizontal: spacing.xl,
   },

@@ -10,6 +10,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -88,6 +89,9 @@ export default function SintomasScreen() {
   // Com fonte grande a coluna encolhe; cinco dias continuam legiveis onde sete
   // nao caberiam.
   const dias = PixelRatio.getFontScale() >= 1.5 ? 5 : 7;
+  // Intensidade e horario dividem a linha; com fonte grande a escala de cinco
+  // bolinhas nao cabe em meia largura, e os dois voltam a empilhar.
+  const empilhar = PixelRatio.getFontScale() >= 1.3;
 
   const carregarPessoas = useCallback(async () => {
     try {
@@ -255,7 +259,12 @@ export default function SintomasScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <ScreenHeader title="Diário de sintomas" titleLines={2} onBack={() => router.back()} />
+        <ScreenHeader
+          title="Diário de sintomas"
+          titleLines={2}
+          onBack={() => router.back()}
+          mostrarSino
+        />
 
         {carregando ? (
           <ActivityIndicator color={colors.accentGreen} style={styles.carregando} />
@@ -294,7 +303,7 @@ export default function SintomasScreen() {
 
             <SurfaceCard style={styles.bloco}>
               <Text style={styles.blocoTitulo} accessibilityRole="header">
-                O que você quer registrar?
+                Como você está se sentindo hoje?
               </Text>
 
               <View
@@ -343,37 +352,58 @@ export default function SintomasScreen() {
             {definicao ? (
               <>
                 <View style={styles.secao}>
-                  <SectionHeader title="Detalhes do registro" />
+                  <SectionHeader title="Registrar sintoma" />
                 </View>
 
                 <SurfaceCard style={styles.bloco}>
-                  <EscalaDeCinco
-                    value={intensidade}
-                    onChange={(v) => {
-                      setIntensidade(v);
-                      setSalvoAs(null);
-                    }}
-                    rotulos={definicao.degraus}
-                    nomeDoGrupo={definicao.nomeDaEscala}
-                  />
+                  {/*
+                    Intensidade e horario LADO A LADO, com um divisor, como o
+                    pacote final desenha. O horario e uma pilula com relogio,
+                    mas continua sendo digitado: o diario aceita registro de
+                    ontem e de horas atras, e um seletor fixo no "agora" nao
+                    serviria.
+                  */}
+                  <View style={[styles.duasColunas, empilhar && styles.empilhadas]}>
+                    <View style={styles.colunaEscala}>
+                      <EscalaDeCinco
+                        value={intensidade}
+                        onChange={(v) => {
+                          setIntensidade(v);
+                          setSalvoAs(null);
+                        }}
+                        rotulos={definicao.degraus}
+                        nomeDoGrupo={definicao.nomeDaEscala}
+                      />
+                    </View>
 
-                  {tipo === 'febre' ? (
-                    <FormField
-                      label="Temperatura (°C)"
-                      value={temperatura}
-                      onChangeText={(v) => {
-                        setTemperatura(v);
-                        setSalvoAs(null);
-                      }}
-                      placeholder="37,8"
-                      keyboardType="decimal-pad"
-                      maxLength={5}
-                      hint="Opcional. Se você mediu, anote aqui."
-                      error={erroDaTemperatura}
-                      aviso={avisoDaTemperatura}
-                      editable={!salvando}
-                    />
-                  ) : null}
+                    {!empilhar ? <View style={styles.divisorVertical} /> : null}
+
+                    <View style={styles.colunaHorario}>
+                      <Text style={styles.rotulo}>Horário</Text>
+                      <View style={[styles.pilulaHorario, !!erroDoHorario && styles.pilulaErro]}>
+                        <Feather name="clock" size={18} color={colors.sectionTitle} />
+                        <TextInput
+                          value={horario}
+                          onChangeText={(v) => {
+                            setHorario(formatarHora(v));
+                            setSalvoAs(null);
+                          }}
+                          placeholder="14:30"
+                          placeholderTextColor={colors.textPlaceholder}
+                          keyboardType="number-pad"
+                          maxLength={5}
+                          editable={!salvando}
+                          accessibilityLabel="Horário"
+                          style={styles.inputHorario}
+                        />
+                      </View>
+                      {erroDoHorario ? (
+                        <Text style={styles.erroHorario} accessibilityLiveRegion="polite">
+                          {erroDoHorario}
+                        </Text>
+                      ) : null}
+                    </View>
+                  </View>
 
                   <Text style={styles.rotulo}>Quando</Text>
                   <View
@@ -399,20 +429,23 @@ export default function SintomasScreen() {
                     ))}
                   </View>
 
-                  <FormField
-                    label="Horário"
-                    value={horario}
-                    onChangeText={(v) => {
-                      setHorario(formatarHora(v));
-                      setSalvoAs(null);
-                    }}
-                    placeholder="14:30"
-                    keyboardType="number-pad"
-                    maxLength={5}
-                    error={erroDoHorario}
-                    editable={!salvando}
-                    containerStyle={styles.campoDoHorario}
-                  />
+                  {tipo === 'febre' ? (
+                    <FormField
+                      label="Temperatura (°C)"
+                      value={temperatura}
+                      onChangeText={(v) => {
+                        setTemperatura(v);
+                        setSalvoAs(null);
+                      }}
+                      placeholder="37,8"
+                      keyboardType="decimal-pad"
+                      maxLength={5}
+                      hint="Opcional. Se você mediu, anote aqui."
+                      error={erroDaTemperatura}
+                      aviso={avisoDaTemperatura}
+                      editable={!salvando}
+                    />
+                  ) : null}
 
                   <FormField
                     label="Observações"
@@ -421,7 +454,7 @@ export default function SintomasScreen() {
                       setNota(v);
                       setSalvoAs(null);
                     }}
-                    placeholder="O que você percebeu? (opcional)"
+                    placeholder="Conte como você está se sentindo..."
                     maxLength={500}
                     multiline
                     editable={!salvando}
@@ -429,6 +462,7 @@ export default function SintomasScreen() {
 
                   <PrimaryButton
                     title="Salvar registro"
+                    tom="terracota"
                     onPress={() => void salvar()}
                     loading={salvando}
                     disabled={!podeSalvar || salvando}
@@ -483,6 +517,12 @@ export default function SintomasScreen() {
                   </>
                 ) : null}
 
+                {/*
+                  Linha do tempo: um trilho vertical liga os pontos. O mais
+                  recente em terracota, os demais em verde. O trilho e feito
+                  de dois segmentos por linha (acima e abaixo do ponto) para
+                  nao passar do primeiro nem do ultimo.
+                */}
                 {visiveis.map((r, i) => (
                   <Pressable
                     key={r.id}
@@ -494,6 +534,10 @@ export default function SintomasScreen() {
                     style={({ pressed }) => [styles.linha, pressed && styles.pressionado]}
                   >
                     <View style={styles.trilhoDaLinha}>
+                      {i > 0 ? <View style={[styles.trilho, styles.trilhoAcima]} /> : null}
+                      {i < visiveis.length - 1 ? (
+                        <View style={[styles.trilho, styles.trilhoAbaixo]} />
+                      ) : null}
                       <View style={[styles.ponto, i === 0 && styles.pontoRecente]} />
                     </View>
                     <View style={styles.linhaTextos}>
@@ -515,7 +559,10 @@ export default function SintomasScreen() {
                     hitSlop={12}
                     style={styles.mostrarMais}
                   >
-                    <Text style={styles.link}>Mostrar mais registros</Text>
+                    <View style={styles.verMais}>
+                      <Text style={styles.verMaisTexto}>Ver histórico completo</Text>
+                      <Feather name="chevron-right" size={16} color={colors.sectionTitle} />
+                    </View>
                   </Pressable>
                 ) : null}
               </SurfaceCard>
@@ -587,7 +634,42 @@ const styles = StyleSheet.create({
   pilulaAtiva: { backgroundColor: colors.accentGreen, borderColor: colors.accentGreen },
   pilulaTexto: { fontFamily: fonts.semibold, fontSize: 15, color: colors.textPrimary },
   pilulaTextoAtivo: { color: colors.onAccent },
-  campoDoHorario: { marginBottom: spacing.lg },
+  duasColunas: { flexDirection: 'row', marginBottom: spacing.sm },
+  empilhadas: { flexDirection: 'column' },
+  // A escala tem largura fixa (cinco bolinhas); quem cede e o horario.
+  colunaEscala: { flexShrink: 0 },
+  divisorVertical: {
+    width: StyleSheet.hairlineWidth,
+    backgroundColor: colors.divider,
+    marginHorizontal: spacing.md,
+    marginBottom: spacing.lg,
+  },
+  colunaHorario: { flex: 1, minWidth: 96, marginBottom: spacing.lg },
+  pilulaHorario: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    backgroundColor: colors.onAccent,
+    borderRadius: radii.pill,
+    borderWidth: 1,
+    borderColor: 'rgba(57, 67, 44, 0.12)',
+    paddingHorizontal: spacing.md,
+    minHeight: 44,
+  },
+  pilulaErro: { borderColor: colors.textError },
+  inputHorario: {
+    flex: 1,
+    fontFamily: fonts.bold,
+    fontSize: 16,
+    color: colors.textPrimary,
+    paddingVertical: spacing.sm,
+  },
+  erroHorario: {
+    fontFamily: fonts.regular,
+    fontSize: 13,
+    color: colors.textError,
+    marginTop: spacing.xs,
+  },
 
   apoioDoBotao: {
     fontFamily: fonts.regular,
@@ -609,11 +691,22 @@ const styles = StyleSheet.create({
     backgroundColor: colors.divider,
     marginVertical: spacing.lg,
   },
-  linha: { flexDirection: 'row', paddingVertical: spacing.md, minHeight: 56 },
-  trilhoDaLinha: { width: 24, alignItems: 'center', paddingTop: 4 },
+  // Sem padding vertical na linha: o trilho precisa encostar nas bordas para
+  // emendar com o da linha vizinha. O respiro fica nos textos.
+  linha: { flexDirection: 'row', minHeight: 56 },
+  trilhoDaLinha: { width: 24, alignItems: 'center', paddingTop: spacing.md + 4 },
+  trilho: {
+    position: 'absolute',
+    width: 2,
+    left: 11,
+    backgroundColor: colors.pillTablet,
+  },
+  // O centro do ponto fica em spacing.md + 4 + 6.
+  trilhoAcima: { top: 0, height: spacing.md + 10 },
+  trilhoAbaixo: { top: spacing.md + 10, bottom: 0 },
   ponto: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.pillTabletIcon },
-  pontoRecente: { backgroundColor: colors.accentGreen },
-  linhaTextos: { flex: 1, marginLeft: spacing.sm },
+  pontoRecente: { backgroundColor: colors.terracotta },
+  linhaTextos: { flex: 1, marginLeft: spacing.sm, paddingVertical: spacing.md },
   linhaQuando: { fontFamily: fonts.bold, fontSize: 15, color: colors.sectionTitle },
   linhaDescricao: {
     fontFamily: fonts.regular,
@@ -628,7 +721,17 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   pressionado: { opacity: 0.85 },
-  mostrarMais: { alignItems: 'center', paddingVertical: spacing.md },
+  mostrarMais: { marginTop: spacing.sm },
+  verMais: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: spacing.xs,
+    backgroundColor: colors.pillTablet,
+    borderRadius: radii.pill,
+    paddingVertical: spacing.md,
+  },
+  verMaisTexto: { fontFamily: fonts.semibold, fontSize: 14, color: colors.sectionTitle },
 
   cartaoCentral: { alignItems: 'center', padding: spacing.xl, marginTop: spacing.lg },
   ajuda: {

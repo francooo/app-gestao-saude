@@ -52,10 +52,9 @@ export function PrescriptionCard({
           <IconTile icone="file-text" {...LADRILHO_NEUTRO} />
           <View style={styles.textos}>
             <Text style={styles.titulo}>Nenhuma prescrição anexada</Text>
-            <Text style={styles.ajuda}>
-              Guarde a foto da receita para ter em mãos na farmácia. Ela fica só na sua conta e
-              é apagada junto com o remédio.
-            </Text>
+            {/* Texto do mockup. A garantia de privacidade (fica so na conta, sai
+                junto com o remedio) continua no alerta de remocao e na politica. */}
+            <Text style={styles.ajuda}>Inclua a receita disponibilizada pela sua médica.</Text>
           </View>
         </View>
 
@@ -71,11 +70,8 @@ export function PrescriptionCard({
             ocupado && styles.apagado,
           ]}
         >
-          {ocupado ? (
-            <ActivityIndicator size="small" color={colors.onAccent} />
-          ) : (
-            <Feather name="camera" size={18} color={colors.onAccent} />
-          )}
+          {/* Sem icone, como no mockup; o spinner so aparece enquanto envia. */}
+          {ocupado ? <ActivityIndicator size="small" color={colors.onAccent} /> : null}
           <Text style={styles.botaoTexto}>Adicionar prescrição</Text>
         </Pressable>
       </SurfaceCard>

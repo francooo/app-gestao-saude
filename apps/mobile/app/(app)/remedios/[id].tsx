@@ -46,7 +46,7 @@ import {
   type EstadoHoje,
 } from '@/lib/posologia';
 import { backgrounds, colors, fonts, radii, spacing } from '@/theme';
-import { Icone, type NomeIcone } from '@/components/Icone';
+import { ICONES, Icone, type NomeIcone } from '@/components/Icone';
 
 /**
  * Espaco da barra de abas flutuante.
@@ -362,6 +362,7 @@ export default function MedicamentoDetalheScreen() {
         <ScreenHeader
           title="Detalhes do medicamento"
           titleLines={2}
+          alinhamento="esquerda"
           onBack={() => router.back()}
           mostrarSino
         />
@@ -568,7 +569,9 @@ function Conteudo({
       <View style={styles.secao}>
         <SectionHeader title="Informações da medicação" />
         <SurfaceCard style={styles.cartao}>
-          <Info tile={{ ...forma, icone: forma.icone }} rotulo="Posologia" valor={posologia(m)} />
+          {/* Neutro, como no mockup: o ambar da forma ja esta no heroi, e aqui
+              ele competiria com o ambar de "Proxima dose", que significa acao. */}
+          <Info tile={{ ...LADRILHO_NEUTRO, icone: ICONES.pilula }} rotulo="Posologia" valor={posologia(m)} />
           <Divisor />
           <Info
             tile={{ ...(dose.atencao ? LADRILHO_ATENCAO : LADRILHO_NEUTRO), icone: 'clock' }}
@@ -595,7 +598,7 @@ function Conteudo({
           <SectionHeader title="Instruções" />
           <SurfaceCard style={styles.cartao}>
             <View style={styles.instrucoes}>
-              <IconTile {...LADRILHO_ATENCAO} icone="info" />
+              <IconTile {...LADRILHO_ATENCAO} icone={ICONES.lampada} />
               <Text style={styles.instrucoesTexto}>{m.instructions}</Text>
             </View>
           </SurfaceCard>
@@ -758,7 +761,11 @@ function chipDeStatus(estado: EstadoHoje, agora: Date): Chip {
       return {
         icone: 'clock',
         ativo: true,
-        texto: `Próxima dose ${diaRelativo(estado.quando, agora).toLowerCase()} às ${hora(estado.quando)}`,
+        // Hoje fica implicito, como no mockup ("Próxima dose 14:00"); amanha e
+        // outros dias continuam ditos, senao 08:00 de amanha pareceria atrasada.
+        texto: isSameDay(estado.quando, agora)
+          ? `Próxima dose ${hora(estado.quando)}`
+          : `Próxima dose ${diaRelativo(estado.quando, agora).toLowerCase()} às ${hora(estado.quando)}`,
       };
     case 'se_necessario':
       return { icone: 'info', ativo: true, texto: 'Somente se necessário' };

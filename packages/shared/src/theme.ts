@@ -17,7 +17,11 @@ export const colors = {
 
   /** Pilula dos campos de texto. Sobre o card resulta em ~#F1EEDB. */
   inputFill: 'rgba(255, 253, 245, 0.88)',
-  inputBorder: 'rgba(255, 255, 255, 0.55)',
+  /**
+   * Sage acinzentado, como no mockup. O branco translucido de antes sumia
+   * sobre o card creme e a pilula parecia nao ter contorno.
+   */
+  inputBorder: 'rgba(110, 124, 84, 0.38)',
   /** Borda quando o campo esta em foco. */
   inputBorderFocused: '#B78842',
   /** Borda quando o campo tem erro de validacao. */
@@ -59,6 +63,12 @@ export const colors = {
   accentGreen: '#1E603E',
   /** Verde mais claro: botao de enviar do assistente. */
   accentGreenSoft: '#3E765B',
+  /**
+   * Verde VIVO do botao de enviar no card do Assistente da home (mockup
+   * home-screen-prescription-ai-entry). Mais saturado que o accentGreenSoft
+   * para destacar sobre a metade verde escura do degrade.
+   */
+  accentGreenBright: '#2E8A62',
 
   /** Titulos de secao ("Medicamentos de hoje"). */
   sectionTitle: '#2E4D30',
@@ -80,6 +90,12 @@ export const colors = {
   tabActive: '#E5E6C8',
   /** Chip "Ver mais", mais claro que os demais. */
   chipMore: '#EFEBD6',
+  /**
+   * Pilula de data/hora no cartao de consulta da home. Sage bem claro sobre o
+   * creme — o surfaceWarm de antes puxava para o laranja, que no mockup e so
+   * do remedio.
+   */
+  pillSage: '#E4E6C8',
 
   // --- Tela de Remedios (medications-screen-family-health.png) ---
   // O ladrilho de capsula e o `surfaceWarm` acima (a medicao deu #F2E2BC,

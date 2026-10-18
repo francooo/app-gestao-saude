@@ -2,7 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { IconTile } from '@/components/IconTile';
-import { colors, fonts, spacing } from '@/theme';
+import { colors, fonts, radii, spacing } from '@/theme';
 import type { NomeIcone } from '@/components/Icone';
 
 type Props = {
@@ -24,9 +24,11 @@ type Props = {
  * decoracao — e o que distingue esta lista de uma lista de ajustes, e um
  * componente de AJUSTES nao tem por que conhecer o conceito de notificacao.
  *
- * As medidas sao COPIADAS do SettingsRow de proposito: as duas listas
- * aparecem no mesmo aplicativo e precisam ler como irmas, e o filete do
- * SettingsGroup ja assume a coluna de 44 px do ladrilho.
+ * Cada aviso e o PROPRIO cartao, separado do seguinte por espaco, como o
+ * pacote final desenha. Antes era uma linha dentro de um SettingsGroup com
+ * filetes; aviso e coisa a ser lida um por um, nao uma lista de ajustes, e o
+ * cartao solto da peso a cada um. O ladrilho cresceu para 56 pelo mesmo
+ * motivo.
  */
 export function NotificationRow({
   ladrilho,
@@ -43,9 +45,9 @@ export function NotificationRow({
       accessible
       accessibilityRole={onPress ? 'button' : 'text'}
       accessibilityLabel={`${naoLido ? 'Não lida, ' : ''}${titulo}, ${subtitulo}, ${quando}`}
-      style={({ pressed }) => [styles.linha, pressed && onPress && styles.pressionada]}
+      style={({ pressed }) => [styles.cartao, pressed && onPress && styles.pressionada]}
     >
-      <IconTile size={44} {...ladrilho} />
+      <IconTile size={56} {...ladrilho} />
 
       <View style={styles.textos}>
         <Text style={styles.titulo} numberOfLines={2}>
@@ -68,24 +70,38 @@ export function NotificationRow({
       {naoLido ? <View style={styles.ponto} /> : null}
 
       {onPress ? (
-        <Feather name="chevron-right" size={20} color={colors.textSecondary} />
+        <Feather
+          name="chevron-right"
+          size={20}
+          color={colors.textSecondary}
+          style={styles.seta}
+        />
       ) : null}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  linha: {
+  cartao: {
     flexDirection: 'row',
     // flex-start, como no SettingsRow: com fonte grande do sistema o titulo
     // vira tres linhas e um ladrilho centralizado flutuaria no meio do texto.
     alignItems: 'flex-start',
-    paddingVertical: spacing.md,
+    backgroundColor: colors.surface,
+    borderRadius: radii.card,
+    paddingVertical: spacing.lg,
     paddingHorizontal: spacing.lg,
-    minHeight: 68,
+    minHeight: 88,
+    shadowColor: '#2C3520',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 2,
   },
-  pressionada: { backgroundColor: 'rgba(90, 100, 73, 0.06)' },
-  textos: { flex: 1, marginLeft: spacing.md, marginTop: 2 },
+  pressionada: { opacity: 0.85 },
+  textos: { flex: 1, marginLeft: spacing.lg, marginTop: 2 },
+  // A seta fica na altura do meio do ladrilho, e nao colada no topo.
+  seta: { marginTop: 18 },
   titulo: { fontFamily: fonts.bold, fontSize: 15, color: colors.sectionTitle },
   subtitulo: {
     fontFamily: fonts.regular,

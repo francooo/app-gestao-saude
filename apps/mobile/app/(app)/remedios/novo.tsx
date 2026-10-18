@@ -8,6 +8,7 @@ import { ApiRequestError } from '@/api/client';
 import { healthApi, type LeituraDeFoto, type MedicamentoLido } from '@/api/health';
 import { BlocoDeAviso } from '@/components/BlocoDeAviso';
 import { CartaoDeLeitura } from '@/components/CartaoDeLeitura';
+import { ICONES } from '@/components/Icone';
 import { IconTile, LADRILHO_ATENCAO, LADRILHO_NEUTRO } from '@/components/IconTile';
 import { OpcaoDeFoto } from '@/components/OpcaoDeFoto';
 import { ScreenBackground } from '@/components/ScreenBackground';
@@ -321,7 +322,7 @@ export default function NovoRemedioScreen() {
           <View style={styles.linha}>
             <IconTile
               size={54}
-              icone="zap"
+              icone={ICONES.brilho}
               {...(politicaVelha ? LADRILHO_NEUTRO : { fundo: colors.accent, traco: colors.onAccent })}
             />
             <View style={styles.apresentacaoTextos}>
@@ -361,10 +362,10 @@ export default function NovoRemedioScreen() {
         ) : (
           <>
             <OpcaoDeFoto
-              icone="file-text"
+              icone="camera"
               ladrilho={LADRILHO_NEUTRO}
               titulo="Fotografar receita"
-              descricao="A leitura identifica nome, dose e posologia"
+              descricao="A IA lê nome, dose e posologia"
               desabilitado={bloqueado}
               motivoDesabilitado="Disponível depois que você aceitar a política atual"
               onPress={() => escolherOrigem('receita')}
@@ -373,7 +374,7 @@ export default function NovoRemedioScreen() {
               icone="package"
               ladrilho={LADRILHO_ATENCAO}
               titulo="Fotografar caixinha"
-              descricao="Identifica o medicamento pela embalagem"
+              descricao="Identifique o medicamento automaticamente"
               desabilitado={bloqueado}
               motivoDesabilitado="Disponível depois que você aceitar a política atual"
               onPress={() => escolherOrigem('caixa')}

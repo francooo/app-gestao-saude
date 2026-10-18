@@ -1,4 +1,4 @@
-import { Feather } from '@expo/vector-icons';
+import { addDays, isSameDay } from 'date-fns';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Avatar } from '@/components/Avatar';
@@ -40,7 +40,7 @@ export function MedicationCard({
   const visual = LADRILHO_POR_FORMA[formaVisual(m.form)];
   const titulo = tituloDoMedicamento(m);
 
-  const status = linhaDeStatus(estado);
+  const status = linhaDeStatus(estado, agora);
   const repetivel = m.scheduleType === 'as_needed';
   const marcado = estado.tipo === 'tomado' && !repetivel;
   const semAcao =
@@ -90,12 +90,13 @@ export function MedicationCard({
                 nome={m.profileName}
                 color={m.profileColor ?? undefined}
                 recyclingKey={m.profileId}
-                size={26}
+                // Maior que antes, como no mockup: e o unico indicio de quem e
+                // o remedio quando a Home mostra a familia inteira.
+                size={38}
               />
             ) : null}
           </View>
-
-          <Feather name="chevron-right" size={20} color={colors.textSecondary} style={styles.seta} />
+          {/* Sem chevron, como no mockup: o cartao inteiro continua tocavel. */}
         </View>
       </SurfaceCard>
     </Pressable>
@@ -104,7 +105,20 @@ export function MedicationCard({
 
 type Status = { icone: NomeIcone; texto: string; cor: string };
 
-function linhaDeStatus(estado: ReturnType<typeof estadoHoje>): Status {
+/**
+ * "14:00", "amanha 08:00" ou "26/09 08:00".
+ *
+ * estadoHoje tambem devolve 'pendente' quando a proxima dose cai depois da
+ * meia-noite (ex.: 12 em 12 horas tomado a noite). So a hora, nesse caso,
+ * fazia a pessoa achar que ainda havia dose HOJE.
+ */
+function quandoRelativo(quando: Date, agora: Date): string {
+  if (isSameDay(quando, agora)) return hora(quando);
+  if (isSameDay(quando, addDays(agora, 1))) return `amanhã ${hora(quando)}`;
+  return `${diaCurto(quando)} ${hora(quando)}`;
+}
+
+function linhaDeStatus(estado: ReturnType<typeof estadoHoje>, agora: Date): Status {
   switch (estado.tipo) {
     case 'tomado':
       return {
@@ -116,7 +130,11 @@ function linhaDeStatus(estado: ReturnType<typeof estadoHoje>): Status {
             : `Tomado hoje às ${hora(estado.quando)}`,
       };
     case 'pendente':
-      return { icone: 'clock', cor: colors.textSecondary, texto: `Próxima dose ${hora(estado.quando)}` };
+      return {
+        icone: 'clock',
+        cor: colors.textSecondary,
+        texto: `Próxima dose ${quandoRelativo(estado.quando, agora)}`,
+      };
     case 'se_necessario':
       return { icone: 'info', cor: colors.textSecondary, texto: 'Somente se necessário' };
     case 'nao_comecou':
@@ -165,5 +183,4 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   direita: { alignItems: 'center', gap: spacing.xs },
-  seta: { marginLeft: spacing.sm },
 });

@@ -90,7 +90,9 @@ const styles = StyleSheet.create({
   desabilitado: { opacity: 0.55 },
   pressionado: { opacity: 0.85 },
 
-  linha: { flexDirection: 'row', alignItems: 'flex-start' },
+  // Centrado como no mockup: o botao fica no meio da altura do cartao, nao
+  // grudado no topo quando a descricao quebra em duas linhas.
+  linha: { flexDirection: 'row', alignItems: 'center' },
   coluna: { flexDirection: 'column', alignItems: 'stretch' },
 
   textos: { flex: 1, marginLeft: spacing.md, marginRight: spacing.sm },

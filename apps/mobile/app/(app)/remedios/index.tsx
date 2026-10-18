@@ -244,7 +244,7 @@ export default function RemediosScreen() {
                 corDoLadrilho={colors.tileSun}
                 rotulo="Hoje"
                 valor={`${resumo.dosesTomadas} ${resumo.dosesTomadas === 1 ? 'dose' : 'doses'}`}
-                detalhe={`de ${resumo.totalMedicamentos} ${resumo.totalMedicamentos === 1 ? 'remédio' : 'remédios'}`}
+                detalhe={`de ${resumo.totalMedicamentos} ${resumo.totalMedicamentos === 1 ? 'medicamento' : 'medicamentos'}`}
               />
               <SummaryTile
                 icone="clock"

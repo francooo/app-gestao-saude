@@ -2,6 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { Icone, ICONES } from '@/components/Icone';
 import { colors, fonts, radii, spacing } from '@/theme';
 
 type Props = {
@@ -32,8 +33,13 @@ export function CartaoLerReceita({ onFotografar, onGaleria }: Props) {
         style={styles.gradiente}
       >
         <View style={styles.cabecalho}>
+          {/*
+            Como no mockup: brilho dourado no canto SUPERIOR direito da moldura
+            e o selo "IA" no INFERIOR direito.
+          */}
           <View style={styles.selo}>
-            <Feather name="camera" size={20} color={colors.onAccent} />
+            <Feather name="camera" size={24} color={colors.onAccent} />
+            <Icone nome={ICONES.brilho} size={18} color={colors.star} style={styles.brilho} />
             <View style={styles.selo_ia}>
               <Text style={styles.selo_iaTexto}>IA</Text>
             </View>
@@ -71,7 +77,7 @@ export function CartaoLerReceita({ onFotografar, onGaleria }: Props) {
         <View style={styles.chips}>
           {CHIPS.map((rotulo) => (
             <View key={rotulo} style={styles.chip}>
-              <Feather name="check" size={12} color={colors.onAccent} />
+              <Feather name="check" size={12} color={colors.accentGreen} />
               <Text style={styles.chipTexto}>{rotulo}</Text>
             </View>
           ))}
@@ -98,17 +104,22 @@ const styles = StyleSheet.create({
   gradiente: { padding: spacing.xl },
   cabecalho: { flexDirection: 'row', alignItems: 'center' },
   selo: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
+    width: 52,
+    height: 52,
+    borderRadius: 16,
     backgroundColor: 'rgba(255, 255, 255, 0.22)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.lg,
   },
+  brilho: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+  },
   selo_ia: {
     position: 'absolute',
-    top: -6,
+    bottom: -6,
     right: -6,
     minWidth: 22,
     height: 20,
@@ -163,10 +174,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    // Creme OPACO com texto verde escuro, como no mockup. O branco translucido
+    // de antes sumia sobre a metade ambar do degrade.
+    backgroundColor: colors.surface,
     borderRadius: radii.pill,
     paddingHorizontal: spacing.md,
     paddingVertical: 6,
   },
-  chipTexto: { fontFamily: fonts.semibold, fontSize: 12, color: colors.onAccent },
+  chipTexto: { fontFamily: fonts.semibold, fontSize: 12, color: colors.accentGreen },
 });
