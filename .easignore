@@ -1,0 +1,36 @@
+# O que NAO vai para o build da EAS.
+#
+# Quando este arquivo existe, a EAS ignora o .gitignore: por isso ele repete
+# tudo de la (segredos inclusive) e acrescenta o que e versionado mas nao entra
+# no aplicativo. Sem isto o pacote enviado passava de 370 MB, quase tudo PNG de
+# referencia de design.
+#
+# apps/api NAO sai daqui: o pnpm instala o workspace inteiro pelo lockfile, e
+# sem o package.json da API o `pnpm install --frozen-lockfile` falha.
+
+# --- copia do .gitignore ---
+node_modules/
+.pnpm-store/
+.expo/
+dist/
+web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+.vercel/
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
+apps/*/build/
+packages/*/dist/
+.DS_Store
+Thumbs.db
+*.log
+
+# --- so do build ---
+# Mockups de design (PNG de 1440x2560): referencia, nao asset do app.
+assets-source/
