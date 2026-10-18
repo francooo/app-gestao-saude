@@ -10,6 +10,7 @@ import {
   PROMPT_POSOLOGIA,
   proporPosologia,
 } from '../../lib/posologia-proposta';
+import { exigirPremium } from '../../lib/plano';
 
 /**
  * "Descreva como tomar": converte uma frase livre em posologia.
@@ -36,6 +37,8 @@ export default withErrorHandling(async (req: VercelRequest, res: VercelResponse)
 
   const auth = await requireAuth(req, res);
   if (!auth) return;
+  // Recurso de IA: so com assinatura ou teste gratis vigente (lib/plano.ts).
+  if (!(await exigirPremium(res, auth.userId))) return;
 
   const body = parseBody(res, posologiaTextoSchema, req.body);
   if (!body) return;

@@ -124,6 +124,12 @@ export const API_ERROR = {
   /** "Descreva como tomar": a IA interpreta o texto da posologia. */
   POSOLOGY_BUSY: 'POSOLOGY_BUSY',
   POSOLOGY_FAILED: 'POSOLOGY_FAILED',
+  /**
+   * Recurso de IA sem assinatura (nem teste) vigente. 403 e nao 402: o
+   * cliente nao trata 402, e 401 dispararia o refresh automatico (ver
+   * WRONG_PASSWORD). Espelha packages/shared.
+   */
+  SUBSCRIPTION_REQUIRED: 'SUBSCRIPTION_REQUIRED',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
 } as const;
 

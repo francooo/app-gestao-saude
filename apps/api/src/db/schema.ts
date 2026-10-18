@@ -58,6 +58,20 @@ export const users = pgTable('users', {
    * America/Sao_Paulo.
    */
   timezone: text('timezone'),
+  /**
+   * PLANO. A regra mora em lib/plano.ts: tem IA quem tem `premium_until` ou
+   * `trial_ends_at` no futuro. Colunas aqui, e nao numa tabela de assinaturas:
+   * uma conta tem UMA assinatura vigente, e o bloqueio das rotas de IA le esta
+   * linha a cada chamada — junto do resto do usuario, sem join.
+   *
+   * O teste de 7 dias nasce no cadastro. `premium_until` so e escrito pelo
+   * SERVIDOR (webhook da loja ou ativacao manual), nunca pelo aplicativo.
+   */
+  trialEndsAt: timestamp('trial_ends_at', { withTimezone: true }),
+  premiumUntil: timestamp('premium_until', { withTimezone: true }),
+  /** play | manual */
+  premiumStore: text('premium_store'),
+  premiumProduct: text('premium_product'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });

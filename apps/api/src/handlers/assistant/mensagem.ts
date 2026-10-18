@@ -15,6 +15,7 @@ import { montarPromptDeSistema } from '../../lib/assistente-prompt';
 import type { MensagemGroq } from '../../lib/groq';
 import { fail, json, parseBody, requireMethod, withErrorHandling } from '../../lib/http';
 import { perfilDaConta } from '../../lib/ownership';
+import { exigirPremium } from '../../lib/plano';
 
 /** Quantas mensagens anteriores acompanham a pergunta. */
 const HISTORICO_NO_PROMPT = 10;
@@ -24,6 +25,8 @@ export default withErrorHandling(async (req: VercelRequest, res: VercelResponse)
 
   const auth = await requireAuth(req, res);
   if (!auth) return;
+  // Recurso de IA: so com assinatura ou teste gratis vigente (lib/plano.ts).
+  if (!(await exigirPremium(res, auth.userId))) return;
 
   const body = parseBody(res, assistantAskSchema, req.body);
   if (!body) return;

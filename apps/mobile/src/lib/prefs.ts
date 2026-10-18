@@ -137,7 +137,8 @@ const MAXIMO_DE_IDS = 24;
 
 /** Nulo quando nunca se marcou tudo como lido. */
 export async function avisosLidosAte(): Promise<string | null> {
-  return ler(AVISOS_LIDOS_ATE);
+  // Vazio = esquecido ao sair da conta (esquecerAvisosLidos).
+  return (await ler(AVISOS_LIDOS_ATE)) || null;
 }
 
 /**
@@ -156,6 +157,16 @@ export async function idsDeAvisosLidos(): Promise<Set<string>> {
   // Separado por quebra de linha, e nao JSON: id nao tem quebra de linha
   // dentro, entao o formato mais barato serve e nao ha parse para falhar.
   return new Set(bruto.split('\n').filter(Boolean));
+}
+
+/**
+ * Ao sair da conta: o "lido" e da CONTA, nao do aparelho. Os ids carregam
+ * uuids de remedio da conta anterior, e o carimbo faria a proxima conta nascer
+ * com avisos dela marcados como lidos.
+ */
+export async function esquecerAvisosLidos(): Promise<void> {
+  await gravar(AVISOS_LIDOS_ATE, '');
+  await gravar(AVISOS_LIDOS_IDS, '');
 }
 
 export async function marcarAvisoComoLido(id: string): Promise<void> {

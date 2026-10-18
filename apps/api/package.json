@@ -9,7 +9,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx scripts/seed.ts",
-    "check:funcoes": "node scripts/check-funcoes.mjs"
+    "check:funcoes": "node scripts/check-funcoes.mjs",
+    "test:isolamento": "tsx scripts/teste-isolamento.ts"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0",

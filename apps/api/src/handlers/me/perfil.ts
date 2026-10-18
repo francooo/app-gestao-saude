@@ -16,6 +16,7 @@ import {
 } from '../../db/schema';
 import type { AuthContext } from '../../lib/auth';
 import { fail, json } from '../../lib/http';
+import { planoDe } from '../../lib/plano';
 
 /**
  * A conta de quem esta perguntando.
@@ -48,6 +49,8 @@ export default async function perfil(
       email: users.email,
       fullName: users.fullName,
       createdAt: users.createdAt,
+      trialEndsAt: users.trialEndsAt,
+      premiumUntil: users.premiumUntil,
     })
     .from(users)
     .where(eq(users.id, auth.userId))
@@ -73,8 +76,14 @@ export default async function perfil(
     .orderBy(desc(consents.grantedAt))
     .limit(1);
 
+  const { trialEndsAt, premiumUntil, ...publico } = u;
   const corpo: Record<string, unknown> = {
-    user: { ...u, createdAt: u.createdAt.toISOString() },
+    user: { ...publico, createdAt: u.createdAt.toISOString() },
+    /**
+     * O nivel de acesso, para o aplicativo esconder e explicar os recursos de
+     * IA. So informativo: quem bloqueia de verdade e exigirPremium, nas rotas.
+     */
+    plano: planoDe({ trialEndsAt, premiumUntil }),
     consent: consentimento
       ? {
           policyVersion: consentimento.policyVersion,

@@ -5,6 +5,7 @@ import type { LoginRequest, PublicUser, RegisterRequest } from '@gestao/shared';
 
 import { authApi, setOnSessionExpired } from '@/api/client';
 import { tokenStorage } from '@/auth/tokenStorage';
+import { limparDadosLocaisDaConta } from '@/lib/sairDaConta';
 
 type AuthState = {
   user: PublicUser | null;
@@ -40,7 +41,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // O client HTTP avisa aqui quando o refresh token e rejeitado.
   useEffect(() => {
-    setOnSessionExpired(() => setUser(null));
+    setOnSessionExpired(() => {
+      setUser(null);
+      // Sessao expirada tambem e uma saida: a proxima pessoa a entrar neste
+      // aparelho pode ser outra conta.
+      void limparDadosLocaisDaConta();
+    });
     return () => setOnSessionExpired(null);
   }, []);
 
@@ -71,6 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Limpa o estado local primeiro: a UI nao deve esperar a rede para sair.
     await tokenStorage.clear();
     setUser(null);
+    await limparDadosLocaisDaConta();
     if (refreshToken) await authApi.logout(refreshToken);
   }, []);
 

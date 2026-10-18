@@ -344,7 +344,12 @@ export async function reconciliarLembretesDeDose(medicamentos: Medication[]): Pr
   }
 
   const permitido = await pedirPermissao();
-  if (!permitido) return;
+  if (!permitido) {
+    // Sem permissao nao da para agendar, mas da para CALAR: sem esta linha, os
+    // lembretes de uma conta anterior neste aparelho sobreviviam aqui.
+    for (const id of jaAgendadas) await Notifications.cancelScheduledNotificationAsync(id);
+    return;
+  }
 
   const canal = await prepararCanal();
   const agora = new Date();

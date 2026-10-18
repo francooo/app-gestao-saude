@@ -16,6 +16,7 @@ import { extrairJson, mapearLeitura } from '../../lib/leitura-de-foto';
 import { ESQUEMA_DA_LEITURA, promptDaLeitura } from '../../lib/leitura-prompt';
 import { fail, json, parseBody, requireMethod, withErrorHandling } from '../../lib/http';
 import { perfilDaConta } from '../../lib/ownership';
+import { exigirPremium } from '../../lib/plano';
 
 /**
  * Le a foto de uma receita ou de uma caixa e devolve os campos do cadastro.
@@ -48,6 +49,8 @@ export default withErrorHandling(async (req: VercelRequest, res: VercelResponse)
 
   const auth = await requireAuth(req, res);
   if (!auth) return;
+  // Recurso de IA: so com assinatura ou teste gratis vigente (lib/plano.ts).
+  if (!(await exigirPremium(res, auth.userId))) return;
 
   const body = parseBody(res, leituraDeFotoSchema, req.body);
   if (!body) return;

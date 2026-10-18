@@ -15,6 +15,7 @@ import {
   withErrorHandling,
 } from '../../lib/http';
 import { hashPassword } from '../../lib/password';
+import { fimDoTeste } from '../../lib/plano';
 
 /** Limite de contas criadas por IP, para conter criacao em massa. */
 const MAX_SIGNUPS_PER_IP = 5;
@@ -72,7 +73,8 @@ export default withErrorHandling(async (req: VercelRequest, res: VercelResponse)
   const userId = await db.transaction(async (tx) => {
     const [created] = await tx
       .insert(users)
-      .values({ email: body.email, passwordHash, fullName: body.fullName })
+      // Toda conta nova comeca com o teste gratis da IA (lib/plano.ts).
+      .values({ email: body.email, passwordHash, fullName: body.fullName, trialEndsAt: fimDoTeste() })
       .returning({ id: users.id });
 
     if (!created) throw new Error('Falha ao criar o usuario');

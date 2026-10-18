@@ -141,6 +141,13 @@
       "when": 1792289355525,
       "tag": "0019_modern_micromacro",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1792340425365,
+      "tag": "0020_broken_vector",
+      "breakpoints": true
     }
   ]
 }

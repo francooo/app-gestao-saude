@@ -153,6 +153,8 @@ export const API_ERROR = {
   /** "Descreva como tomar": a IA interpreta o texto da posologia. */
   POSOLOGY_BUSY: 'POSOLOGY_BUSY',
   POSOLOGY_FAILED: 'POSOLOGY_FAILED',
+  /** Recurso de IA sem assinatura (nem teste gratis) vigente. */
+  SUBSCRIPTION_REQUIRED: 'SUBSCRIPTION_REQUIRED',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   /** Erros do lado do cliente, nunca vindos da API. */
   NETWORK_ERROR: 'NETWORK_ERROR',
@@ -203,6 +205,8 @@ export const ERROR_MESSAGES_PT: Record<string, string> = {
     'A interpretação está ocupada neste minuto. Aguarde uns 20 segundos e tente de novo.',
   [API_ERROR.POSOLOGY_FAILED]:
     'Não consegui entender essa descrição. Tente escrever de outro jeito — ou preencha à mão.',
+  [API_ERROR.SUBSCRIPTION_REQUIRED]:
+    'Este recurso usa inteligência artificial e faz parte da assinatura. Veja em Ajustes › Assinatura.',
   [API_ERROR.INTERNAL_ERROR]: 'Algo deu errado do nosso lado. Tente novamente.',
   [API_ERROR.NETWORK_ERROR]: 'Sem conexão com o servidor. Verifique sua internet.',
   // Nao e problema da pessoa: o app foi publicado sem a URL da API.
