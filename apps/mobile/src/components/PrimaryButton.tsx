@@ -8,9 +8,21 @@ type Props = {
   loading?: boolean;
   disabled?: boolean;
   style?: ViewStyle;
+  /**
+   * Cor do botao. Padrao ambar (acao principal). "terracota" e o Salvar do
+   * diario de sintomas, que o pacote final desenha nessa cor.
+   */
+  tom?: 'ambar' | 'terracota';
 };
 
-export function PrimaryButton({ title, onPress, loading = false, disabled = false, style }: Props) {
+export function PrimaryButton({
+  title,
+  onPress,
+  loading = false,
+  disabled = false,
+  style,
+  tom = 'ambar',
+}: Props) {
   const inactive = disabled || loading;
 
   return (
@@ -22,7 +34,8 @@ export function PrimaryButton({ title, onPress, loading = false, disabled = fals
       accessibilityState={{ disabled: inactive, busy: loading }}
       style={({ pressed }) => [
         styles.button,
-        pressed && !inactive ? styles.pressed : null,
+        tom === 'terracota' && styles.terracota,
+        pressed && !inactive ? (tom === 'terracota' ? styles.terracotaPressed : styles.pressed) : null,
         inactive ? styles.inactive : null,
         style,
       ]}
@@ -52,6 +65,8 @@ const styles = StyleSheet.create({
   pressed: {
     backgroundColor: colors.accentPressed,
   },
+  terracota: { backgroundColor: colors.terracotta, shadowColor: '#6B3A24' },
+  terracotaPressed: { opacity: 0.85 },
   inactive: {
     opacity: 0.65,
   },

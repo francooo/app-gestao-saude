@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { IconTile, LADRILHO_ATENCAO, LADRILHO_NEUTRO } from '@/components/IconTile';
 import { SurfaceCard } from '@/components/SurfaceCard';
 import { colors, fonts, radii, spacing } from '@/theme';
+import type { NomeIcone } from '@/components/Icone';
 
 type Acao = { rotulo: string; onPress: () => void };
 
@@ -17,7 +18,7 @@ type Props = {
    * aviso sem saida ensina a ignorar o ambar.
    */
   tom: 'atencao' | 'neutro';
-  icone: keyof typeof Feather.glyphMap;
+  icone: NomeIcone;
   titulo: string;
   texto: string;
   /** Lista com visto verde, no padrao da tela de privacidade. */

@@ -1,10 +1,11 @@
 import { Feather } from '@expo/vector-icons';
 import { Redirect, Tabs } from 'expo-router';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/auth/AuthContext';
 import { AberturaPorNotificacao } from '@/components/AberturaPorNotificacao';
+import { Icone, ICONES } from '@/components/Icone';
 import { AvisosProvider } from '@/lib/avisosContext';
 import { colors, fonts, radii } from '@/theme';
 
@@ -40,7 +41,11 @@ export default function AppLayout() {
          * botoes e aparelhos com gestos.
          */
         tabBarStyle: [styles.barra, { bottom: insets.bottom + 12 }],
-        tabBarLabelStyle: styles.rotulo,
+        // A aba ativa ganha peso, alem da cor: no pacote final o rotulo ativo
+        // e verde E mais pesado.
+        tabBarLabel: ({ focused, color, children }) => (
+          <Text style={[styles.rotulo, focused && styles.rotuloAtivo, { color }]}>{children}</Text>
+        ),
         tabBarItemStyle: styles.item,
         // Retangulo claro atras do icone da aba ativa, como na referencia.
         tabBarActiveBackgroundColor: colors.tabActive,
@@ -58,11 +63,9 @@ export default function AppLayout() {
         name="remedios"
         options={{
           title: 'Remédios',
-          // O Feather nao tem icone de capsula; "thermometer" e o mais proximo
-          // do campo da saude sem recorrer a outra familia de icones.
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="thermometer" size={size} color={color} />
-          ),
+          // A pilula vem do MaterialCommunityIcons (ver Icone.tsx): o Feather
+          // nao tem capsula, e o pacote final de telas desenha a pilula.
+          tabBarIcon: ({ color, size }) => <Icone nome={ICONES.pilula} size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -85,7 +88,9 @@ export default function AppLayout() {
         name="ajustes"
         options={{
           title: 'Ajustes',
-          tabBarIcon: ({ color, size }) => <Feather name="sliders" size={size} color={color} />,
+          // Sliders HORIZONTAIS, como no pacote final. O "sliders" do Feather e
+          // vertical.
+          tabBarIcon: ({ color, size }) => <Icone nome={ICONES.ajustes} size={size} color={color} />,
         }}
       />
 
@@ -188,6 +193,7 @@ const styles = StyleSheet.create({
     fontFamily: fonts.semibold,
     fontSize: 11,
   },
+  rotuloAtivo: { fontFamily: fonts.extrabold },
   item: {
     paddingVertical: 4,
     marginHorizontal: 4,

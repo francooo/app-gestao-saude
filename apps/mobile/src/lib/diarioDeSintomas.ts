@@ -3,6 +3,7 @@ import { isSameDay, startOfDay, subDays } from 'date-fns';
 
 import type { SymptomEntry, SymptomKind } from '@/api/health';
 import { diaCurto, hora } from '@/lib/posologia';
+import type { NomeIcone } from '@/components/Icone';
 
 /**
  * As regras do diario de sintomas, sem React e sem rede.
@@ -15,7 +16,7 @@ import { diaCurto, hora } from '@/lib/posologia';
 export type DefinicaoDeTipo = {
   chave: SymptomKind;
   rotulo: string;
-  icone: keyof typeof Feather.glyphMap;
+  icone: NomeIcone;
   /** Titulo do grupo da escala. Em humor e sono nao se diz "intensidade". */
   nomeDaEscala: string;
   /** Os cinco degraus, do 1 ao 5. */

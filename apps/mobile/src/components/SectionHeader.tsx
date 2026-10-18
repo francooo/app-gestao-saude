@@ -17,6 +17,8 @@ type Props = {
    * Feather nao tem folha, entao a arte vem da propria referencia.
    */
   icon?: 'leaf';
+  /** Filete fino depois do titulo, ate a borda (secoes de formulario do mock). */
+  linha?: boolean;
 };
 
 const folha = require('../../assets/images/leaf-icon.png');
@@ -27,6 +29,7 @@ export function SectionHeader({
   verTodosLabel,
   verTodosIcon,
   icon,
+  linha = false,
 }: Props) {
   return (
     <View style={styles.row}>
@@ -37,6 +40,7 @@ export function SectionHeader({
         <Text style={styles.title} accessibilityRole="header">
           {title}
         </Text>
+        {linha ? <View style={styles.filete} importantForAccessibility="no" /> : null}
       </View>
 
       {onVerTodos ? (
@@ -77,6 +81,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   folha: { width: 26, height: 26 },
+  filete: { flex: 1, height: 1.5, backgroundColor: colors.accentGreen, opacity: 0.25 },
   title: {
     flexShrink: 1,
     fontFamily: fonts.extrabold,

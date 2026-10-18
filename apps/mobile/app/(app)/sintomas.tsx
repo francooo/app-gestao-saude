@@ -41,6 +41,7 @@ import {
 import { hora } from '@/lib/posologia';
 import { messageForError } from '@gestao/shared';
 import { backgrounds, colors, fonts, radii, spacing } from '@/theme';
+import { Icone, type NomeIcone } from '@/components/Icone';
 
 /** Mesmo nome e valor das outras telas; aqui a barra some, mas o rodape continua. */
 const ESPACO_BARRA = 96;
@@ -317,8 +318,8 @@ export default function SintomasScreen() {
                           acrescentariam informacao — so gastariam tokens cujo
                           significado ja esta fixado no aplicativo. */}
                       <View style={[styles.circulo, ativo && styles.circuloAtivo]}>
-                        <Feather
-                          name={t.icone}
+                        <Icone
+                          nome={t.icone}
                           size={24}
                           color={ativo ? colors.onAccent : colors.pillTabletIcon}
                         />

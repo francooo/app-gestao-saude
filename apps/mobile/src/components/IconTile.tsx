@@ -1,6 +1,6 @@
-import { Feather } from '@expo/vector-icons';
 import { StyleSheet, View, type ViewStyle } from 'react-native';
 
+import { Icone, ICONES, type NomeIcone } from '@/components/Icone';
 import { colors, radii } from '@/theme';
 import type { FormaVisual } from '@/lib/posologia';
 
@@ -18,7 +18,7 @@ import type { FormaVisual } from '@/lib/posologia';
  */
 
 type Props = {
-  icone: keyof typeof Feather.glyphMap;
+  icone: NomeIcone;
   fundo: string;
   traco: string;
   /** 54 em destaque, 44 em linha de lista. */
@@ -48,7 +48,7 @@ export function IconTile({ icone, fundo, traco, size = 44, style }: Props) {
         style,
       ]}
     >
-      <Feather name={icone} size={Math.round(size * 0.45)} color={traco} />
+      <Icone nome={icone} size={Math.round(size * 0.45)} color={traco} />
     </View>
   );
 }
@@ -56,16 +56,16 @@ export function IconTile({ icone, fundo, traco, size = 44, style }: Props) {
 /**
  * Ladrilho e traco por forma farmaceutica.
  *
- * O Feather nao tem icone de capsula nem de comprimido; "aperture" e "circle"
- * sao as aproximacoes que o projeto ja adotou. Abrir uma segunda familia de
- * icones por dois icones nao se paga.
+ * Capsula e comprimido vem do MaterialCommunityIcons (ver Icone.tsx): o
+ * Feather nao tem nenhum dos dois, e o pacote final de telas desenha a pilula
+ * de verdade. Antes eram "aperture" e "circle", aproximacoes.
  */
 export const LADRILHO_POR_FORMA: Record<
   FormaVisual,
-  { fundo: string; traco: string; icone: keyof typeof Feather.glyphMap }
+  { fundo: string; traco: string; icone: NomeIcone }
 > = {
-  capsula: { fundo: colors.surfaceWarm, traco: colors.accent, icone: 'aperture' },
-  comprimido: { fundo: colors.pillTablet, traco: colors.pillTabletIcon, icone: 'circle' },
+  capsula: { fundo: colors.surfaceWarm, traco: colors.accent, icone: ICONES.pilula },
+  comprimido: { fundo: colors.pillTablet, traco: colors.pillTabletIcon, icone: ICONES.comprimido },
   gotas: { fundo: colors.surfaceWarm, traco: colors.accent, icone: 'droplet' },
   ml: { fundo: colors.pillTablet, traco: colors.pillTabletIcon, icone: 'thermometer' },
   // Inalador: "wind" é a aproximação do Feather para spray/bombinha.

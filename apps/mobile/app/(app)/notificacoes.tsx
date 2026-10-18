@@ -23,6 +23,7 @@ import { SettingsGroup } from '@/components/SettingsGroup';
 import { SurfaceCard } from '@/components/SurfaceCard';
 import { useAvisos, type AvisoComLeitura } from '@/lib/avisosContext';
 import { backgrounds, colors, fonts, radii, spacing } from '@/theme';
+import type { NomeIcone } from '@/components/Icone';
 
 const CHIPS: Chip[] = [
   { value: null, label: 'Todas' },
@@ -32,7 +33,7 @@ const CHIPS: Chip[] = [
 ];
 
 /** Ladrilho e icone de cada tipo. Ambar so onde ha algo a fazer. */
-const VISUAL: Record<string, { icone: keyof typeof Feather.glyphMap; fundo: string; traco: string }> =
+const VISUAL: Record<string, { icone: NomeIcone; fundo: string; traco: string }> =
   {
     'dose-atrasada': { icone: 'alert-circle', fundo: colors.surfaceWarm, traco: colors.accent },
     'dose-agora': { icone: 'aperture', fundo: colors.surfaceWarm, traco: colors.accent },

@@ -15,6 +15,7 @@ import {
   tituloDoMedicamento,
 } from '@/lib/posologia';
 import { colors, fonts, spacing } from '@/theme';
+import { Icone, type NomeIcone } from '@/components/Icone';
 
 type Props = {
   medicamento: Medication;
@@ -65,7 +66,7 @@ export function MedicationCard({
             </Text>
 
             <View style={styles.status}>
-              <Feather name={status.icone} size={13} color={status.cor} />
+              <Icone nome={status.icone} size={13} color={status.cor} />
               <Text style={[styles.statusTexto, { color: status.cor }]} numberOfLines={1}>
                 {status.texto}
               </Text>
@@ -101,7 +102,7 @@ export function MedicationCard({
   );
 }
 
-type Status = { icone: keyof typeof Feather.glyphMap; texto: string; cor: string };
+type Status = { icone: NomeIcone; texto: string; cor: string };
 
 function linhaDeStatus(estado: ReturnType<typeof estadoHoje>): Status {
   switch (estado.tipo) {

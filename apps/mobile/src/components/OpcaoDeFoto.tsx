@@ -4,9 +4,10 @@ import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-na
 import { IconTile } from '@/components/IconTile';
 import { SurfaceCard } from '@/components/SurfaceCard';
 import { colors, fonts, radii, spacing } from '@/theme';
+import type { NomeIcone } from '@/components/Icone';
 
 type Props = {
-  icone: keyof typeof Feather.glyphMap;
+  icone: NomeIcone;
   ladrilho: { fundo: string; traco: string };
   titulo: string;
   descricao: string;

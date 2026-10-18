@@ -46,6 +46,7 @@ import {
   type EstadoHoje,
 } from '@/lib/posologia';
 import { backgrounds, colors, fonts, radii, spacing } from '@/theme';
+import { Icone, type NomeIcone } from '@/components/Icone';
 
 /**
  * Espaco da barra de abas flutuante.
@@ -533,8 +534,8 @@ function Conteudo({
             accessibilityRole="text"
             accessibilityLabel={`Situação: ${chip.texto}`}
           >
-            <Feather
-              name={chip.icone}
+            <Icone
+              nome={chip.icone}
               size={15}
               color={chip.ativo ? colors.accentGreen : colors.textSecondary}
             />
@@ -674,7 +675,7 @@ function Info({
   rotulo,
   valor,
 }: {
-  tile: { fundo: string; traco: string; icone: keyof typeof Feather.glyphMap };
+  tile: { fundo: string; traco: string; icone: NomeIcone };
   rotulo: string;
   valor: string;
 }) {
@@ -733,7 +734,7 @@ function LinhaDeDose({ dose, agora }: { dose: Dose; agora: Date }) {
 // que e a mesma fonte que a lista de remedios usa.
 // ---------------------------------------------------------------------------
 
-type Chip = { icone: keyof typeof Feather.glyphMap; texto: string; ativo: boolean };
+type Chip = { icone: NomeIcone; texto: string; ativo: boolean };
 
 /**
  * O chip NUNCA some — muda icone, texto e tom.

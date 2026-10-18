@@ -2,6 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { Alert, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, fonts, radii, spacing } from '@/theme';
+import { Icone, type NomeIcone } from '@/components/Icone';
 
 type Props = {
   /** Preenche o campo com uma pergunta pronta. */
@@ -12,7 +13,7 @@ type Props = {
 type Acao = {
   chave: string;
   rotulo: string;
-  icone: keyof typeof Feather.glyphMap;
+  icone: NomeIcone;
   cor: string;
   pergunta: string;
 };
@@ -90,7 +91,7 @@ export function QuickActions({ onPerguntar, desabilitado = false }: Props) {
             style={({ pressed }) => [styles.cartao, pressed && styles.pressionado]}
           >
             <View style={[styles.circulo, { backgroundColor: a.cor }]}>
-              <Feather name={a.icone} size={22} color={colors.onAccent} />
+              <Icone nome={a.icone} size={22} color={colors.onAccent} />
             </View>
             <Text style={styles.rotulo} numberOfLines={2}>
               {a.rotulo}

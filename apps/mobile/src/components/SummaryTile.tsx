@@ -3,9 +3,10 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { SurfaceCard } from '@/components/SurfaceCard';
 import { colors, fonts, radii, spacing } from '@/theme';
+import { Icone, type NomeIcone } from '@/components/Icone';
 
 type Props = {
-  icone: keyof typeof Feather.glyphMap;
+  icone: NomeIcone;
   /** Cor do ladrilho. Ambar para "Hoje", oliva para "Proxima dose". */
   corDoLadrilho: string;
   rotulo: string;
@@ -20,7 +21,7 @@ export function SummaryTile({ icone, corDoLadrilho, rotulo, valor, detalhe }: Pr
     <SurfaceCard style={styles.card}>
       <View style={styles.linha}>
         <View style={[styles.ladrilho, { backgroundColor: corDoLadrilho }]}>
-          <Feather name={icone} size={22} color={colors.onAccent} />
+          <Icone nome={icone} size={22} color={colors.onAccent} />
         </View>
 
         <View style={styles.textos}>

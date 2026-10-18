@@ -2,6 +2,7 @@ import { Feather } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { BotaoDeSino } from '@/components/BotaoDeSino';
+import { Icone, type NomeIcone } from '@/components/Icone';
 import { colors, fonts, radii, spacing } from '@/theme';
 
 type Props = {
@@ -25,12 +26,27 @@ type Props = {
    * desenha. O bloco mais alto continua centralizado em relacao aos botoes.
    */
   titleLines?: 1 | 2;
+  /**
+   * Onde fica o titulo. Padrao centro. "esquerda" cola o titulo no botao de
+   * voltar, como o pacote final desenha o detalhe do remedio e os Ajustes.
+   */
+  alinhamento?: 'centro' | 'esquerda';
+  /** Icone antes do titulo (so no alinhamento a esquerda, ex.: Assistente). */
+  icone?: NomeIcone;
 };
 
-export function ScreenHeader({ title, onBack, mostrarSino = false, titleLines = 1 }: Props) {
+export function ScreenHeader({
+  title,
+  onBack,
+  mostrarSino = false,
+  titleLines = 1,
+  alinhamento = 'centro',
+  icone,
+}: Props) {
+  const esquerda = alinhamento === 'esquerda';
   return (
     <View style={styles.linha}>
-      <View style={styles.lado}>
+      <View style={[styles.lado, esquerda && !onBack && styles.ladoVazio]}>
         {onBack ? (
           <Pressable
             onPress={onBack}
@@ -43,8 +59,17 @@ export function ScreenHeader({ title, onBack, mostrarSino = false, titleLines = 
         ) : null}
       </View>
 
+      {esquerda && icone ? (
+        <View style={styles.iconeTitulo}>
+          <Icone nome={icone} size={26} color={colors.accentGreen} />
+        </View>
+      ) : null}
       <Text
-        style={[styles.titulo, titleLines === 2 && styles.tituloDuasLinhas]}
+        style={[
+          styles.titulo,
+          titleLines === 2 && styles.tituloDuasLinhas,
+          esquerda && styles.tituloEsquerda,
+        ]}
         accessibilityRole="header"
         numberOfLines={titleLines}
       >
@@ -69,6 +94,10 @@ const styles = StyleSheet.create({
   lado: {
     width: 48,
   },
+  // Sem voltar e com titulo a esquerda, a lateral vazia so empurraria o texto.
+  ladoVazio: { width: 0 },
+  iconeTitulo: { marginLeft: spacing.xs },
+  tituloEsquerda: { textAlign: 'left', paddingLeft: spacing.md },
   ladoDireito: {
     alignItems: 'flex-end',
   },

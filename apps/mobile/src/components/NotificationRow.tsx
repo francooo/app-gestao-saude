@@ -3,9 +3,10 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { IconTile } from '@/components/IconTile';
 import { colors, fonts, spacing } from '@/theme';
+import type { NomeIcone } from '@/components/Icone';
 
 type Props = {
-  ladrilho: { icone: keyof typeof Feather.glyphMap; fundo: string; traco: string };
+  ladrilho: { icone: NomeIcone; fundo: string; traco: string };
   titulo: string;
   subtitulo: string;
   /** "Agora", "Há 2 horas", "Ontem". */
