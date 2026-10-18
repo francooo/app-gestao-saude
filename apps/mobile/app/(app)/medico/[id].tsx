@@ -28,7 +28,17 @@ import { buscarCep, formatarCep, montarEndereco, somenteDigitos } from '@/lib/ce
 import { escolherFoto } from '@/lib/foto';
 import { colors, fonts, radii, spacing } from '@/theme';
 
+/**
+ * Mesmo conserto de membro/[id].tsx: a rota mora nas ABAS, que reaproveitam a
+ * tela. Sem a `key`, "Adicionar medico" depois de editar um herdava a foto e
+ * os campos do anterior.
+ */
 export default function MedicoFormScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  return <FormularioDeMedico key={id} />;
+}
+
+function FormularioDeMedico() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();

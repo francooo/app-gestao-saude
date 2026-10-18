@@ -57,8 +57,19 @@ const PARENTESCOS = relationshipValues.map((v) => ({
  * O mockup desta tela ja mostra nome, parentesco e nascimento — que seria o
  * conteudo de uma ficha separada — entao duas telas para seis campos seria
  * peso morto.
+ *
+ * A `key` e o conserto de um defeito real: esta rota mora no navegador de
+ * ABAS (ver (app)/_layout.tsx), e uma aba e montada uma vez e reaproveitada.
+ * Ir de "editar Fulana" para "Adicionar" so trocava o parametro — o estado do
+ * formulario ficava, e o cadastro novo nascia com a FOTO (e o resto) da
+ * ultima pessoa aberta. Com a chave, cada membro ganha um formulario do zero.
  */
 export default function MembroScreen() {
+  const { id, origem } = useLocalSearchParams<{ id: string; origem?: string }>();
+  return <FormularioDeMembro key={`${id}:${origem ?? ''}`} />;
+}
+
+function FormularioDeMembro() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id, origem } = useLocalSearchParams<{ id: string; origem?: string }>();
