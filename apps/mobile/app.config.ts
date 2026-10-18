@@ -39,6 +39,15 @@ const config: ExpoConfig = {
     },
     // Encolhe a tela quando o teclado abre, em vez de empurrar a janela inteira.
     softwareKeyboardLayoutMode: 'resize',
+    /**
+     * Cobranca da Google Play, ANTES da biblioteca de compra (RevenueCat).
+     *
+     * O Play Console so deixa criar a assinatura depois de receber um pacote
+     * que declara esta permissao — e a compra so pode ser programada depois
+     * de a assinatura existir. Declarar ja no primeiro envio quebra o ovo e a
+     * galinha. Nao muda nada em tempo de execucao ate a biblioteca chegar.
+     */
+    permissions: ['com.android.vending.BILLING'],
   },
 
   web: {
