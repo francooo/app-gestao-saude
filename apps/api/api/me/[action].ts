@@ -4,6 +4,7 @@ import { API_ERROR } from '../../src/contracts';
 import { type AuthContext, requireAuth } from '../../src/lib/auth';
 import { fail, withErrorHandling } from '../../src/lib/http';
 
+import acompanhantes from '../../src/handlers/me/acompanhantes';
 import localizacao from '../../src/handlers/me/localizacao';
 import apagarConta from '../../src/handlers/me/apagar-conta';
 import consentimento from '../../src/handlers/me/consentimento';
@@ -41,6 +42,8 @@ const ROTAS: Record<string, Acao> = {
   email,
   consentimento,
   'apagar-conta': apagarConta,
+  // Quem recebe os avisos pelo WhatsApp (tela "Cadastrar acompanhante").
+  acompanhantes,
 };
 
 export default withErrorHandling(async (req: VercelRequest, res: VercelResponse) => {

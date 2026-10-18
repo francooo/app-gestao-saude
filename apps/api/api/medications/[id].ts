@@ -18,6 +18,7 @@ import {
   profiles,
 } from '../../src/db/schema';
 import { requireAuth } from '../../src/lib/auth';
+import { avisarDoseTomada } from '../../src/lib/avisos-whatsapp';
 import { fail, json, parseBody, withErrorHandling } from '../../src/lib/http';
 import { estoquesDe } from '../../src/lib/estoque';
 import { doseDaConta, medicamentoDaConta } from '../../src/lib/ownership';
@@ -374,6 +375,7 @@ async function registrarDose(
   // dipironas no mesmo dia sao duas doses, nao duplicata.
   if (!valores.scheduledFor) {
     const [criada] = await db.insert(medicationDoses).values(valores).returning();
+    if (criada!.status === 'tomada') await avisarSemSegurar(medicamento.id, criada!.takenAt!);
     return json(res, 201, { dose: serializarDose(criada!) });
   }
 
@@ -400,7 +402,26 @@ async function registrarDose(
     })
     .returning();
 
+  if (dose!.status === 'tomada') await avisarSemSegurar(medicamento.id, dose!.takenAt!);
   return json(res, 200, { dose: serializarDose(dose!) });
+}
+
+/**
+ * "Fulana tomou" para os acompanhantes, com prazo de 4 s e engolindo erro.
+ *
+ * Roda ANTES da resposta, e nao depois: numa funcao serverless, o que sobra
+ * apos o res.end() pode ser congelado no meio. A dose ja esta gravada aqui —
+ * nenhuma falha do WhatsApp pode virar erro na tela de quem marcou.
+ */
+async function avisarSemSegurar(medicationId: string, takenAt: Date) {
+  try {
+    await Promise.race([
+      avisarDoseTomada(medicationId, takenAt),
+      new Promise((resolver) => setTimeout(resolver, 4000)),
+    ]);
+  } catch (e) {
+    console.error('aviso de dose tomada falhou', e instanceof Error ? e.message : e);
+  }
 }
 
 async function desfazerDose(

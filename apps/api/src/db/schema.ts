@@ -49,6 +49,15 @@ export const users = pgTable('users', {
   referenceAddress: text('reference_address'),
   referenceLatitude: numeric('reference_latitude'),
   referenceLongitude: numeric('reference_longitude'),
+  /**
+   * Fuso IANA da familia ("America/Sao_Paulo"), enviado pelo aparelho.
+   *
+   * O servidor sempre foi agnostico de fuso — todo "hoje" e "08:00" era
+   * calculado no celular. Os lembretes por WhatsApp quebram isso: quem dispara
+   * e o servidor, e "a dose das 08:00" so tem instante com um fuso. Nulo =
+   * America/Sao_Paulo.
+   */
+  timezone: text('timezone'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
@@ -622,11 +631,68 @@ export const medications = pgTable(
 );
 
 /**
- * Horarios fixos de um medicamento.
+ * Acompanhantes: quem recebe avisos dos cuidados de uma pessoa pelo WhatsApp.
  *
- * Tabela separada em vez de array porque "08:00 e 20:00" precisa ser
- * consultavel para gerar lembretes, e array nao se indexa bem para isso.
+ * NAO e usuario do aplicativo — e um telefone com nome e as permissoes que a
+ * conta deu. Cada permissao e um booleano proprio porque a tela as liga e
+ * desliga uma a uma, e o envio consulta exatamente uma por vez.
  */
+export const caregivers = pgTable(
+  'caregivers',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    profileId: uuid('profile_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    fullName: text('full_name').notNull(),
+    /** So digitos, com DDI: 5511999991234. */
+    phone: text('phone').notNull(),
+    relationship: text('relationship'),
+    notifyDose: boolean('notify_dose').notNull().default(true),
+    notifyLate: boolean('notify_late').notNull().default(true),
+    notifyLowStock: boolean('notify_low_stock').notNull().default(true),
+    notifyTaken: boolean('notify_taken').notNull().default(true),
+    /** O interruptor "Ativar mensagens". Desligado, nada sai. */
+    active: boolean('active').notNull().default(true),
+    invitedAt: timestamp('invited_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('caregivers_profile_idx').on(t.profileId), index('caregivers_user_idx').on(t.userId)],
+);
+
+/**
+ * Cada mensagem de WhatsApp que o servidor TENTOU mandar.
+ *
+ * E a trava contra duplicata: o agendador roda a cada minuto, e duas execucoes
+ * sobrepostas mandariam a mesma dose duas vezes. A linha e inserida ANTES do
+ * envio, e o indice unico faz a segunda execucao desistir. Tambem e o rastro —
+ * sem o texto, que e dado de saude.
+ */
+export const whatsappSends = pgTable(
+  'whatsapp_sends',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    caregiverId: uuid('caregiver_id')
+      .notNull()
+      .references(() => caregivers.id, { onDelete: 'cascade' }),
+    medicationId: uuid('medication_id').references(() => medications.id, { onDelete: 'cascade' }),
+    /** convite | dose | atraso | tomado | estoque */
+    kind: text('kind').notNull(),
+    /** O horario da dose a que a mensagem se refere (ou o dia, no estoque). */
+    slot: timestamp('slot', { withTimezone: true }),
+    /** enviando | enviada | falha */
+    status: text('status').notNull().default('enviando'),
+    error: text('error'),
+    sentAt: timestamp('sent_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex('whatsapp_sends_unique_idx').on(t.caregiverId, t.medicationId, t.kind, t.slot),
+  ],
+);
+
 /**
  * Compras de um remedio — a base do ESTOQUE.
  *
@@ -662,6 +728,12 @@ export const medicationStockEntries = pgTable(
   ],
 );
 
+/**
+ * Horarios fixos de um medicamento.
+ *
+ * Tabela separada em vez de array porque "08:00 e 20:00" precisa ser
+ * consultavel para gerar lembretes, e array nao se indexa bem para isso.
+ */
 export const medicationTimes = pgTable(
   'medication_times',
   {

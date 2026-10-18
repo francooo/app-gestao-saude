@@ -340,6 +340,7 @@ const RESUMO = [
   'Se você pedir para ler a foto de uma receita ou de uma caixa, a imagem também vai para a Groq, fora do Brasil, só para preencher o cadastro.',
   'Se usar "Descreva como tomar" no cadastro de um remédio, a frase escrita vai para a Groq só para preencher os horários.',
   'A foto da caixinha fica guardada no cadastro do remédio, e dá para removê-la. A da receita, só se você anexar.',
+  'Se você cadastrar um acompanhante, ele recebe por WhatsApp o primeiro nome da pessoa, o remédio e o horário — só os avisos que você marcou —, por meio de um provedor terceiro de envio.',
   'Apagar a conta remove tudo: pessoas, remédios, doses, receitas e conversas.',
 ];
 

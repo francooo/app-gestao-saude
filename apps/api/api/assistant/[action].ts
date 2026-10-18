@@ -3,6 +3,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { API_ERROR } from '../../src/contracts';
 import { fail, withErrorHandling } from '../../src/lib/http';
 
+import cronLembretes from '../../src/handlers/assistant/cron-lembretes';
 import historico from '../../src/handlers/assistant/historico';
 import lerFoto from '../../src/handlers/assistant/ler-foto';
 import mensagem from '../../src/handlers/assistant/mensagem';
@@ -36,6 +37,9 @@ const ROTAS: Record<string, (req: VercelRequest, res: VercelResponse) => Promise
   // "Descreva como tomar" no cadastro do remedio. Tambem nao e o assistente:
   // mora aqui pela vaga, com os proprios codigos POSOLOGY_*.
   posologia,
+  // Lembretes por WhatsApp, chamado a cada minuto pelo cron-job.org. Sem
+  // usuario logado: protegido por CRON_SECRET dentro do proprio handler.
+  'cron-lembretes': cronLembretes,
 };
 
 export default withErrorHandling(async (req: VercelRequest, res: VercelResponse) => {

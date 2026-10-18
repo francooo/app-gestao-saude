@@ -142,7 +142,7 @@ export type ApiErrorCode = (typeof API_ERROR)[keyof typeof API_ERROR];
  * quem seguisse ao pe da letra deixaria o packages/shared para tras, e todo
  * cadastro novo ja nasceria pedindo reaceite.
  */
-export const POLICY_VERSION = '2026-10-17';
+export const POLICY_VERSION = '2026-10-17.2';
 
 export const fullNameSchema = z
   .string()
@@ -623,6 +623,29 @@ export const PERGUNTAS_POR_DIA = 50;
  * silencio e melhor que uma tela de erro por um teto de custo.
  */
 export const BUSCAS_POR_DIA = 10;
+
+/**
+ * Acompanhante que recebe avisos pelo WhatsApp.
+ *
+ * O telefone chega como a pessoa digitou ("(11) 99999-1234"); o servidor
+ * normaliza e recusa o que nao for celular brasileiro. `fuso` e o fuso IANA do
+ * aparelho — o servidor precisa dele para saber quando e "08:00" da familia.
+ */
+export const acompanhanteSchema = z.object({
+  profileId: z.uuid({ message: 'Escolha para quem são os cuidados' }),
+  fullName: z.string().trim().min(2, { message: 'Informe o nome' }).max(120),
+  phone: z.string().trim().min(10, { message: 'Informe o WhatsApp com DDD' }).max(25),
+  relationship: z.string().trim().max(60).optional().nullable(),
+  notifyDose: z.boolean().optional(),
+  notifyLate: z.boolean().optional(),
+  notifyLowStock: z.boolean().optional(),
+  notifyTaken: z.boolean().optional(),
+  active: z.boolean().optional(),
+  fuso: z.string().trim().max(64).optional().nullable(),
+});
+
+/** Na edicao, a pessoa (profileId) nao muda: o acompanhante e de quem foi. */
+export const acompanhantePatchSchema = acompanhanteSchema.omit({ profileId: true }).partial();
 
 /**
  * Uma compra de remedio — entra no estoque.

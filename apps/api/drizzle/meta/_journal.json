@@ -134,6 +134,13 @@
       "when": 1792288494632,
       "tag": "0018_mixed_shatterstar",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1792289355525,
+      "tag": "0019_modern_micromacro",
+      "breakpoints": true
     }
   ]
 }
