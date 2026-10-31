@@ -118,6 +118,20 @@ export default withErrorHandling(async (req: VercelRequest, res: VercelResponse)
     {
       timeoutMs: PRAZO_DA_LEITURA_MS,
       modelo: MODELO_DE_VISAO,
+      /**
+       * SEM RACIOCINIO, e isso conserta um defeito medido, nao e economia.
+       *
+       * Com o 'low' padrao o qwen passou a raciocinar antes de responder, e
+       * numa receita de cinco remedios o raciocinio sozinho comeu o teto
+       * inteiro: o Groq devolve 400 ("max completion tokens reached before
+       * generating a valid document") e a pessoa le "nao consegui ler a
+       * foto". Com 'none' a mesma receita saiu completa em 615 tokens. Ler e
+       * transcrever nao pede raciocinio — e o esquema JSON ja guia a saida.
+       */
+      esforco: 'none',
+      // NAO SUBIR: esta conta tem OTPM de 1000 neste modelo, e o Groq recusa
+      // com 429 qualquer pedido cujo teto passe disso — medido com 1500. Sem
+      // raciocinio, 900 cobre ~7 remedios (~120 tokens cada).
       tetoDeSaida: 900,
       formatoDeResposta: ESQUEMA_DA_LEITURA,
     },

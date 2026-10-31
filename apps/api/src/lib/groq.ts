@@ -99,8 +99,11 @@ type Opcoes = {
    */
   modelo?: string;
   tetoDeSaida?: number;
-  /** `null` REMOVE o campo do corpo: nem todo modelo aceita reasoning_effort. */
-  esforco?: 'low' | 'medium' | 'high' | null;
+  /**
+   * `null` REMOVE o campo do corpo: nem todo modelo aceita reasoning_effort.
+   * 'none' DESLIGA o raciocinio — o qwen de visao aceita; o gpt-oss nao.
+   */
+  esforco?: 'none' | 'low' | 'medium' | 'high' | null;
   /** response_format, para quem precisa de JSON e nao de prosa. */
   formatoDeResposta?: unknown;
 };
