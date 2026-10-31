@@ -1,0 +1,12 @@
+01|A saúde da família inteira, na palma da sua mão!
+02|Tudo começa aqui. Para entrar, é só digitar o seu imeil e a sua senha.
+03|E o aplicativo guarda o seu acesso: abriu, já está dentro.
+04|Esqueceu a senha? Relaxa! A gente manda um link para o seu imeil, válido por trinta minutos.
+05|Primeira vez por aqui? Toque em criar conta. Seu nome, seu imeil, uma senha...
+06|aceite a política de privacidade, e pronto! Você já entra direto.
+07|E olha só a tela inicial!
+08|No topo, a família toda. Toque em alguém, e a tela mostra só o que é dela.
+09|Fotografe a receita, e a inteligência artificial preenche o cadastro para você.
+10|Ficou com dúvida? Pergunte ao Assistente de Saúde. E anote febre, dor, humor e sono no diário de sintomas.
+11|Logo abaixo, os remédios de hoje, os seus médicos e as próximas consultas.
+12|Gestão Saúde. Cuidando de quem você ama!

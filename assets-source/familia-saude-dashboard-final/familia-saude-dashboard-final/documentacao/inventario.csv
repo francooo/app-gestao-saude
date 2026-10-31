@@ -1,0 +1,9 @@
+ordem,pasta,nome,descricao,largura_px,altura_px,tamanho_bytes
+1,01-login,web-dashboard-login-familia-saude.png,Tela de login web,2560,1440,4069616
+2,02-visao-geral,web-dashboard-overview-revised-familia-saude.png,Visão geral revisada, sem notificações,2560,1440,3271575
+3,03-usuarios,web-dashboard-users-familia-saude.png,Gestão de usuários,2560,1440,3069595
+4,04-assinaturas,web-dashboard-subscriptions-familia-saude.png,Gestão de assinaturas,2560,1440,3112713
+5,05-medicamentos,web-dashboard-medications-familia-saude.png,Gestão de medicamentos,2560,1440,3360768
+6,06-medicos,web-dashboard-doctors-familia-saude.png,Gestão de médicos,2560,1440,3151492
+7,07-relatorios,web-dashboard-reports-familia-saude.png,Relatórios,2560,1440,3021863
+8,08-configuracoes,web-dashboard-settings-familia-saude.png,Configurações,2560,1440,3395096

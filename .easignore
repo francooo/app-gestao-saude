@@ -34,3 +34,6 @@ Thumbs.db
 # --- so do build ---
 # Mockups de design (PNG de 1440x2560): referencia, nao asset do app.
 assets-source/
+
+# Skills do Claude Code (o /brag traz ~17 MB de audio): nao fazem parte do app.
+.claude/

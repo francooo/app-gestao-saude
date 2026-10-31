@@ -1,0 +1,140 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>Trilha</title></head><body>
+<script>
+'use strict';
+// D maior, 96 BPM: tempo 0.625 s, compasso 2.5 s, 22 compassos = 55 s.
+const SR=44100, DUR=55, BEAT=60/96, BAR=BEAT*4;
+const mtof=m=>440*Math.pow(2,(m-69)/12);
+const CHORDS=[[50,54,57,62],[49,52,57,64],[50,54,59,62],[50,55,59,62]]; // D A Bm G
+const ROOTS=[38,45,47,43];
+const MEL=[[[78,0],[76,1.5],[74,2]],[[76,0],[73,1.5],[69,2.5]],[[74,0],[78,1.5],[81,2]],[[79,0],[78,1],[74,2.5]]];
+const TAPS=[11.25,12.5,14.375,16.25,21.875,23.75,30.0,36.875,39.375,43.75,45.0,48.125,48.75,49.375];
+const CUTS=[5,10,15,22.5,27.5,32.5,37.5,42.5,47.5,50];
+const POPS=[10.9375,24.6875,28.4375,39.6875,45.625];
+
+function impulse(ctx,sec,decay){
+  const n=Math.floor(SR*sec),b=ctx.createBuffer(2,n,SR);
+  for(let c=0;c<2;c++){const d=b.getChannelData(c);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/n,decay)}
+  return b;
+}
+function noiseBuf(ctx){const n=SR*2,b=ctx.createBuffer(1,n,SR),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=Math.random()*2-1;return b}
+
+window.renderMusic=async function(){
+  const ctx=new OfflineAudioContext(2,SR*DUR,SR);
+  const master=ctx.createGain();master.gain.value=.9;
+  const comp=ctx.createDynamicsCompressor();comp.threshold.value=-16;comp.ratio.value=3;comp.attack.value=.01;comp.release.value=.2;
+  master.connect(comp);comp.connect(ctx.destination);
+  const rev=ctx.createConvolver();rev.buffer=impulse(ctx,2.6,3);const revG=ctx.createGain();revG.gain.value=.32;rev.connect(revG);revG.connect(master);
+  const NB=noiseBuf(ctx);
+  const out=(node,g,send=0)=>{const gn=ctx.createGain();gn.gain.value=g;node.connect(gn);gn.connect(master);if(send){const s=ctx.createGain();s.gain.value=send;gn.connect(s);s.connect(rev)}return gn};
+
+  // --- instrumentos ---
+  function pad(t,dur,notes,g){
+    const lp=ctx.createBiquadFilter();lp.type='lowpass';lp.frequency.value=1100;lp.Q.value=.4;
+    const env=ctx.createGain();env.gain.setValueAtTime(0,t);env.gain.linearRampToValueAtTime(g,t+.5);env.gain.setValueAtTime(g,t+dur-.1);env.gain.exponentialRampToValueAtTime(.0001,t+dur+1.2);
+    lp.connect(env);out(env,1,.6);
+    for(const m of notes)for(const det of [-7,7]){const o=ctx.createOscillator();o.type='sawtooth';o.frequency.value=mtof(m);o.detune.value=det;o.connect(lp);o.start(t);o.stop(t+dur+1.3)}
+  }
+  function pluck(t,m,g,send=.35){
+    const o=ctx.createOscillator();o.type='triangle';o.frequency.value=mtof(m);
+    const o2=ctx.createOscillator();o2.type='sine';o2.frequency.value=mtof(m)*2;
+    const e=ctx.createGain();e.gain.setValueAtTime(0,t);e.gain.linearRampToValueAtTime(g,t+.005);e.gain.exponentialRampToValueAtTime(.0001,t+.55);
+    const e2=ctx.createGain();e2.gain.value=.25;o.connect(e);o2.connect(e2);e2.connect(e);out(e,1,send);
+    o.start(t);o2.start(t);o.stop(t+.6);o2.stop(t+.6);
+  }
+  function bell(t,m,g,len=1.6,send=.5){
+    [[1,1],[2,.32],[3.01,.12],[4.2,.05]].forEach(([r,a])=>{
+      const o=ctx.createOscillator();o.type='sine';o.frequency.value=mtof(m)*r;
+      const e=ctx.createGain();e.gain.setValueAtTime(0,t);e.gain.linearRampToValueAtTime(g*a,t+.004);e.gain.exponentialRampToValueAtTime(.0001,t+len/r);
+      o.connect(e);out(e,1,send);o.start(t);o.stop(t+len+.1);
+    });
+  }
+  function bass(t,m,dur,g){
+    const o=ctx.createOscillator();o.type='sine';o.frequency.value=mtof(m);
+    const o2=ctx.createOscillator();o2.type='triangle';o2.frequency.value=mtof(m)*2;
+    const e=ctx.createGain();e.gain.setValueAtTime(0,t);e.gain.linearRampToValueAtTime(g,t+.012);e.gain.setValueAtTime(g,t+dur*.7);e.gain.exponentialRampToValueAtTime(.0001,t+dur);
+    const e2=ctx.createGain();e2.gain.value=.18;o.connect(e);o2.connect(e2);e2.connect(e);out(e,1);
+    o.start(t);o2.start(t);o.stop(t+dur+.05);o2.stop(t+dur+.05);
+  }
+  function kick(t,g){
+    const o=ctx.createOscillator();o.frequency.setValueAtTime(130,t);o.frequency.exponentialRampToValueAtTime(48,t+.12);
+    const e=ctx.createGain();e.gain.setValueAtTime(g,t);e.gain.exponentialRampToValueAtTime(.0001,t+.38);o.connect(e);out(e,1);o.start(t);o.stop(t+.4);
+  }
+  function noise(t,len,g,type,freq,q=1,send=0){
+    const s=ctx.createBufferSource();s.buffer=NB;s.loopStart=0;const f=ctx.createBiquadFilter();f.type=type;f.frequency.value=freq;f.Q.value=q;
+    const e=ctx.createGain();e.gain.setValueAtTime(g,t);e.gain.exponentialRampToValueAtTime(.0001,t+len);s.connect(f);f.connect(e);out(e,1,send);
+    s.start(t,Math.random());s.stop(t+len+.02);return f;
+  }
+  function whoosh(tEnd,g){
+    const t=tEnd-.4,s=ctx.createBufferSource();s.buffer=NB;const f=ctx.createBiquadFilter();f.type='bandpass';f.Q.value=1.2;
+    f.frequency.setValueAtTime(350,t);f.frequency.exponentialRampToValueAtTime(2600,tEnd);f.frequency.exponentialRampToValueAtTime(900,tEnd+.3);
+    const e=ctx.createGain();e.gain.setValueAtTime(.0001,t);e.gain.exponentialRampToValueAtTime(g,tEnd-.02);e.gain.exponentialRampToValueAtTime(.0001,tEnd+.35);
+    s.connect(f);f.connect(e);out(e,1,.4);s.start(t,.3);s.stop(tEnd+.4);
+  }
+  function tap(t,g=.11){
+    const o=ctx.createOscillator();o.type='sine';o.frequency.setValueAtTime(1760,t);o.frequency.exponentialRampToValueAtTime(880,t+.04);
+    const e=ctx.createGain();e.gain.setValueAtTime(g,t);e.gain.exponentialRampToValueAtTime(.0001,t+.07);o.connect(e);out(e,1,.15);o.start(t);o.stop(t+.08);
+    noise(t,.03,g*.5,'bandpass',3200,2,.1);
+  }
+  function pop(t,g=.08){
+    const o=ctx.createOscillator();o.type='sine';o.frequency.setValueAtTime(587,t);o.frequency.exponentialRampToValueAtTime(1175,t+.08);
+    const e=ctx.createGain();e.gain.setValueAtTime(0,t);e.gain.linearRampToValueAtTime(g,t+.01);e.gain.exponentialRampToValueAtTime(.0001,t+.18);o.connect(e);out(e,1,.3);o.start(t);o.stop(t+.2);
+  }
+
+  // --- arranjo ---
+  const nBars=22;
+  for(let b=0;b<nBars;b++){
+    const t0=b*BAR,c=b%4,ch=CHORDS[c];
+    const finalBar=b>=21;
+    if(b<21)pad(t0,BAR,ch,b<2?.022:.028);
+    // arpejo em colcheias
+    if(b<21){const pat=[0,1,2,3,2,1,2,3];for(let i=0;i<8;i++){const g=(b<2?.05:.075)*(i%2?.75:1);pluck(t0+i*BEAT/2,ch[pat[i]]+12,g)}}
+    // bateria e baixo
+    if(b>=2&&b<21){
+      kick(t0,b<4?.45:.6);
+      if(b>=4){kick(t0+2*BEAT,.55);
+        noise(t0+BEAT,.16,.14,'bandpass',1800,.8,.3);noise(t0+3*BEAT,.16,.14,'bandpass',1800,.8,.3);
+        for(let i=0;i<8;i++)noise(t0+i*BEAT/2,.05,i%2?.035:.022,'highpass',7000,.7);
+        bass(t0,ROOTS[c],BEAT*1.4,.26);bass(t0+1.5*BEAT,ROOTS[c],BEAT*.45,.2);bass(t0+2*BEAT,ROOTS[c],BEAT*1.4,.26);bass(t0+3.5*BEAT,ROOTS[c]+(c===0?7:0),BEAT*.45,.2);
+      }else bass(t0,ROOTS[c],BAR*.95,.22);
+    }
+    // sino de melodia a partir de 30 s
+    if(b>=12&&b<21)for(const [m,bt] of MEL[c])bell(t0+bt*BEAT,m,.075,1.4);
+  }
+  // final: acorde de D sustentado + sino
+  pad(52.5,1.6,[50,54,57,62,66],.03);bass(52.5,38,2.4,.22);bell(52.5,74,.12,2.4);bell(52.5,86,.05,2.0);
+  kick(50,.6);noise(50,1.6,.05,'highpass',5000,.5,.5); // prato suave na virada para o encerramento
+  // subida para o celular (8.75 -> 10)
+  {const s=ctx.createBufferSource();s.buffer=NB;const f=ctx.createBiquadFilter();f.type='bandpass';f.Q.value=.9;f.frequency.setValueAtTime(300,8.75);f.frequency.exponentialRampToValueAtTime(3500,10);
+   const e=ctx.createGain();e.gain.setValueAtTime(.0001,8.75);e.gain.exponentialRampToValueAtTime(.06,9.98);e.gain.exponentialRampToValueAtTime(.0001,10.3);s.connect(f);f.connect(e);out(e,1,.4);s.start(8.75);s.stop(10.4)}
+
+  // --- efeitos ---
+  bell(.3125,81,.13,1.6);bell(1.25,86,.13,1.6);bell(2.1875,90,.13,1.6);
+  for(const c of CUTS)whoosh(c,.05);
+  for(const t of TAPS)tap(t);
+  noise(16.25,.05,.12,'highpass',2500,.7,.2);noise(16.34375,.08,.1,'highpass',2000,.7,.2); // obturador
+  [[17.5,86],[18.125,90],[18.75,93]].forEach(([t,m])=>pluck(t,m,.05,.5));
+  [86,90,93,98].forEach((m,i)=>bell(19.375+i*BEAT/4,m,.09,1.2)); // IA pronta
+  bell(24.0625,81,.08,1.0);bell(24.21875,86,.08,1.2);              // dose tomada
+  bell(33.75,90,.08,1.0);bell(35.0,93,.08,1.0);                   // mensagens
+  for(const t of POPS)pop(t);
+  for(let i=0;i<8;i++)tap(37.8125+i*BEAT/4,.035);                   // digitação
+  bell(51.0,86,.08,1.6);
+
+  const buf=await ctx.startRendering();
+  // normaliza para -1 dBFS, com fade final curto
+  let peak=0;for(let c=0;c<2;c++){const d=buf.getChannelData(c);for(let i=0;i<d.length;i++)peak=Math.max(peak,Math.abs(d[i]))}
+  const k=.89/peak,fade=Math.floor(SR*.6);
+  const n=buf.length,data=new DataView(new ArrayBuffer(44+n*4));
+  const W=(o,s)=>{for(let i=0;i<s.length;i++)data.setUint8(o+i,s.charCodeAt(i))};
+  W(0,'RIFF');data.setUint32(4,36+n*4,true);W(8,'WAVEfmt ');data.setUint32(16,16,true);data.setUint16(20,1,true);data.setUint16(22,2,true);
+  data.setUint32(24,SR,true);data.setUint32(28,SR*4,true);data.setUint16(32,4,true);data.setUint16(34,16,true);W(36,'data');data.setUint32(40,n*4,true);
+  const L=buf.getChannelData(0),R=buf.getChannelData(1);
+  for(let i=0;i<n;i++){const f=i>n-fade?(n-i)/fade:1;
+    data.setInt16(44+i*4,Math.max(-1,Math.min(1,L[i]*k*f))*32767,true);data.setInt16(46+i*4,Math.max(-1,Math.min(1,R[i]*k*f))*32767,true)}
+  const bytes=new Uint8Array(data.buffer);let s='';const CH=0x8000;
+  for(let i=0;i<bytes.length;i+=CH)s+=String.fromCharCode.apply(null,bytes.subarray(i,i+CH));
+  return btoa(s);
+};
+window.ready=Promise.resolve();
+</script></body></html>

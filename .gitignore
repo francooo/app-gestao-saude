@@ -29,3 +29,7 @@ packages/*/dist/
 .DS_Store
 Thumbs.db
 *.log
+
+# Python (ambientes virtuais gerados pelo /brag)
+.venv/
+__pycache__/

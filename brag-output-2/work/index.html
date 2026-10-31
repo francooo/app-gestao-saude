@@ -1,0 +1,357 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Gestão Saúde — Login e Início</title>
+<style>
+@font-face{font-family:N;src:url(fonts/Nunito_400Regular.ttf);font-weight:400}
+@font-face{font-family:N;src:url(fonts/Nunito_600SemiBold.ttf);font-weight:600}
+@font-face{font-family:N;src:url(fonts/Nunito_700Bold.ttf);font-weight:700}
+@font-face{font-family:N;src:url(fonts/Nunito_800ExtraBold.ttf);font-weight:800}
+@font-face{font-family:N;src:url(fonts/Nunito_900Black.ttf);font-weight:900}
+html,body{margin:0;padding:0;background:#000;overflow:hidden}
+*{box-sizing:border-box}
+#stage{position:relative;width:1080px;height:1920px;overflow:hidden;font-family:N,sans-serif;
+  background:linear-gradient(180deg,#EDE8CB 0%,#DCD9B0 22%,#ABAE78 52%,#8E9A63 100%)}
+.abs{position:absolute;left:0;top:0}
+.leaf{position:absolute}
+.phone{position:absolute;left:246px;top:560px;width:588px;height:1241px;border-radius:80px;background:#1d2618;
+  box-shadow:0 50px 90px rgba(28,38,18,.45),0 12px 24px rgba(28,38,18,.25),inset 0 0 0 3px #3a4630;transform-origin:50% 0}
+.screen{position:absolute;left:14px;top:14px;width:560px;height:1213px;border-radius:66px;overflow:hidden;background:#7F8E5C}
+.view{position:absolute;left:0;top:0;transform-origin:0 0;overflow:hidden}
+/* ---- telas de autenticacao, em dp (393 x 851) ---- */
+.dp{width:393px;height:851px;background:#7F8E5C;font-family:N}
+.ill{position:absolute;left:0;right:0;bottom:0;background:url(screens/login-bg.jpg) center bottom/cover}
+.ill:before{content:'';position:absolute;left:0;right:0;top:0;height:28px;background:linear-gradient(#7F8E5C,rgba(127,142,92,0))}
+.cardArea{position:absolute;left:24px;right:24px}
+.glass{background:rgba(245,243,230,.78);border-radius:28px;border:.5px solid rgba(255,255,255,.35);padding:24px 20px;
+  box-shadow:0 8px 20px rgba(44,53,32,.18)}
+.ttl{font-weight:800;font-size:30px;letter-spacing:-.3px;color:#39432C;text-align:center;margin-bottom:24px;line-height:1.25}
+.subt{font-weight:400;font-size:15px;color:#5A6449;text-align:center;margin:-18px 0 22px;line-height:1.4}
+.pi{margin-bottom:16px}
+.pi .lb{font-weight:700;font-size:15px;color:#39432C;margin-bottom:8px}
+.pi .fld{display:flex;align-items:center;height:56px;border-radius:999px;border:1px solid rgba(110,124,84,.38);background:rgba(255,253,245,.88);padding:0 16px}
+.pi .fld svg{flex:none}
+.pi .tx{flex:1;margin-left:12px;font-size:16px;color:#39432C;white-space:nowrap;overflow:hidden;position:relative;height:22px;line-height:22px}
+.pi .ph{color:#878F78;position:absolute;left:0;top:0}
+.pi .val{position:absolute;left:0;top:0}
+.pi .val.dots{letter-spacing:2px;font-weight:800}
+.caret{display:inline-block;width:2px;height:20px;background:#B78842;vertical-align:-4px;margin-left:1px}
+.lnk{font-weight:700;font-size:14px;color:#52613C;text-decoration:underline}
+.btn{margin-top:24px;height:58px;border-radius:999px;background:#B78842;box-shadow:0 4px 8px rgba(92,67,24,.25);
+  display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;color:#fff;position:relative}
+.spin{width:24px;height:24px;border-radius:50%;border:3px solid rgba(255,255,255,.35);border-top-color:#fff;position:absolute}
+.ctr{text-align:center;margin-top:16px}
+.cons{display:flex;align-items:flex-start;padding:4px 0}
+.cons .box{width:22px;height:22px;border-radius:7px;border:1.5px solid #5A6449;background:rgba(255,253,245,.88);margin:2px 12px 0 0;flex:none;padding:2px}
+.cons .t{font-weight:600;font-size:13px;line-height:19px;color:#5A6449}
+.sbar{position:absolute;left:0;top:0;width:393px;height:32px;display:flex;align-items:center;justify-content:space-between;padding:0 26px;font-weight:800;font-size:15px}
+/* ---- legendas e cartoes do palco ---- */
+.cap{position:absolute;left:0;width:1080px;text-align:center;top:214px}
+.eyebrow{display:inline-block;padding:12px 30px;border-radius:40px;background:#1E603E;color:#F8F3DE;font-weight:800;font-size:30px;letter-spacing:3px;text-transform:uppercase}
+.headline{font-weight:900;font-size:72px;line-height:1.06;color:#1F3A22;margin-top:20px;letter-spacing:-.5px}
+.sub{font-weight:700;font-size:36px;color:#3E5A35;margin-top:12px}
+.callout{position:absolute;overflow:hidden;border-radius:38px;background:#F8F3DE;box-shadow:0 34px 70px rgba(28,38,18,.42),0 0 0 4px rgba(255,255,255,.75);transform-origin:50% 50%}
+.badge{position:absolute;left:120px;width:840px;height:190px;border-radius:44px;background:#F8F3DE;display:flex;align-items:center;gap:30px;padding:0 36px;
+  box-shadow:0 34px 70px rgba(28,38,18,.42),0 0 0 4px rgba(255,255,255,.75)}
+.badge .ic{width:120px;height:120px;border-radius:34px;background:#1E603E;display:flex;align-items:center;justify-content:center;flex:none}
+.tapdot{position:absolute;border-radius:50%;background:rgba(255,255,255,.85);box-shadow:0 0 0 5px rgba(30,96,62,.35),0 6px 18px rgba(0,0,0,.25)}
+.tapring{position:absolute;border-radius:50%;border-style:solid;border-color:rgba(255,255,255,.9)}
+.hl{position:absolute;border-radius:60px;border:10px solid #F8F3DE;box-shadow:0 0 0 6px rgba(30,96,62,.55),0 0 50px rgba(255,240,190,.8)}
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<script>
+'use strict';
+const clamp=(x,a=0,b=1)=>Math.min(b,Math.max(a,x));
+const prog=(t,a,b)=>clamp((t-a)/(b-a));
+const eOut=x=>1-Math.pow(1-x,3), eIn=x=>x*x*x, eIO=x=>x<.5?4*x*x*x:1-Math.pow(-2*x+2,3)/2;
+const eBack=x=>{const c1=1.55,c3=c1+1;return 1+c3*Math.pow(x-1,3)+c1*Math.pow(x-1,2)};
+const lerp=(a,b,x)=>a+(b-a)*x;
+const stage=document.getElementById('stage');
+const el=(tag,cls,parent,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;(parent||stage).appendChild(e);return e};
+const css=(e,o)=>{for(const k in o)e.style[k]=o[k]};
+const typed=(t,t0,t1,s)=>s.slice(0,Math.round(clamp((t-t0)/(t1-t0))*s.length));
+
+// Feather (os mesmos icones do app)
+const FE={
+  mail:'<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>',
+  lock:'<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  user:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>',
+  eye:'<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>',
+  check:'<polyline points="20 6 9 17 4 12"/>',
+  activity:'<polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>',
+  chev:'<polyline points="9 18 15 12 9 6"/>',
+  shield:'<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/>',
+};
+const fe=(n,size,color,w=2)=>`<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${FE[n]}</svg>`;
+
+// posicao de um elemento dentro da raiz da tela, em unidades da tela (sem escala)
+function posOf(e,root){let x=0,y=0;while(e&&e!==root){x+=e.offsetLeft;y+=e.offsetTop;e=e.offsetParent}return {x,y}}
+
+// ---------- toques ----------
+class Taps{
+  constructor(root,size){this.root=root;this.s=size;this.list=[]}
+  add(t0,getXY){const ring=el('div','tapring',this.root),dot=el('div','tapdot',this.root);ring.style.borderWidth=(this.s*.07)+'px';this.list.push({t0,getXY,ring,dot})}
+  update(t){
+    for(const k of this.list){
+      const d=t-k.t0;
+      if(d<-.18||d>.75){k.dot.style.opacity=0;k.ring.style.opacity=0;continue}
+      const {x,y}=k.getXY();const press=d<0?1.25-(d+.18)/.18*.3:.95,dr=this.s*press;
+      css(k.dot,{width:dr+'px',height:dr+'px',left:(x-dr/2)+'px',top:(y-dr/2)+'px',opacity:d<0?eOut((d+.18)/.18):1-eIn(prog(d,.2,.55))});
+      const rp=prog(d,0,.6),rr=this.s*(1+eOut(rp)*1.7);
+      css(k.ring,{width:rr+'px',height:rr+'px',left:(x-rr/2)+'px',top:(y-rr/2)+'px',opacity:d<0?0:(1-rp)*.9});
+    }
+  }
+}
+const center=(e,root,dx=0,dy=0)=>()=>{const p=posOf(e,root);return {x:p.x+e.offsetWidth/2+dx,y:p.y+e.offsetHeight/2+dy}};
+
+// ---------- telas de autenticacao ----------
+function statusBar(root,color){el('div','sbar',root,`<span style="color:${color}">9:41</span><span style="display:flex;gap:6px;align-items:center">
+  <svg width="18" height="12" viewBox="0 0 18 12"><g fill="${color}"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5" width="3" height="7" rx="1"/><rect x="10" y="2.5" width="3" height="9.5" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></g></svg>
+  <svg width="26" height="13" viewBox="0 0 26 13"><rect x=".5" y=".5" width="22" height="12" rx="3.5" fill="none" stroke="${color}" opacity=".6"/><rect x="2.5" y="2.5" width="17" height="8" rx="2" fill="${color}"/><rect x="23.5" y="4" width="2" height="5" rx="1" fill="${color}" opacity=".6"/></svg></span>`)}
+
+function pillInput(parent,label,icon,ph,secure){
+  const w=el('div','pi',parent,`<div class="lb">${label}</div><div class="fld">${fe(icon,20,'#5A6449')}<div class="tx"><span class="ph">${ph}</span><span class="val${secure?' dots':''}"></span></div>${secure?fe('eye',20,'#5A6449'):''}</div>`);
+  const fld=w.querySelector('.fld'),phE=w.querySelector('.ph'),val=w.querySelector('.val');
+  return {w,fld,set(text,focused,caretOn){phE.style.display=text?'none':'block';val.innerHTML=(secure?'•'.repeat(text.length):text)+(focused&&caretOn?'<span class="caret"></span>':'');
+    fld.style.borderColor=focused?'#B78842':'rgba(110,124,84,.38)';fld.style.borderWidth=focused?'1.5px':'1px';
+    if(focused&&!text)phE.innerHTML=(caretOn?'<span class="caret" style="margin:0 2px 0 -1px"></span>':'')+phE.dataset.ph; else phE.innerHTML=phE.dataset.ph;},init(){phE.dataset.ph=ph}};
+}
+const caretOn=t=>Math.floor(t*2.4)%2===0;
+const SC=560/393;
+
+class LoginView{
+  constructor(parent){
+    const r=this.root=el('div','view dp',parent);r.style.transform=`scale(${SC})`;
+    const card=el('div','cardArea',r);card.style.top='48px';
+    const g=el('div','glass',card);el('div','ttl',g,'Bem-vinda');
+    this.email=pillInput(g,'E-mail','mail','Digite seu e-mail');this.email.init();
+    this.pass=pillInput(g,'Senha','lock','Digite sua senha',true);this.pass.init();
+    const lw=el('div','',g);css(lw,{textAlign:'right',marginTop:'-8px'});this.esq=el('span','lnk',lw,'Esqueci minha senha');
+    this.btn=el('div','btn',g,'Entrar');
+    const c=el('div','ctr',g,'<span style="font-size:14px;color:#5A6449">Ainda não tem conta? </span>');this.criar=el('span','lnk',c,'Criar conta');
+    this.card=card;statusBar(r,'#F8F3DE');
+    const ill=el('div','ill',r);r.insertBefore(ill,r.firstChild);this.ill=ill;
+    this.taps=new Taps(r,46);
+    this.taps.add(11.3,center(this.esq,r));this.taps.add(20.1,center(this.criar,r));
+    this.taps.add(5.0,center(this.email.fld,r));this.taps.add(6.55,center(this.pass.fld,r));
+  }
+  layout(){this.ill.style.top=(48+this.card.offsetHeight-6)+'px'}
+  update(t){
+    const filled=t>=5.2;
+    const e=typed(t,5.2,6.45,'ana.clara@email.com'),p=typed(t,6.6,7.35,'aninha24');
+    const fE=t>=5.0&&t<6.55,fP=t>=6.55&&t<11.2;
+    this.email.set(e,fE,caretOn(t));this.pass.set(p,fP,caretOn(t));
+    this.taps.update(t);
+  }
+}
+class ForgotView{
+  constructor(parent){
+    const r=this.root=el('div','view dp',parent);r.style.transform=`scale(${SC})`;
+    const card=el('div','cardArea',r);card.style.top='48px';this.card=card;
+    const g=el('div','glass',card);
+    this.form=el('div','',g);el('div','ttl',this.form,'Esqueci minha senha');el('div','subt',this.form,'Informe seu e-mail para receber o link de redefinição.').style.margin='-12px 0 22px';
+    this.email=pillInput(this.form,'E-mail','mail','Digite seu e-mail');this.email.init();
+    this.btn=el('div','btn',this.form,'<span class="bl">Enviar link de redefinição</span>');this.btn.style.marginTop='8px';
+    this.spin=el('div','spin',this.btn);
+    el('div','ctr',this.form,'<span class="lnk">Voltar para o login</span>');
+    this.sent=el('div','',g);css(this.sent,{position:'absolute',left:'0',right:'0',top:'0',padding:'24px 20px'});
+    el('div','ttl',this.sent,'Confira seu e-mail');el('div','subt',this.sent,'Se houver uma conta com esse e-mail, enviamos um link para criar uma nova senha. O link vale por 30 minutos.').style.margin='-12px 0 0';
+    this.back=el('div','btn',this.sent,'Voltar ao login');
+    g.style.position='relative';g.style.overflow='hidden';this.g=g;
+    statusBar(r,'#F8F3DE');const ill=el('div','ill',r);r.insertBefore(ill,r.firstChild);this.ill=ill;
+    this.taps=new Taps(r,46);this.taps.add(13.55,center(this.email.fld,r));this.taps.add(14.85,center(this.btn,r));this.taps.add(17.3,center(this.back,r));
+  }
+  layout(){this.g.style.height='auto';this.hForm=this.g.offsetHeight;this.hSent=this.sent.offsetHeight;this.ill.style.top=(48+this.hForm-6)+'px'}
+  update(t){
+    const k=eIO(prog(t,15.25,15.7)),h=lerp(this.hForm,this.hSent,k);
+    this.g.style.height=h+'px';this.ill.style.top=(48+h-6)+'px';
+    this.email.set(typed(t,13.75,14.6,'ana.clara@email.com'),t>=13.55&&t<14.85,caretOn(t));
+    const loading=t>=14.9&&t<15.25;this.spin.style.display=loading?'block':'none';this.btn.querySelector('.bl').style.opacity=loading?0:1;
+    if(loading)this.spin.style.transform=`rotate(${t*900}deg)`;
+    const s=eOut(prog(t,15.25,15.6));this.form.style.opacity=1-s;this.sent.style.opacity=s;this.sent.style.transform=`translateY(${(1-s)*14}px)`;
+    this.taps.update(t);
+  }
+}
+class SignupView{
+  constructor(parent){
+    const r=this.root=el('div','view dp',parent);r.style.transform=`scale(${SC})`;
+    const sc=this.scroll=el('div','abs',r);css(sc,{width:'393px'});
+    const card=el('div','cardArea',sc);card.style.top='44px';this.card=card;
+    const g=el('div','glass',card);el('div','ttl',g,'Criar sua conta').style.marginBottom='4px';el('div','subt',g,'Preencha os dados para começar.').style.margin='0 0 22px';
+    this.nome=pillInput(g,'Nome completo','user','Como você se chama');this.nome.init();
+    this.email=pillInput(g,'E-mail','mail','Digite seu e-mail');this.email.init();
+    this.s1=pillInput(g,'Senha','lock','Crie uma senha',true);this.s1.init();
+    this.s2=pillInput(g,'Confirmar senha','lock','Repita sua senha',true);this.s2.init();
+    const cons=el('div','cons',g,`<div class="box"></div><div class="t">Li e aceito a política de privacidade, e autorizo o tratamento dos meus dados de saúde para acompanhamento no aplicativo.</div>`);
+    this.box=cons.querySelector('.box');
+    this.btn=el('div','btn',g,'<span class="bl">Criar conta</span>');this.spin=el('div','spin',this.btn);
+    el('div','ctr',g,'<span class="lnk">Já tenho uma conta</span>');
+    statusBar(r,'#F8F3DE');const ill=el('div','ill',sc);sc.insertBefore(ill,sc.firstChild);this.ill=ill;
+    this.taps=new Taps(sc,46);this.taps.add(20.75,center(this.nome.fld,sc));this.taps.add(24.1,center(this.box,sc));this.taps.add(25.6,center(this.btn,sc));
+  }
+  layout(){const h=44+this.card.offsetHeight;this.ill.style.top=(h-6)+'px';this.ill.style.height=Math.max(200,851-h+120)+'px';this.ill.style.bottom='auto';
+    this.max=Math.max(0,h+200-851);}
+  update(t){
+    const c=caretOn(t);
+    this.nome.set(typed(t,20.9,21.55,'Ana Clara Souza'),t>=20.75&&t<21.6,c);
+    this.email.set(typed(t,21.65,22.3,'ana.clara@email.com'),t>=21.6&&t<22.32,c);
+    this.s1.set(typed(t,22.35,22.75,'aninha24'),t>=22.32&&t<22.9,c);
+    this.s2.set(typed(t,22.95,23.45,'aninha24'),t>=22.9&&t<23.6,c);
+    const on=t>=24.15;css(this.box,{background:on?'#B78842':'rgba(255,253,245,.88)',borderColor:on?'#B78842':'#5A6449'});this.box.innerHTML=on?fe('check',15,'#fff',3.2):'';
+    const loading=t>=25.7;this.spin.style.display=loading?'block':'none';this.btn.querySelector('.bl').style.opacity=loading?0:1;if(loading)this.spin.style.transform=`rotate(${t*900}deg)`;
+    this.scroll.style.transform=`translateY(${-eIO(prog(t,22.2,23.7))*this.max}px)`;
+    this.taps.update(t);
+  }
+}
+
+// ---------- tela inicial (coordenadas do mock, 1440 de largura) ----------
+const HS=560/1440;
+const HOME='screens/home-screen-prescription-ai-entry.png';
+function crop(parent,src,sy,sh,y,{x=0,w=1440,sx=0,feather=0,radius=0}={}){
+  const d=el('div','abs',parent);css(d,{left:x+'px',top:y+'px',width:w+'px',height:sh+'px',overflow:'hidden',borderRadius:radius+'px',
+    backgroundImage:`url(${src})`,backgroundPosition:`${-sx}px ${-sy}px`,backgroundSize:'1440px 2560px'});
+  if(feather)d.style.webkitMaskImage=`linear-gradient(180deg,transparent 0,#000 ${feather}px,#000 calc(100% - ${feather}px),transparent 100%)`;
+  return d;
+}
+const COL={diario:1696,seg2:1906,medHead:2251,medCard:2341,seg3:2665,end:3240};
+class HomeView{
+  constructor(parent,withTaps=true){
+    const r=this.root=el('div','view',parent);css(r,{width:'1440px',height:'3119px',background:'linear-gradient(180deg,#96A06A,#ABAE78 45%,#E2DDB9)'});
+    r.style.transform=`scale(${HS})`;
+    const c=this.col=el('div','abs',r);css(c,{width:'1440px',height:COL.end+'px'});
+    // folhas laterais do fundo, como o ScreenBackground
+    for(const [f,x,y,w,rot] of [['ramo-a.png',-170,1700,420,8],['ramo-b.png',1130,2250,400,-10],['ramo-c.png',-120,2650,330,14]]){const i=el('img','abs',c);i.src='screens/'+f;css(i,{left:x+'px',top:y+'px',width:w+'px',opacity:.55,transform:`rotate(${rot}deg)`})}
+    crop(c,HOME,0,1690,0,{feather:0}).style.webkitMaskImage='linear-gradient(180deg,#000 calc(100% - 40px),transparent)';
+    // textos reais do AssistantCard por cima do mock
+    const p1=el('div','abs',c);css(p1,{left:'318px',top:'1388px',width:'700px',height:'64px',borderRadius:'12px',background:'linear-gradient(90deg,#af7a35,#94803f 45%,#76773f)',boxShadow:'0 0 10px 6px rgba(150,125,62,.6)'});
+    const t1=el('div','abs',c,'Tire dúvidas sobre remédios e consultas');css(t1,{left:'330px',top:'1392px',fontWeight:'600',fontSize:'34px',color:'#FBF6E6',whiteSpace:'nowrap'});
+    const p2=el('div','abs',c);css(p2,{left:'188px',top:'1516px',width:'700px',height:'62px',background:'#f4efd6',boxShadow:'0 0 8px 6px #f4efd6'});
+    const t2=el('div','abs',c,'Ex.: quando é a próxima dose do Lucas?');css(t2,{left:'202px',top:'1522px',fontWeight:'400',fontSize:'32px',color:'#878F78',whiteSpace:'nowrap'});
+    // Diario de sintomas (inicio.tsx)
+    const d=el('div','abs',c);css(d,{left:'100px',top:COL.diario+'px',width:'1240px',height:'200px',borderRadius:'72px',background:'rgba(248,243,222,.9)',
+      boxShadow:'0 10px 30px rgba(44,53,32,.12)',display:'flex',alignItems:'center',padding:'0 54px',gap:'44px'});
+    d.innerHTML=`<div style="width:130px;height:130px;border-radius:36px;background:#D8DCBE;display:flex;align-items:center;justify-content:center;flex:none">${fe('activity',64,'#7B8F63',2.2)}</div>
+      <div style="flex:1"><div style="font-weight:700;font-size:46px;color:#2E4D30">Diário de sintomas</div><div style="font-size:34px;color:#5A6449;margin-top:4px">Anote febre, dor, humor e sono</div></div>${fe('chev',64,'#1E603E',2.4)}`;
+    this.diario=d;
+    crop(c,HOME,1660,345,COL.seg2,{feather:30});
+    const mh=el('div','abs',c,`<span>Médicos</span><span style="color:#2E8A62;font-weight:700;font-size:40px">Ver todos ›</span>`);
+    css(mh,{left:'106px',top:COL.medHead+'px',width:'1220px',display:'flex',justifyContent:'space-between',alignItems:'center',fontWeight:'800',fontSize:'48px',color:'#2E4D30'});
+    crop(c,'screens/doctors-screen-family-health.png',1259,314,COL.medCard,{x:96,w:1248,sx:96,radius:60});
+    crop(c,HOME,2005,325,COL.seg3,{feather:30});
+    // barra de abas fixa
+    crop(r,HOME,2325,235,3119-235).style.webkitMaskImage='linear-gradient(180deg,transparent,#000 40px)';
+    const sbg=el('div','abs',r);css(sbg,{width:'1440px',height:'150px',background:'linear-gradient(180deg,rgba(150,160,106,.95) 55%,rgba(150,160,106,0))'});
+    const sb=el('div','abs',r);sb.style.transform='scale(3.664)';sb.style.transformOrigin='0 0';statusBar(sb,'#26341f');
+    this.hls=[[44.6,46.35,100,2005,1240,235],[46.45,47.55,96,COL.medHead-20,1248,430],[47.6,48.95,100,COL.seg3+5,1240,320]].map(([a,b,x,y,w,h])=>{
+      const e=el('div','hl',c);css(e,{left:(x-16)+'px',top:(y-16)+'px',width:(w+32)+'px',height:(h+32)+'px'});return {e,a,b}});
+    this.taps=new Taps(c,110);
+    if(withTaps){this.taps.add(31.0,()=>({x:265,y:687}));this.taps.add(34.3,()=>({x:1158,y:1075}));this.taps.add(39.45,()=>({x:1212,y:1545}));this.taps.add(42.1,()=>({x:1250,y:1796}))}
+    else for(const h of this.hls)h.e.remove();
+  }
+  update(t){
+    this.col.style.transform=`translateY(${-eIO(prog(t,44.3,46.4))*190}px)`;
+    for(const h of this.hls){const v=Math.min(eOut(prog(t,h.a,h.a+.3)),1-eIn(prog(t,h.b-.25,h.b)));h.e.style.opacity=t>h.a&&t<h.b?v:0;h.e.style.transform=`scale(${lerp(1.04,1,eOut(prog(t,h.a,h.a+.3)))})`}
+    this.taps.update(t);
+  }
+}
+
+// ---------- palco ----------
+const leaves=[['ramo-a.png',-120,-60,430,.55,-8],['ramo-c.png',820,40,300,.5,14],['ramo-b.png',760,1520,420,.6,-6],['ramo-canto.png',-90,1580,380,.55,8]]
+  .map(([f,x,y,w,o,r])=>{const i=el('img','leaf');i.src='screens/'+f;css(i,{left:x+'px',top:y+'px',width:w+'px',opacity:o});return {i,r}});
+const splash=el('img','abs');splash.src='screens/mother-baby-splash-primary.png';css(splash,{width:'1080px',height:'1920px',transformOrigin:'50% 60%'});
+const veil=el('div','abs');css(veil,{width:'1080px',height:'1920px',background:'linear-gradient(180deg,#EDE8CB 0%,#DCD9B0 22%,#ABAE78 52%,#8E9A63 100%)'});
+stage.prepend(splash,veil,...leaves.map(l=>l.i));
+const hookT=el('div','cap',null,`<div style="font-weight:900;font-size:100px;line-height:1.04;color:#FBF6E4;letter-spacing:-1px;text-shadow:0 6px 30px rgba(40,50,25,.4)">A saúde da família<br>na palma da mão</div>`);
+const outT=el('div','cap',null,`<div class="oic" style="width:150px;height:150px;margin:0 auto 26px;border-radius:38px;background:url(screens/icon.png) center/cover;box-shadow:0 18px 40px rgba(40,50,25,.35),0 0 0 5px #F8F3DE"></div>
+  <div style="font-weight:900;font-size:132px;color:#FBF6E4;letter-spacing:-1px;text-shadow:0 6px 30px rgba(40,50,25,.4)">Gestão Saúde</div>
+  <div style="font-weight:700;font-size:50px;color:#FBF6E4;margin-top:6px;text-shadow:0 4px 18px rgba(40,50,25,.45)">Cuidando de quem você ama</div>`);
+outT.style.top='150px';
+
+const CAPS=[
+  [3.3,7.7,'Login','Entre com<br>e-mail e senha'],
+  [7.7,11.5,'Seguro','Abriu, já está<br>dentro'],
+  [11.5,17.5,'Esqueci a senha','Link de redefinição<br>no seu e-mail'],
+  [17.5,26.3,'Primeira vez?','Crie sua conta','nome, e-mail e senha — e pronto'],
+  [26.3,29.0,'Tela inicial','Tudo à mão,<br>logo ao entrar'],
+  [29.0,33.3,'Família','Escolha de quem<br>vai cuidar'],
+  [33.3,38.0,'IA','Fotografe a receita,<br>a IA preenche'],
+  [38.0,40.95,'Assistente','Tire dúvidas<br>na hora'],
+  [40.95,44.4,'Diário','Febre, dor,<br>humor e sono'],
+  [44.4,49.0,'Resumo do dia','Remédios, médicos<br>e consultas'],
+].map(([a,b,ey,h,sub])=>({c:el('div','cap',null,`<div class="eyebrow">${ey}</div><div class="headline">${h}</div>${sub?`<div class="sub">${sub}</div>`:''}`),a,b}));
+
+const phone=el('div','phone');const screen=el('div','screen',phone);
+const V={login:new LoginView(screen),forgot:new ForgotView(screen),signup:new SignupView(screen),home:new HomeView(screen)};
+const NAV=[[0,'login',1],[11.55,'forgot',1],[17.55,'login',-1],[20.35,'signup',1],[26.3,'home',1]];
+
+class Callout{
+  constructor(make,crop,y,w,a,b){
+    const [cx,cy,cw,ch]=crop;const k=w/cw;this.a=a;this.b=b;
+    this.box=el('div','callout');css(this.box,{left:((1080-w)/2)+'px',top:y+'px',width:w+'px',height:Math.round(ch*k)+'px'});
+    this.v=make(this.box);this.v.root.style.transform=`translate(${-cx*k}px,${-cy*k}px) scale(${k})`;
+  }
+  update(t){
+    const vis=t>this.a-.05&&t<this.b;this.box.style.display=vis?'block':'none';if(!vis)return;
+    const pi=prog(t,this.a,this.a+.45),po=prog(t,this.b-.3,this.b);
+    this.box.style.opacity=Math.min(eOut(pi*1.6),1-eIn(po));
+    this.box.style.transform=`translateY(${(1-eOut(pi))*50-eIn(po)*30}px) scale(${lerp(.82,1,eBack(pi))*lerp(1,.92,eIn(po))})`;
+    this.v.update(t);
+  }
+}
+const mkHome=p=>new HomeView(p,false);
+const CALLOUTS=[
+  new Callout(mkHome,[110,575,1230,280],1330,960,29.4,33.15),
+  new Callout(mkHome,[96,919,1254,329],1290,980,33.6,37.95),
+  new Callout(mkHome,[100,1280,1247,362],1270,980,38.3,40.9),
+  new Callout(mkHome,[100,1696,1240,200],1350,980,41.15,44.3),
+];
+const badge=el('div','badge',null,`<div class="ic">${fe('shield',70,'#F8F3DE',2)}</div><div><div style="font-weight:900;font-size:46px;color:#1F3A22">Acesso guardado</div><div style="font-weight:600;font-size:33px;color:#5A6449;margin-top:2px">com segurança neste aparelho</div></div>`);
+badge.style.top='1330px';
+
+function renderFrame(t){
+  for(const [i,l] of leaves.entries())l.i.style.transform=`rotate(${l.r+Math.sin(t*.9+i*1.7)*2.2}deg)`;
+  // gancho e encerramento sobre a ilustracao
+  const hookV=t<3.3, outV=t>48.8;
+  splash.style.opacity=hookV||outV?1:0;
+  splash.style.transform=`scale(${hookV?lerp(1.12,1.0,eOut(prog(t,0,1.2)))+prog(t,1.2,3.3)*.03:1.0+prog(t,48.9,53.6)*.04})`;
+  veil.style.opacity=hookV?eIO(prog(t,2.85,3.3)):outV?1-eIO(prog(t,48.9,49.5)):1;
+  const hp=prog(t,.35,.8);hookT.style.opacity=t<.3?0:Math.min(eOut(hp),1-prog(t,2.7,3.0));hookT.style.top='250px';
+  hookT.style.transform=`translateY(${(1-eOut(hp))*40}px) scale(${lerp(.95,1,eOut(hp))})`;
+  const oi=prog(t,49.3,49.75),ot=prog(t,49.55,50.0),os=prog(t,50.1,50.5);
+  outT.style.display=t>49.2?'block':'none';
+  const ic=outT.querySelector('.oic');ic.style.transform=`scale(${eBack(oi)})`;ic.style.opacity=eOut(oi);
+  outT.children[1].style.opacity=eOut(ot);outT.children[1].style.transform=`translateY(${(1-eOut(ot))*30}px)`;
+  outT.children[2].style.opacity=eOut(os);outT.children[2].style.transform=`translateY(${(1-eOut(os))*20}px)`;
+
+  // celular
+  const rise=eOut(prog(t,2.9,3.8)),drop=eIn(prog(t,48.85,49.5));
+  phone.style.display=t>=2.9&&t<49.5?'block':'none';
+  phone.style.transform=`translateY(${(1-rise)*1500+drop*1500}px)`;
+  let i=0;for(let k=0;k<NAV.length;k++)if(t>=NAV[k][0])i=k;
+  const [t0,cur,dir]=NAV[i],p=i>0?eIO(prog(t,t0,t0+.45)):1,prev=i>0&&p<1?NAV[i-1][1]:null;
+  for(const id in V){const v=V[id];v.root.style.display='none'}
+  const base=id=>id==='home'?`scale(${HS})`:`scale(${SC})`;
+  const cv=V[cur];cv.root.style.display='block';cv.root.style.zIndex=2;cv.root.style.filter='none';cv.root.style.transform=`translateX(${dir*(1-p)*560}px) ${base(cur)}`;cv.update(t);
+  if(prev&&prev!==cur){const pv=V[prev];pv.root.style.display='block';pv.root.style.zIndex=1;pv.root.style.filter=`brightness(${1-p*.3})`;pv.root.style.transform=`translateX(${-dir*p*180}px) ${base(prev)}`;pv.update(t)}
+
+  for(const c of CAPS){const vis=t>c.a&&t<c.b;c.c.style.display=vis?'block':'none';if(!vis)continue;
+    const pi=prog(t,c.a+.08,c.a+.5),po=prog(t,c.b-.32,c.b);c.c.style.opacity=Math.min(eOut(pi),1-eIn(po));c.c.style.transform=`translateY(${(1-eOut(pi))*36-eIn(po)*30}px)`}
+  for(const c of CALLOUTS)c.update(t);
+  const bv=t>8.0&&t<11.15;badge.style.display=bv?'flex':'none';
+  if(bv){const pi=prog(t,8.05,8.5),po=prog(t,10.85,11.15);badge.style.opacity=Math.min(eOut(pi*1.6),1-eIn(po));badge.style.transform=`translateY(${(1-eOut(pi))*50}px) scale(${lerp(.82,1,eBack(pi))})`}
+}
+// mede com o celular e as telas visiveis: oculto, tudo mede zero
+function layoutAll(){
+  phone.style.display='block';for(const v of Object.values(V))v.root.style.display='block';
+  for(const v of Object.values(V))v.layout&&v.layout();
+}
+window.renderFrame=renderFrame;
+window.ready=Promise.all([document.fonts.ready,...[...document.images].map(i=>i.decode().catch(()=>{}))])
+  .then(()=>document.fonts.load('900 40px N')).then(layoutAll);
+renderFrame(0);
+</script>
+</body>
+</html>
