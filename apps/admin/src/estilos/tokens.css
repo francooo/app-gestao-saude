@@ -1,0 +1,68 @@
+/*
+ * Tokens do design system do painel
+ * (assets-source/familia-saude-dashboard-final/.../design-system/DESIGN-SYSTEM.md).
+ *
+ * O DS nao define fonte, sombra nem breakpoints; as escolhas abaixo estao
+ * marcadas. Nunito e a fonte do app mobile, para as duas pontas conversarem.
+ */
+:root {
+  /* cores do DS */
+  --sage-50: #eef3e9;
+  --sage-100: #dde8d8;
+  --sage-300: #b7c9ad;
+  --moss-700: #3f5a45;
+  --moss-800: #304637;
+  --cream-50: #fffdf7;
+  --cream-100: #f8f3e8;
+  --caramel-500: #c9854b;
+  --caramel-600: #a96839;
+  --mustard-400: #d6b45a;
+  --success: #5d9b72;
+  --warning: #c9854b;
+  --error: #b95b54;
+  --ink: #27352b;
+  --muted: #718074;
+
+  /* fundos claros das pills (derivados do DS, que so da os tons fortes) */
+  --success-bg: #e3efe4;
+  --warning-bg: #f6e6d4;
+  --error-bg: #f5e1df;
+  --neutral-bg: #e8ece5;
+
+  /* tipografia (escolha nossa: Nunito, a fonte do app) */
+  --fonte: 'Nunito', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --texto-auxiliar: 0.8125rem; /* 13px */
+  --texto-label: 0.8125rem;
+  --texto: 0.9375rem; /* 15px */
+  --texto-titulo-card: 1.125rem; /* 18px */
+  --texto-kpi: 2rem; /* 32px */
+  --texto-titulo-pagina: 1.875rem; /* 30px */
+
+  /* forma */
+  --raio-card: 20px;
+  --raio-campo: 14px;
+  --raio-pilula: 999px;
+  --sombra-card: 0 1px 2px rgba(48, 70, 55, 0.04), 0 8px 24px rgba(48, 70, 55, 0.06);
+  --borda: 1px solid var(--sage-300);
+
+  /* layout */
+  --largura-sidebar: 264px;
+  --gutter: 56px;
+  --gap: 24px;
+  --alvo-minimo: 40px;
+}
+
+@media (max-width: 1279px) {
+  :root {
+    --gutter: 32px;
+    --gap: 20px;
+  }
+}
+
+@media (max-width: 767px) {
+  :root {
+    --gutter: 16px;
+    --gap: 16px;
+    --texto-titulo-pagina: 1.5rem;
+  }
+}

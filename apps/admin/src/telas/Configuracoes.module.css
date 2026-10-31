@@ -1,0 +1,338 @@
+/* Configuracoes: menu de secoes a esquerda e o conteudo a direita (mockup 08). */
+
+.grade {
+  display: grid;
+  grid-template-columns: 280px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--gap);
+}
+
+.abas {
+  position: sticky;
+  top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  border-radius: var(--raio-card);
+  background: var(--cream-50);
+  box-shadow: var(--sombra-card);
+}
+
+.abas button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--raio-campo);
+  background: transparent;
+  color: var(--moss-700);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.abas button:hover {
+  background: var(--cream-100);
+}
+
+.abas button[aria-current='page'] {
+  background: var(--sage-100);
+  color: var(--moss-800);
+  font-weight: 700;
+}
+
+.conteudo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+  min-width: 0;
+}
+
+.conteudo > * {
+  margin-bottom: 0;
+}
+
+/* --- perfil --- */
+
+.perfil {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 32px;
+}
+
+.avatarGrande {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  background: var(--moss-700);
+  color: var(--cream-50);
+  font-size: 2.25rem;
+  font-weight: 800;
+}
+
+.dados {
+  display: grid;
+  flex: 1 1 320px;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px 32px;
+  margin: 0;
+  padding-left: 32px;
+  border-left: 1px solid var(--sage-100);
+}
+
+.dados dt {
+  color: var(--muted);
+  font-size: var(--texto-label);
+  font-weight: 600;
+}
+
+.dados dd {
+  margin: 2px 0 0;
+  color: var(--ink);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+/* --- formularios --- */
+
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 440px;
+}
+
+.formLinha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.formLinha .campo {
+  flex: 1 1 200px;
+}
+
+.formLinha button {
+  margin-top: 0;
+}
+
+.rotulo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: var(--moss-800);
+  font-size: var(--texto-label);
+  font-weight: 700;
+}
+
+.campo {
+  min-height: 46px;
+  padding: 0 14px;
+  border: var(--borda);
+  border-radius: var(--raio-campo);
+  background: var(--cream-100);
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.campo:focus {
+  border-color: var(--moss-700);
+  outline: 0;
+}
+
+.campo[aria-invalid='true'] {
+  border-color: var(--error);
+}
+
+.dica {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.erro {
+  color: var(--error);
+  font-size: var(--texto-auxiliar);
+  font-weight: 600;
+}
+
+.sucesso {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: var(--raio-campo);
+  background: var(--success-bg);
+  color: var(--moss-700);
+  font-size: var(--texto-auxiliar);
+  font-weight: 600;
+}
+
+.botaoTexto {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* --- listas (sessoes, falhas) --- */
+
+.sessoes {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sessoes li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--sage-50);
+}
+
+.sessoes li:last-child {
+  border-bottom: 0;
+}
+
+.sessaoTexto {
+  display: flex;
+  flex: 1 1 240px;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.35;
+}
+
+.sessaoTexto strong {
+  color: var(--moss-800);
+}
+
+.sessaoTexto span {
+  color: var(--muted);
+  font-size: var(--texto-auxiliar);
+}
+
+.iconeFalha {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--error-bg);
+  color: var(--error);
+}
+
+/* --- registro de acesso --- */
+
+.filtroDoRegistro {
+  display: flex;
+}
+
+.detalhes {
+  display: inline-block;
+  max-width: 320px;
+  color: var(--muted);
+  font-size: var(--texto-auxiliar);
+  overflow-wrap: anywhere;
+}
+
+/* --- WhatsApp --- */
+
+.whatsapp {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.iconeWhatsapp {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--moss-700);
+  color: var(--cream-50);
+}
+
+.whatsappTextos {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.numerosPequenos {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.numeroPequeno {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 2px 8px;
+  padding: 14px 16px;
+  border-radius: var(--raio-campo);
+  background: var(--cream-100);
+  color: var(--moss-700);
+}
+
+.numeroPequeno span {
+  color: var(--muted);
+  font-size: var(--texto-auxiliar);
+  font-weight: 600;
+}
+
+.numeroPequeno strong {
+  grid-column: 1 / -1;
+  color: var(--moss-800);
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
+/* --- responsivo --- */
+
+@media (max-width: 1023px) {
+  .grade {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .abas {
+    position: static;
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 8px;
+  }
+
+  .abas button {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 559px) {
+  .dados {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .numerosPequenos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

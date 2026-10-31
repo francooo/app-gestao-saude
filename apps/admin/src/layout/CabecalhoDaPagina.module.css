@@ -1,0 +1,50 @@
+.cabecalho {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 96px;
+  margin-bottom: 32px;
+}
+
+.textos {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.titulo {
+  font-size: var(--texto-titulo-pagina);
+  font-weight: 800;
+}
+
+.subtitulo {
+  color: var(--muted);
+}
+
+.acoes {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 12px;
+}
+
+.folha {
+  position: absolute;
+  top: -40px;
+  right: calc(var(--gutter) * -1);
+  width: 220px;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .folha {
+    width: 140px;
+    top: -60px;
+  }
+}

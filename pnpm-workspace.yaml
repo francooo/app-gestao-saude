@@ -1,3 +1,6 @@
 packages:
   - 'apps/*'
   - 'packages/*'
+  # Painel web: projeto independente (npm, lockfile proprio), para nao mexer
+  # nas dependencias do app mobile.
+  - '!apps/admin'

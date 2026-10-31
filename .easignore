@@ -37,3 +37,7 @@ assets-source/
 
 # Skills do Claude Code (o /brag traz ~17 MB de audio): nao fazem parte do app.
 .claude/
+
+# Painel web (apps/admin): projeto separado, fora do workspace pnpm e com
+# lockfile proprio. Nao entra no aplicativo.
+apps/admin/
