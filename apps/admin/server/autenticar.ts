@@ -1,6 +1,6 @@
-import { consultar } from './db';
-import { ERRO, falha } from './http';
-import { verificarTokenDeAcesso } from './token';
+import { consultar } from './db.js';
+import { ERRO, falha } from './http.js';
+import { verificarTokenDeAcesso } from './token.js';
 
 export interface Admin {
   id: string;

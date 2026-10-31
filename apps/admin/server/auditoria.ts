@@ -1,4 +1,4 @@
-import { consultar } from './db';
+import { consultar } from './db.js';
 
 /**
  * Registro de acesso (LGPD): quem fez o que, sobre qual conta, quando.

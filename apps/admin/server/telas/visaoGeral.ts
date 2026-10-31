@@ -1,8 +1,8 @@
-import { registrar } from '../auditoria';
-import type { Admin } from '../autenticar';
-import { consultar } from '../db';
-import { ipDe, json } from '../http';
-import { FUSO } from '../listagem';
+import { registrar } from '../auditoria.js';
+import type { Admin } from '../autenticar.js';
+import { consultar } from '../db.js';
+import { ipDe, json } from '../http.js';
+import { FUSO } from '../listagem.js';
 
 /**
  * Visao geral: numeros da operacao, evolucao dos ultimos 6 meses, rankings e

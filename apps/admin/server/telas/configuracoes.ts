@@ -1,12 +1,12 @@
 import { z } from 'zod';
 
-import { registrar } from '../auditoria';
-import type { Admin } from '../autenticar';
-import { consultar } from '../db';
-import { ERRO, falha, ipDe, json, lerCookie, lerJson } from '../http';
-import { paginar, parametrosDe } from '../listagem';
-import { gerarHashDeSenha, verificarSenha } from '../senha';
-import { COOKIE_DE_SESSAO, encerrarOutrasSessoes, listarSessoes } from '../sessao';
+import { registrar } from '../auditoria.js';
+import type { Admin } from '../autenticar.js';
+import { consultar } from '../db.js';
+import { ERRO, falha, ipDe, json, lerCookie, lerJson } from '../http.js';
+import { paginar, parametrosDe } from '../listagem.js';
+import { gerarHashDeSenha, verificarSenha } from '../senha.js';
+import { COOKIE_DE_SESSAO, encerrarOutrasSessoes, listarSessoes } from '../sessao.js';
 
 /**
  * Configuracoes: perfil do admin, seguranca (senha, sessoes, registro de

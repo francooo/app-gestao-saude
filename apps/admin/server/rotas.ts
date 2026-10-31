@@ -1,10 +1,10 @@
 import { z } from 'zod';
 
-import { registrar } from './auditoria';
-import { buscarAdminAtivo, exigirAdmin, type Admin } from './autenticar';
-import { consultar } from './db';
-import { ERRO, falha, ipDe, json, lerCookie, lerJson } from './http';
-import { gastarTempoDeVerificacao, verificarSenha } from './senha';
+import { registrar } from './auditoria.js';
+import { buscarAdminAtivo, exigirAdmin, type Admin } from './autenticar.js';
+import { consultar } from './db.js';
+import { ERRO, falha, ipDe, json, lerCookie, lerJson } from './http.js';
+import { gastarTempoDeVerificacao, verificarSenha } from './senha.js';
 import {
   COOKIE_DE_SESSAO,
   cookieApagado,
@@ -12,15 +12,15 @@ import {
   criarSessao,
   encerrarSessao,
   renovarSessao,
-} from './sessao';
-import { assinaturas } from './telas/assinaturas';
-import { auditoria, conta, editarConta, encerrarOutras, sessoes, trocarSenha, whatsapp } from './telas/configuracoes';
-import { medicamentos } from './telas/medicamentos';
-import { medicos } from './telas/medicos';
-import { relatorios } from './telas/relatorios';
-import { usuarios } from './telas/usuarios';
-import { visaoGeral } from './telas/visaoGeral';
-import { DURACAO_DO_ACESSO_S, emitirTokenDeAcesso } from './token';
+} from './sessao.js';
+import { assinaturas } from './telas/assinaturas.js';
+import { auditoria, conta, editarConta, encerrarOutras, sessoes, trocarSenha, whatsapp } from './telas/configuracoes.js';
+import { medicamentos } from './telas/medicamentos.js';
+import { medicos } from './telas/medicos.js';
+import { relatorios } from './telas/relatorios.js';
+import { usuarios } from './telas/usuarios.js';
+import { visaoGeral } from './telas/visaoGeral.js';
+import { DURACAO_DO_ACESSO_S, emitirTokenDeAcesso } from './token.js';
 
 type Handler = (request: Request) => Promise<Response>;
 

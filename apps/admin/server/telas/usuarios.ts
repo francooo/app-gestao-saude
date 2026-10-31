@@ -1,8 +1,8 @@
-import { registrar } from '../auditoria';
-import type { Admin } from '../autenticar';
-import { consultar } from '../db';
-import { ipDe, json } from '../http';
-import { FUSO, paginar, parametrosDe } from '../listagem';
+import { registrar } from '../auditoria.js';
+import type { Admin } from '../autenticar.js';
+import { consultar } from '../db.js';
+import { ipDe, json } from '../http.js';
+import { FUSO, paginar, parametrosDe } from '../listagem.js';
 
 const PLANOS = ['assinante', 'teste', 'sem_plano'] as const;
 const SITUACOES = ['ativa', 'inativa', 'desativada'] as const;

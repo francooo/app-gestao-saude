@@ -1,8 +1,8 @@
-import { registrar } from '../auditoria';
-import type { Admin } from '../autenticar';
-import { consultar } from '../db';
-import { ipDe, json } from '../http';
-import { paginar, parametrosDe } from '../listagem';
+import { registrar } from '../auditoria.js';
+import type { Admin } from '../autenticar.js';
+import { consultar } from '../db.js';
+import { ipDe, json } from '../http.js';
+import { paginar, parametrosDe } from '../listagem.js';
 
 /**
  * Profissionais de saude cadastrados pelas familias.

@@ -1,4 +1,4 @@
-import { rotear } from '../server/rotas';
+import { rotear } from '../server/rotas.js';
 
 /**
  * Unica funcao serverless do painel. O vercel.json reescreve todo /api/* para

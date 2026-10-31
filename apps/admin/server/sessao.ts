@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 
-import { consultar } from './db';
+import { consultar } from './db.js';
 
 /**
  * Sessao longa do painel: refresh token aleatorio em cookie httpOnly, e no
