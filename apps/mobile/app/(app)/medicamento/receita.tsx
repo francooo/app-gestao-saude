@@ -26,19 +26,26 @@ import {
 import { FormField } from '@/components/FormField';
 import { ImageViewerModal } from '@/components/ImageViewerModal';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { PrimeiraDose } from '@/components/PrimeiraDose';
 import { ProfileSelector } from '@/components/ProfileSelector';
 import { ScreenBackground } from '@/components/ScreenBackground';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { SurfaceCard } from '@/components/SurfaceCard';
 import { dataParaISO, formatarData, isoParaData } from '@/lib/pessoa';
+import { hora } from '@/lib/posologia';
 import {
+  aplicarPrimeiraDose,
   type CamposDoRascunho,
+  definirPrimeiraDose,
   descartarReceita,
   guardarReceita,
+  instanteDaPrimeiraDose,
   lerReceita,
   marcarCadastroConcluido,
+  proximasDosesDoIntervalo,
   type RascunhoDeReceita,
   removerItemDoLote,
+  type RespostaPrimeiraDose,
 } from '@/lib/rascunhoDeMedicamento';
 import { sincronizarLembretesDeUmMedicamento } from '@/lib/reminders';
 import { backgrounds, colors, fonts, radii, spacing } from '@/theme';
@@ -96,6 +103,12 @@ export default function RevisarReceitaScreen() {
   const [erroGeral, setErroGeral] = useState<string | null>(null);
   const [erroPerfil, setErroPerfil] = useState<string | null>(null);
   const [erroData, setErroData] = useState<string | null>(null);
+  /** Erro da primeira dose por indice do item, so depois de tentar salvar. */
+  const [errosDose, setErrosDose] = useState<Record<number, string>>({});
+
+  const rolagem = useRef<ScrollView>(null);
+  /** Topo de cada cartao no conteudo, para levar a pessoa ao que falta. */
+  const topoDosCartoes = useRef<Record<number, number>>({});
 
   /**
    * O que ja foi resolvido, para uma SEGUNDA tentativa nao duplicar.
@@ -165,6 +178,8 @@ export default function RevisarReceitaScreen() {
         style: 'destructive',
         onPress: () => {
           removerItemDoLote(indice);
+          // Os erros sao por indice; remover um do meio desalinharia os outros.
+          setErrosDose({});
           const r = lerReceita();
           setReceita(r ? { ...r, itens: [...r.itens] } : null);
         },
@@ -172,10 +187,31 @@ export default function RevisarReceitaScreen() {
     ]);
   }
 
+  function mudarPrimeiraDose(indice: number, resposta: RespostaPrimeiraDose) {
+    definirPrimeiraDose(indice, resposta);
+    setErrosDose(({ [indice]: _, ...resto }) => resto);
+    const r = lerReceita();
+    setReceita(r ? { ...r, itens: [...r.itens] } : null);
+  }
+
+  /** Copia a resposta para os remedios que ainda nao tem nenhuma. */
+  function usarEmTodos(resposta: RespostaPrimeiraDose) {
+    if (!receita) return;
+    receita.itens.forEach((it, i) => {
+      if (it.campos.tipo !== 'as_needed' && (it.primeiraDose?.jaTomou ?? null) === null) {
+        definirPrimeiraDose(i, resposta);
+      }
+    });
+    setErrosDose({});
+    const r = lerReceita();
+    setReceita(r ? { ...r, itens: [...r.itens] } : null);
+  }
+
   function paraInput(
     campos: CamposDoRascunho,
     readItem: number,
     prescriberId: string | null,
+    startsAt: string | null,
   ): MedicationInput {
     const q = Number(campos.quantidade.replace(',', '.'));
     const emb = Number(campos.embalagem.replace(',', '.'));
@@ -188,6 +224,7 @@ export default function RevisarReceitaScreen() {
       doseUnit: campos.forma === 'outro' ? null : campos.forma,
       packageAmount: Number.isFinite(emb) && emb > 0 ? Math.round(emb) : null,
       endsAt: campos.fimDoTratamento,
+      startsAt,
       scheduleType: campos.tipo,
       intervalHours: campos.tipo === 'interval' ? campos.intervalo : null,
       times: campos.tipo === 'fixed_times' ? campos.horarios.filter((h) => HORA_VALIDA.test(h)) : [],
@@ -229,6 +266,30 @@ export default function RevisarReceitaScreen() {
       setErroGeral('Um dos remédios está sem nome. Toque em "Editar" para completar.');
       return;
     }
+
+    // A primeira dose de cada remedio, com UM relogio para todos: e o mesmo
+    // instante que vira startsAt e, se ja tomada, a dose registrada.
+    const agora = new Date();
+    const instantes = receita.itens.map((it) =>
+      it.campos.tipo === 'as_needed' ? null : instanteDaPrimeiraDose(it.primeiraDose, agora),
+    );
+    const erros: Record<number, string> = {};
+    instantes.forEach((r, i) => {
+      if (r && !r.ok) erros[i] = r.erro;
+    });
+    const faltando = Object.keys(erros).map(Number);
+    if (faltando.length > 0) {
+      setErrosDose(erros);
+      setErroGeral(
+        faltando.length === 1
+          ? 'Falta responder a primeira dose de um remédio.'
+          : `Falta responder a primeira dose de ${faltando.length} remédios.`,
+      );
+      const y = topoDosCartoes.current[faltando[0]!];
+      if (y !== undefined) rolagem.current?.scrollTo({ y: Math.max(0, y - spacing.lg), animated: true });
+      return;
+    }
+    setErrosDose({});
 
     setSalvando(true);
     try {
@@ -272,11 +333,29 @@ export default function RevisarReceitaScreen() {
       const total = receita.itens.length;
       const restantes: RascunhoDeReceita['itens'] = [];
       let salvos = 0;
-      for (const item of receita.itens) {
+      for (const [indice, item] of receita.itens.entries()) {
         try {
-          const criado = await healthApi.createMedication(
-            paraInput(item.campos, item.readItem, prescriberId),
+          const instante = instantes[indice];
+          const quando = instante?.ok ? instante.quando : null;
+          const { campos, startsAt } = aplicarPrimeiraDose(item.campos, quando);
+          let criado = await healthApi.createMedication(
+            paraInput(campos, item.readItem, prescriberId, startsAt),
           );
+          if (quando && item.primeiraDose?.jaTomou) {
+            // A dose que ja aconteceu entra no historico (e no estoque) no
+            // mesmo horario que ancora a grade, para casar com o slot dela.
+            try {
+              const iso = quando.toISOString();
+              const dose = await healthApi.registerDose(criado.id, {
+                scheduledFor: iso,
+                takenAt: iso,
+                status: 'tomada',
+              });
+              criado = { ...criado, doses: [dose, ...criado.doses], lastDoseAt: dose.takenAt };
+            } catch {
+              /* o remedio ja existe; a dose pode ser marcada na tela dele. */
+            }
+          }
           if (guardarFoto && receita.foto) {
             // Best-effort, como no form: o remedio ja existe, a foto e extra.
             try {
@@ -341,6 +420,7 @@ export default function RevisarReceitaScreen() {
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
+          ref={rolagem}
           contentContainerStyle={[
             styles.conteudo,
             { paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.xxl * 2 },
@@ -493,16 +573,35 @@ export default function RevisarReceitaScreen() {
               : `${receita.itens.length} remédios nesta receita`}
           </Text>
 
-          {receita.itens.map((item, indice) => (
-            <CartaoDoItem
-              key={`${item.readItem}-${indice}`}
-              campos={item.campos}
-              podeRemover={receita.itens.length > 1}
-              desabilitado={salvando}
-              onEditar={() => router.push(`/medicamento/form/novo?loteItem=${indice}`)}
-              onRemover={() => remover(indice)}
-            />
-          ))}
+          {receita.itens.map((item, indice) => {
+            const outrosSemResposta = receita.itens.some(
+              (it, i) =>
+                i !== indice &&
+                it.campos.tipo !== 'as_needed' &&
+                (it.primeiraDose?.jaTomou ?? null) === null,
+            );
+            return (
+              <View
+                key={`${item.readItem}-${indice}`}
+                onLayout={(e) => {
+                  topoDosCartoes.current[indice] = e.nativeEvent.layout.y;
+                }}
+              >
+                <CartaoDoItem
+                  campos={item.campos}
+                  primeiraDose={item.primeiraDose}
+                  erroDose={errosDose[indice] ?? null}
+                  podeUsarEmTodos={outrosSemResposta}
+                  podeRemover={receita.itens.length > 1}
+                  desabilitado={salvando}
+                  onPrimeiraDose={(r) => mudarPrimeiraDose(indice, r)}
+                  onUsarEmTodos={() => item.primeiraDose && usarEmTodos(item.primeiraDose)}
+                  onEditar={() => router.push(`/medicamento/form/novo?loteItem=${indice}`)}
+                  onRemover={() => remover(indice)}
+                />
+              </View>
+            );
+          })}
 
           {progresso ? <Text style={styles.progresso}>{progresso}</Text> : null}
           {erroGeral ? <Text style={styles.erroGeral}>{erroGeral}</Text> : null}
@@ -544,19 +643,57 @@ function resumoPosologia(c: CamposDoRascunho): string {
   return c.intervalo === 24 ? '1x ao dia' : `A cada ${c.intervalo}h`;
 }
 
+/**
+ * O que a resposta da primeira dose muda neste remedio, para a pessoa ver
+ * ANTES de salvar: os horarios realinhados ou as proximas doses do intervalo.
+ * Uma resposta incompleta nao tem previa; uma completa e incoerente ("ja
+ * tomei" amanha) devolve o erro na hora, sem esperar o salvar.
+ */
+function previaDaPrimeiraDose(
+  campos: CamposDoRascunho,
+  resposta: RespostaPrimeiraDose | undefined,
+): { campos: CamposDoRascunho; previa: string | null; erro: string | null } {
+  if (!resposta || resposta.jaTomou === null || !HORA_VALIDA.test(resposta.hora)) {
+    return { campos, previa: null, erro: null };
+  }
+  const instante = instanteDaPrimeiraDose(resposta);
+  if (!instante.ok) return { campos, previa: null, erro: instante.erro };
+
+  const { campos: ajustados } = aplicarPrimeiraDose(campos, instante.quando);
+  if (ajustados.tipo === 'fixed_times') {
+    return { campos: ajustados, previa: `Horários: ${ajustados.horarios.join(' · ')}`, erro: null };
+  }
+  const proximas = proximasDosesDoIntervalo(ajustados, instante.quando, resposta.jaTomou);
+  const rotulo = resposta.jaTomou ? 'Próximas' : 'Doses';
+  return { campos: ajustados, previa: `${rotulo}: ${proximas.map(hora).join(' · ')}`, erro: null };
+}
+
 function CartaoDoItem({
-  campos,
+  campos: camposLidos,
+  primeiraDose,
+  erroDose,
+  podeUsarEmTodos,
   podeRemover,
   desabilitado,
+  onPrimeiraDose,
+  onUsarEmTodos,
   onEditar,
   onRemover,
 }: {
   campos: CamposDoRascunho;
+  primeiraDose: RespostaPrimeiraDose | undefined;
+  erroDose: string | null;
+  podeUsarEmTodos: boolean;
   podeRemover: boolean;
   desabilitado: boolean;
+  onPrimeiraDose: (r: RespostaPrimeiraDose) => void;
+  onUsarEmTodos: () => void;
   onEditar: () => void;
   onRemover: () => void;
 }) {
+  const perguntaDose = camposLidos.tipo !== 'as_needed';
+  const { campos, previa, erro } = previaDaPrimeiraDose(camposLidos, primeiraDose);
+  const respondida = perguntaDose && previa !== null;
   const quantidade =
     campos.quantidade.trim().length > 0
       ? `${campos.quantidade.trim()}${campos.forma === 'outro' ? '' : ` ${campos.forma}`}`
@@ -578,6 +715,28 @@ function CartaoDoItem({
           </Text>
         </View>
       </View>
+
+      {perguntaDose ? (
+        <PrimeiraDose
+          valor={primeiraDose}
+          onChange={onPrimeiraDose}
+          previa={previa}
+          erro={erroDose ?? erro}
+          desabilitado={desabilitado}
+        />
+      ) : null}
+
+      {respondida && podeUsarEmTodos ? (
+        <Pressable
+          onPress={onUsarEmTodos}
+          disabled={desabilitado}
+          accessibilityRole="button"
+          style={({ pressed }) => [styles.usarEmTodos, pressed && styles.pressionado]}
+        >
+          <Feather name="copy" size={15} color={colors.accentGreen} />
+          <Text style={styles.usarEmTodosTexto}>Usar a mesma resposta nos outros remédios</Text>
+        </Pressable>
+      ) : null}
 
       <View style={styles.itemAcoes}>
         <Pressable
@@ -754,6 +913,14 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   editarTexto: { fontFamily: fonts.semibold, fontSize: 14, color: colors.accentGreen },
+  usarEmTodos: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    minHeight: 44,
+    marginTop: spacing.xs,
+  },
+  usarEmTodosTexto: { flex: 1, fontFamily: fonts.semibold, fontSize: 14, color: colors.accentGreen },
   removerItem: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   removerItemTexto: { fontFamily: fonts.semibold, fontSize: 14, color: colors.textError },
 

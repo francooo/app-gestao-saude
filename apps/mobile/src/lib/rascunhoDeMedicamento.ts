@@ -140,6 +140,27 @@ export type ItemDoLote = {
   /** O indice do item NA LEITURA. Vira photoReadItem no cadastro; preservado
    * por item para que remover um do meio nao desalinhe os outros. */
   readItem: number;
+  /**
+   * A resposta da pessoa sobre a primeira dose, ainda crua.
+   *
+   * Mora no ITEM e nao em CamposDoRascunho de proposito: o form de edicao so
+   * devolve `campos`, entao a resposta sobrevive ao "Editar" sem que nenhum dos
+   * caminhos que preenchem o form precise saber dela.
+   */
+  primeiraDose?: RespostaPrimeiraDose;
+};
+
+/**
+ * "Ja tomei ontem as 22:00" ou "ainda nao, vou tomar hoje as 20:00".
+ *
+ * O dia e RELATIVO e a hora e texto do campo; o instante so e montado ao
+ * salvar (instanteDaPrimeiraDose). Guardar assim deixa a tela totalmente
+ * controlada, e copiar a resposta para os outros remedios e copiar o objeto.
+ */
+export type RespostaPrimeiraDose = {
+  jaTomou: boolean | null;
+  dia: 'ontem' | 'hoje' | 'amanha';
+  hora: string;
 };
 
 export type RascunhoDeReceita = {
@@ -203,6 +224,13 @@ export function atualizarItemDoLote(
   const item = lote.receita.itens[index];
   if (!item) return;
   lote.receita.itens[index] = { ...item, campos, camposLidos };
+}
+
+export function definirPrimeiraDose(index: number, resposta: RespostaPrimeiraDose): void {
+  if (!lote) return;
+  const item = lote.receita.itens[index];
+  if (!item) return;
+  lote.receita.itens[index] = { ...item, primeiraDose: resposta };
 }
 
 /** Remove um item do lote. A tela garante o minimo de 1. */
@@ -333,6 +361,100 @@ export function encaixarIntervalo(horas: number): number {
      */
     return d < dMelhor || (d === dMelhor && atual > melhor) ? atual : melhor;
   });
+}
+
+// ---------------------------------------------------------------------------
+// Primeira dose
+//
+// Sem ela, a grade de "a cada 8h" ancora no momento do CADASTRO: o antibiotico
+// tomado as 14h e cadastrado as 17h30 passaria a pedir 17h30, 01h30, 09h30.
+// A resposta vira `startsAt`, que a grade (posologia.ts) e os lembretes do
+// WhatsApp (grade-de-doses.ts, no servidor) ja usam como ancora.
+// ---------------------------------------------------------------------------
+
+/** Quanto "no futuro" ainda conta como agora, para quem acabou de tomar. */
+const FOLGA_JA_TOMOU_MS = 2 * 60_000;
+/** Quanto "no passado" ainda conta como agora, para quem vai tomar ja. */
+const FOLGA_AINDA_NAO_MS = 5 * 60_000;
+
+export type InstanteDaPrimeiraDose = { ok: true; quando: Date } | { ok: false; erro: string };
+
+/** Monta o instante no fuso do aparelho e confere se ele faz sentido. */
+export function instanteDaPrimeiraDose(
+  r: RespostaPrimeiraDose | undefined,
+  agora = new Date(),
+): InstanteDaPrimeiraDose {
+  if (!r || r.jaTomou === null) {
+    return { ok: false, erro: 'Diga se a primeira dose já foi tomada' };
+  }
+  if (!HORA.test(r.hora)) return { ok: false, erro: 'Informe a hora, como 14:00' };
+
+  const [h, m] = r.hora.split(':').map(Number);
+  const quando = new Date(agora);
+  quando.setDate(quando.getDate() + (r.dia === 'ontem' ? -1 : r.dia === 'amanha' ? 1 : 0));
+  quando.setHours(h!, m!, 0, 0);
+
+  if (r.jaTomou && quando.getTime() > agora.getTime() + FOLGA_JA_TOMOU_MS) {
+    return { ok: false, erro: 'Esse horário ainda não chegou. Se a dose não foi tomada, marque "Ainda não".' };
+  }
+  if (!r.jaTomou && quando.getTime() < agora.getTime() - FOLGA_AINDA_NAO_MS) {
+    return { ok: false, erro: 'Esse horário já passou. Se a dose já foi tomada, marque "Já tomei".' };
+  }
+  return { ok: true, quando };
+}
+
+const HORA = /^([01]\d|2[0-3]):[0-5]\d$/;
+
+function hhmm(minutosDoDia: number): string {
+  const m = ((Math.round(minutosDoDia) % 1440) + 1440) % 1440;
+  return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
+}
+
+/**
+ * Os mesmos N horarios por dia, igualmente espacados, comecando na primeira
+ * dose: 08/16/00 com a primeira as 14:00 vira 06/14/22.
+ *
+ * O espacamento e 24/N mesmo quando a receita veio com horarios desiguais —
+ * a leitura da foto preenche "3x ao dia" com horarios de exemplo, e o que a
+ * receita fixa e a QUANTIDADE por dia. Quem precisar de outro desenho ajusta
+ * em "Editar".
+ */
+export function realinharHorarios(horarios: string[], inicio: Date): string[] {
+  const n = Math.max(1, Math.min(8, horarios.filter((h) => HORA.test(h)).length));
+  const base = inicio.getHours() * 60 + inicio.getMinutes();
+  const novos = Array.from({ length: n }, (_, i) => hhmm(base + (i * 1440) / n));
+  return [...new Set(novos)].sort();
+}
+
+/** Os campos que vao para o cadastro, ja com a primeira dose aplicada. */
+export function aplicarPrimeiraDose(
+  campos: CamposDoRascunho,
+  quando: Date | null,
+): { campos: CamposDoRascunho; startsAt: string | null } {
+  if (!quando || campos.tipo === 'as_needed') return { campos, startsAt: null };
+  const ajustados =
+    campos.tipo === 'fixed_times'
+      ? { ...campos, horarios: realinharHorarios(campos.horarios, quando) }
+      : campos;
+  return { campos: ajustados, startsAt: quando.toISOString() };
+}
+
+/**
+ * As proximas doses de "a cada N horas", para a previa no cartao. A primeira
+ * so entra se ainda nao foi tomada.
+ */
+export function proximasDosesDoIntervalo(
+  campos: CamposDoRascunho,
+  quando: Date,
+  jaTomou: boolean,
+  quantas = 3,
+): Date[] {
+  if (campos.tipo !== 'interval' || campos.intervalo <= 0) return [];
+  const inicio = jaTomou ? 1 : 0;
+  return Array.from(
+    { length: quantas },
+    (_, i) => new Date(quando.getTime() + (inicio + i) * campos.intervalo * 3_600_000),
+  );
 }
 
 const TIPOS_VALIDOS: ScheduleType[] = ['interval', 'fixed_times', 'as_needed'];
