@@ -48,7 +48,6 @@
 <link rel="modulepreload" href="assets/moments/moments.js">
 <link rel="modulepreload" href="assets/moments/lib.js">
 <link rel="modulepreload" href="assets/moments/letters-assemble/moment.js">
-<link rel="modulepreload" href="assets/moments/line-carries-colour/moment.js">
 <!-- page CSS: inside the visuals (the phones, the hero's art, the panels), one --p-h per card group, the consent box -->
 <style>
   /* the hero's lit sage ground: one soft light, no grain (no effect on this page) */
@@ -198,7 +197,6 @@
   @media (max-width: 1023px) { .plan-panel { --p-h: 260px; } }
   .plan-panel .ui-card { width: 300px; }
   @media (max-width: 639px) { .plan-panel .ui-card { width: auto; } }
-  #assistente.mo-lc, #assistente[data-moment] { --mo-gap: 18px; }
   /* section 8: the privacy rows beside the photograph */
   #privacidade .rows__name { font-weight: 500; }
   @media (max-width: 639px) { #receita .stack-5 > p:last-child { display: none; } }
@@ -214,9 +212,42 @@
   .form .field--full { grid-column: 1 / -1; }
 
   /* the name across the .wrap: "Gestão Saúde" is twelve letters, so it is set to fit the 1280 line */
-  .close__word { font-size: clamp(56px, 13.4vw, 196px); line-height: 1.08; }
+  .close__word { font-size: clamp(56px, 9vw, 132px); line-height: 1.08; }
   @media (max-width: 639px) { .close__word { font-size: clamp(40px, 14vw, 72px); } }
   .nav__logo img { width: 26px; height: 26px; }
+
+  /*
+   * Seções que crescem com o conteúdo, em qualquer largura.
+   *
+   * O kit fixa cada seção em exatamente uma tela (height: 100svh) de 1280px
+   * para cima, medido em 1440x900. Numa janela larga e baixa (um notebook com
+   * zoom de 125%, a barra de favoritos aberta) o conteúdo não cabe e invade a
+   * seção de baixo: título sobre foto, rodapé sobre o nome grande. Aqui a
+   * altura vira MÍNIMA — a mesma regra que o kit já usa entre 640 e 1279.
+   */
+  @media (min-width: 1280px) {
+    main > :is(section, .section):not(.hero, .section--hero), footer.closing {
+      height: auto; min-height: calc(var(--h, 1) * 100svh);
+      display: flex; flex-direction: column;
+    }
+    main > :is(section, .section):not(.hero, .section--hero) > :is(.wrap, .container), footer.closing > .wrap {
+      flex: 1 0 auto; height: auto; min-height: 0;
+    }
+  }
+
+  /* Títulos numa escala mais contida: em telas largas o h2 do kit chega a 48px,
+     e as frases grandes passavam de 190px. */
+  :root { --t-h2: clamp(28px, 1.1vw + 20px, 40px); --t-h1: clamp(36px, 2.4vw + 22px, 60px); }
+  @media (min-width: 640px) { #frase .mo-la__type { font-size: clamp(48px, 7vw, 112px); max-width: 16ch; } }
+
+  /* Assistente no celular: o quadro da conversa ganha altura para a conversa
+     inteira caber nele, e a lista de atalhos fica só no desktop, para a seção
+     caber numa tela. */
+  @media (max-width: 639px) {
+    #assistente .frame--phone { --ratio: 150%; }
+    #assistente .split-facts { display: none; }
+    #assistente > .wrap > .fill { flex: 1 0 auto; }
+  }
 </style>
 </head>
 <body>
@@ -225,8 +256,10 @@
      rhythm surface-pairs, buttons arrow, mark arc (replaced by the client's own leaf), grounds none (0 of 0-2), lit ground sage,
      palette the client's own (start.mjs brand: bg #F8F3DE, ink #2E4D30, accent #1E603E, surface #F4E2BE, muted #5A6449),
      type Nunito (the app's own face, start.mjs brand --type nunito --force), radius round, effect none, scene none
-     moments: letters-assemble in #frase (the app's own line builds itself, once, on the way down);
-              line-carries-colour in #assistente (the page turns to the warm surface band where the assistant answers) -->
+     moments: letters-assemble in #frase (the app's own line builds itself, once, on the way down).
+              line-carries-colour was removed from #assistente: in a short window its cover stayed as an
+              empty panel over the section's words. -->
+<!-- sections grow with their content at every width (page CSS overrides the kit's fixed 100svh from 1280 up) -->
 <header class="nav">
   <div class="wrap nav__bar">
     <a class="skip-link" href="#top">Pular para o conteúdo</a>
@@ -467,7 +500,7 @@
   <section class="section" id="frase" data-moment="letters-assemble" aria-labelledby="frase-h">
     <div class="wrap">
       <h2 id="frase-h" class="mo-la__type">Cuidando de quem você ama</h2>
-      <p class="mo-la__sub">É a frase da tela inicial do Gestão Saúde, logo acima das pessoas da sua família e dos remédios de hoje.</p>
+      <p class="mo-la__sub">Os remédios, as consultas e os lembretes de cada pessoa da casa, num app só.</p>
       <div class="frase-shot ui" role="img" aria-label="O topo da tela inicial do app: Bom dia, Ana, a frase Cuidando de quem você ama e as pessoas da família">
         <div class="ph-card">
           <p class="ph-title">Bom dia, Ana</p>
@@ -483,8 +516,8 @@
     </div>
   </section>
 
-  <!-- 5. ASSISTENTE (surface band, line-carries-colour): the assistant answering with its sources -->
-  <section class="section ground-surface" id="assistente" data-moment="line-carries-colour" data-moment-opts='{"from": "base"}' aria-labelledby="assistente-h">
+  <!-- 5. ASSISTENTE (surface band): the assistant answering with its sources -->
+  <section class="section ground-surface" id="assistente" aria-labelledby="assistente-h">
     <div class="wrap">
       <div class="grid fill">
         <div class="span-5 stack-5">
@@ -559,7 +592,8 @@
   <section class="section" id="medicos" style="--hm: 2" aria-labelledby="medicos-h">
     <div class="wrap">
       <div class="section-head">
-        <h2 id="medicos-h">Médicos, consultas e diário de sintomas da família. <span class="muted">As notificações mostram o que precisa de atenção.</span></h2>
+        <h2 id="medicos-h">Médicos, consultas e diário de sintomas no app</h2>
+        <p>As notificações mostram o que precisa da sua atenção.</p>
       </div>
       <div class="grid">
         <article class="card card--row card--open span-4 m-nolift">
