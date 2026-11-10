@@ -1,0 +1,21 @@
+{
+  "name": "@gestao/site",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Pagina de vendas do Gestao Saude. Projeto independente: fora do workspace pnpm, com lockfile proprio (npm). Pagina estatica + uma funcao (api/lista-de-espera.ts).",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "~5.9.2"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.2.0",
+    "zod": "^4.6.7"
+  }
+}

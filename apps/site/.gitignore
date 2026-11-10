@@ -1,0 +1,11 @@
+node_modules
+.vercel
+.env*
+shots
+# Laudos, capturas e perfis do Chrome dos verificadores da skill taste: so o
+# historico dos sorteios e as dispensas ficam no repositorio.
+.taste-skill/*
+!.taste-skill/history.json
+!.taste-skill/layout-history.json
+!.taste-skill/waivers.json
+!.taste-skill/build.json

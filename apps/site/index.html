@@ -1,0 +1,817 @@
+<!doctype html>
+<html lang="pt-BR" data-type="software" data-radius="round" data-ground="sage" data-buttons="arrow" data-motion>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gestão Saúde: app de remédios e consultas para a família</title>
+<meta name="description" content="Lembretes de dose, estoque dos remédios, receita lida por foto e um assistente de saúde para cuidar dos filhos, dos pais e de você. Para Android, com 7 dias grátis do Premium.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Gestão Saúde: app de remédios e consultas para a família">
+<meta property="og:description" content="Lembretes de dose, estoque e receita lida por foto, para a família toda. Entre na lista de espera do lançamento.">
+<meta property="og:image" content="share.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#f8f3de">
+<!-- <link rel="canonical" href="https://[o domínio do site]/"> -->
+<meta name="site-kind" content="software">
+<meta name="page-type" content="software">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400..700&family=JetBrains+Mono:wght@400..500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/system.css">
+<link rel="stylesheet" href="assets/ui/cards.css">
+<link rel="stylesheet" href="assets/motion/motion.css">
+<link rel="stylesheet" href="assets/backgrounds/backgrounds.css">
+<link rel="stylesheet" href="assets/layout/layout.css">
+<link rel="stylesheet" href="assets/icons/icon.css">
+<style>
+:root {
+  --p-bg: #f8f3de; --p-surface: #f4e2be; --p-ink: #2e4d30; --p-muted: #5a6449;
+  --p-accent: #1e603e; --p-accent-ink: #f8f3de; --p-action: #1e603e; --p-action-ink: #f8f3de;
+  --p-inv-bg: #2e4d30; --p-inv-surface: #3b583b; --p-inv-ink: #f8f3de; --p-inv-muted: #c6cab2;
+  --p-inv-accent: #f8f3de; --p-inv-accent-ink: #2e4d30; --p-inv-action: #f8f3de; --p-inv-action-ink: #2e4d30;
+  --font-display: "Nunito", system-ui, sans-serif;
+  --font-text: "Nunito", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --display-weight: 400;
+  --display-tracking: -0.02em;
+  --display-tracking-xl: -0.03em;
+}
+</style>
+<link rel="stylesheet" href="assets/ui/base.css">
+<link rel="stylesheet" href="assets/ui/chat/fragment.css">
+<link rel="stylesheet" href="assets/diagrams/diagram.css">
+<script>document.documentElement.classList.add('m-enter');setTimeout(()=>document.documentElement.classList.add('m-enter-done'),700)</script>
+<script src="assets/backgrounds/backgrounds.js"></script>
+<script>document.documentElement.classList.add('mo-js');setTimeout(()=>document.documentElement.classList.add('mo-safe'),2500)</script>
+<link rel="modulepreload" href="assets/moments/moments.js">
+<link rel="modulepreload" href="assets/moments/lib.js">
+<link rel="modulepreload" href="assets/moments/letters-assemble/moment.js">
+<link rel="modulepreload" href="assets/moments/line-carries-colour/moment.js">
+<!-- page CSS: inside the visuals (the phones, the hero's art, the panels), one --p-h per card group, the consent box -->
+<style>
+  /* the hero's lit sage ground: one soft light, no grain (no effect on this page) */
+  .hero__art { background:
+      url(img/ramo-canto.webp) left -24px top -16px / 260px auto no-repeat,
+      radial-gradient(70% 60% at 18% 12%, color-mix(in oklab, var(--ground-surface) 80%, white), transparent 70%),
+      radial-gradient(60% 50% at 90% 100%, color-mix(in oklab, var(--ground-bg) 80%, var(--ground-accent)), transparent 70%),
+      var(--ground-bg); }
+  .hero__art > .ly-piece--main.device { left: auto; right: var(--s-8); top: var(--s-7); width: 288px; }
+  .hero__art > .ly-piece--note { left: var(--s-6); bottom: var(--s-6); width: 300px; z-index: 2; }
+  #frase .mo-la__sub { color: var(--ink); }
+  /* a phone: the top of the home screen under the line, on the lit ground (the line is where the app shows it) */
+  .frase-shot { display: none; }
+  @media (max-width: 639px) {
+    .frase-shot { display: block; margin-top: var(--s-6); padding: var(--s-6) var(--s-4); border-radius: var(--r-lg); text-align: left;
+                  font: 400 13px/1.35 var(--font-text); color: #2e4d30;
+                  background: radial-gradient(70% 60% at 18% 12%, color-mix(in oklab, var(--ground-surface) 80%, white), transparent 70%), var(--ground-bg); }
+  }
+  #medicos .card > p { color: var(--ink); }
+  .hero__proof { font-size: var(--t-small); color: var(--muted); }
+  @media (max-width: 1023px) { .hero__art > .ly-piece--main.device { right: var(--s-6); top: var(--s-6); } .hero__art { background-size: 200px auto, auto, auto, auto; } }
+  @media (max-width: 1023px) { .hero__art .ph-appt { display: none; } }
+  @media (min-width: 640px) and (max-width: 1023px) { .hero__art { min-height: calc(500px + 2 * var(--s-6)); } .hero__art > .ly-piece--main.device { width: 240px; } }
+  .hero .btn-row > .btn--secondary { padding-inline: 0; }
+  @media (max-width: 639px) { .hero__art > .ly-piece--main.device { right: auto; left: 50%; translate: -50% 0; top: var(--s-4); width: 272px; } .hero__art { background-size: 0 0, auto, auto, auto; } }
+
+  /* the note over the phone: the dose of 14:00 and what followed */
+  .note { background: #fffdf5; color: #2e4d30; border-radius: 16px; padding: 14px 16px; font: 400 13px/1.4 var(--font-text);
+          box-shadow: 0 1px 0 rgb(46 77 48 / .06), 0 18px 40px -22px rgb(46 77 48 / .5); border: 1px solid rgb(46 77 48 / .1); }
+  .note__row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px; }
+  .note__row b { font-weight: 600; font-size: 14px; }
+  .note__chip { display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: 999px; background: #dcebdc; color: #1e603e; font-size: 12px; font-weight: 600; }
+  .note__line { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: 1px solid rgb(46 77 48 / .08); }
+  .note__line:first-of-type { border-top: 0; }
+  .note__line i { width: 18px; height: 18px; flex: none; border-radius: 50%; display: grid; place-items: center; background: #dcebdc; color: #1e603e; font-style: normal; font-size: 11px; font-weight: 700; }
+  .note__line i.warn { background: #f6e3bf; color: #7a5212; }
+
+  /* the phone (sections-library, Heroes: a .device built in page CSS, an 8px bezel), with the app's own screens */
+  .device { position: relative; width: var(--dev-w, 288px); aspect-ratio: 288 / 600; padding: 8px; border-radius: 40px; background: #263828;
+            box-shadow: 0 1px 0 rgb(255 255 255 / .08) inset, 0 34px 60px -30px rgb(30 50 30 / .55); }
+  .device__screen { position: relative; height: 100%; overflow: hidden; border-radius: 32px; color: #2e4d30;
+                    background: url(img/ramo-b.webp) right -40px top -12px / 112px auto no-repeat, linear-gradient(180deg, #e2e8d1 0%, #edf0de 55%, #e6ebd5 100%);
+                    font: 400 13px/1.35 var(--font-text); text-align: left; letter-spacing: 0; }
+  .device__screen > .ramo { position: absolute; z-index: 0; pointer-events: none; opacity: .55; height: auto; }
+  .device__screen > .ramo--tr { right: -34px; top: -10px; width: 110px; }
+  .device__screen > .ramo--bl { left: -40px; bottom: 60px; width: 100px; transform: scaleX(-1); }
+  .ph { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 10px; padding: 0 12px; }
+  .ph-status { position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; height: 30px; padding: 0 20px; font-size: 12px; font-weight: 600; color: #2e4d30; }
+  .ph-status svg { width: 38px; height: 10px; }
+  .ph-bar { display: flex; align-items: center; gap: 10px; padding-top: 2px; }
+  .ph-bar__btn { width: 30px; height: 30px; flex: none; border-radius: 50%; background: #fbf8ec; display: grid; place-items: center; }
+  .ph-bar__btn svg { width: 14px; height: 14px; fill: none; stroke: #2e4d30; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .ph-title { font-size: 19px; line-height: 1.15; font-weight: 600; letter-spacing: -0.01em; color: #24432a; margin: 0; }
+  .ph-sub { font-size: 12px; color: #5a6449; }
+  .ph-card { background: #fbf8ec; border-radius: 18px; padding: 12px; box-shadow: 0 1px 0 rgb(46 77 48 / .05); }
+  .ph-label { display: flex; justify-content: space-between; align-items: baseline; font-size: 14px; font-weight: 600; color: #24432a; margin-top: 2px; }
+  .ph-label a, .ph-label span { font-size: 12px; font-weight: 600; color: #1e603e; }
+  .ph-av::before { content: attr(data-i); }
+  .ph-av { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-size: 13px; font-weight: 600; flex: none; }
+  .ph-av--sm { width: 26px; height: 26px; font-size: 10px; }
+  .av-ana { background: #1e603e; } .av-pedro { background: #a8771f; } .av-lucia { background: #5f7445; } .av-add { background: transparent; color: #1e603e; border: 1.5px dashed #1e603e; font-size: 18px; font-weight: 500; }
+  .ph-people { display: flex; justify-content: space-between; gap: 6px; }
+  .ph-person { display: grid; justify-items: center; gap: 4px; font-size: 11px; color: #3f5a40; }
+  .ph-person.is-on .ph-av { box-shadow: 0 0 0 2px #fbf8ec, 0 0 0 4px #1e603e; }
+  .ph-person.is-on { color: #1e603e; font-weight: 600; }
+  .ph-row { display: grid; grid-template-columns: 38px minmax(0, 1fr) auto; align-items: center; gap: 10px; }
+  .ph-ico { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: #f6e7c8; }
+  .ph-ico--g { background: #dfe8d6; }
+  .ph-ico svg { width: 18px; height: 18px; fill: none; stroke: #a8771f; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .ph-ico--g svg { stroke: #3f6a45; }
+  .ph-name { font-size: 13px; font-weight: 600; color: #24432a; display: block; }
+  .ph-meta { font-size: 11.5px; color: #55624a; display: block; }
+  .ph-ok { color: #1e603e; font-weight: 600; }
+  .ph-tick { width: 24px; height: 24px; border-radius: 50%; border: 2px solid #2f7a52; display: grid; place-items: center; }
+  .ph-tick.is-done { background: #2f7a52; }
+  .ph-tick svg { width: 12px; height: 12px; fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  .ph-chip { display: inline-flex; align-items: center; height: 20px; padding: 0 8px; border-radius: 999px; background: #e3eadb; color: #2e4d30; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .ph-chip--warn { background: #f6e3bf; color: #7a5212; }
+  .ph-chip--ai { background: #f3e6c9; color: #7a5212; }
+  .ph-btn { display: flex; align-items: center; justify-content: center; height: 38px; border-radius: 999px; background: #b78842; color: #fffaf0; font-size: 13px; font-weight: 600; }
+  .ph-btn--ghost { background: #e3eadb; color: #24432a; }
+  .ph-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .ph-stat b { display: block; font-size: 20px; line-height: 1.1; font-weight: 600; color: #24432a; letter-spacing: -0.01em; }
+  .ph-list { display: grid; gap: 0; }
+  .ph-list > div { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 0; border-top: 1px solid rgb(46 77 48 / .08); font-size: 12px; }
+  .ph-list > div:first-child { border-top: 0; padding-top: 2px; }
+  .ph-opts { display: grid; gap: 6px; }
+  .ph-opt { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 12px; background: #f4f1e2; font-size: 12.5px; }
+  .ph-opt i { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #8a9a7e; flex: none; }
+  .ph-opt.is-on { background: #dcebdc; font-weight: 600; color: #1e603e; }
+  .ph-opt.is-on i { border: 4px solid #1e603e; }
+  .ph-times { display: flex; gap: 6px; flex-wrap: wrap; }
+  .ph-switch { width: 34px; height: 20px; border-radius: 999px; background: #2f7a52; position: relative; flex: none; }
+  .ph-switch::after { content: ""; position: absolute; right: 2px; top: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; }
+  .ph-q { background: #24432a; color: #f8f3de; border-radius: 18px; padding: 12px; display: grid; gap: 8px; }
+  .ph-q b { font-weight: 600; font-size: 13px; }
+  .ph-q .ph-meta { color: #d5dcc6; }
+  .ph-q__btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .ph-q__btns span { display: grid; place-items: center; height: 32px; border-radius: 999px; background: #3b583b; font-size: 12px; font-weight: 600; }
+  .ph-q__btns span.is-on { background: #f8f3de; color: #24432a; }
+  .ph-stars { color: #b78842; letter-spacing: 1px; font-size: 11px; }
+  .ph-tabs { position: absolute; z-index: 2; left: 8px; right: 8px; bottom: 8px; height: 52px; border-radius: 22px; background: #fbf8ec;
+             display: grid; grid-template-columns: repeat(5, 1fr); align-items: center; box-shadow: 0 -1px 0 rgb(46 77 48 / .05); }
+  .ph-tabs span { display: grid; justify-items: center; gap: 2px; font-size: 9.5px; color: #55624a; }
+  .ph-tabs span.is-on { color: #1e603e; font-weight: 600; }
+  .ph-tabs svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* section 2: three phones on the lit ground, across the .wrap, cut by the frame's foot */
+  .phones { position: relative; overflow: clip; border-radius: var(--r-lg); margin-top: var(--s-7); display: flex; justify-content: center; gap: var(--s-8); padding-top: var(--s-7);
+            background: radial-gradient(60% 80% at 15% 0%, color-mix(in oklab, var(--ground-surface) 85%, white), transparent 70%),
+                        radial-gradient(50% 70% at 90% 100%, color-mix(in oklab, var(--ground-bg) 75%, var(--ground-accent)), transparent 70%), var(--ground-bg);
+            -webkit-mask: linear-gradient(to bottom, #000 calc(100% - 56px), transparent); mask: linear-gradient(to bottom, #000 calc(100% - 56px), transparent); }
+  .phones { align-items: flex-start; }
+  .phones > .device { flex: none; }
+  @media (max-width: 1279px) { .phones > .device:nth-child(3) { display: none; } }
+  @media (max-width: 639px) { .phones { padding-top: var(--s-5); min-height: 420px; } .phones > .device:nth-child(2) { display: none; } .phones > .device:first-child .ph-stats { display: none; } }
+
+  /* the split frames that hold one phone (section 3) */
+  .frame--phone { background: radial-gradient(70% 60% at 80% 10%, color-mix(in oklab, var(--ground-surface) 85%, white), transparent 70%), var(--ground-bg); border: 0; }
+  .frame--phone > .stage > .at-rise { --w: 288px; }
+  @media (max-width: 639px) { .frame--phone { --ratio: 140%; } .frame--phone > .stage > .at-rise > .device { margin-inline: auto; } }
+
+  /* section 2 and 6: the h2 and its paragraph in one row */
+  .lead-row { align-items: start; }
+  .lead-row > p { font-size: var(--t-lead); line-height: 1.5; color: var(--ink); }
+  .lead-row > p .link { font-size: var(--t-body); }
+  .split-facts { display: grid; gap: var(--s-3); margin: 0; padding: 0; list-style: none; }
+  .split-facts li { padding-top: var(--s-3); border-top: 1px solid var(--line); }
+  .split-lead { font-size: var(--t-lead); line-height: 1.5; }
+
+  /* section 6: the photograph beside the hub */
+  #familia .pair { --pair-h: 440px; }
+  #familia .pair > * { height: var(--pair-h); }
+  #familia .panel { --p-h: 440px; min-height: 0; }
+  @media (max-width: 1023px) { #familia .pair { --pair-h: 380px; } #familia .panel { --p-h: 380px; } }
+  @media (max-width: 639px) { #familia .pair { --pair-h: 300px; } #familia .panel { --p-h: 340px; } }
+
+  #familia [data-dg-still] :is(.dg-node, .dg-cap, .dg-line, .dg-e) { transition: none !important; }
+  /* section 7: one --p-h for the three cards */
+  #medicos .panel { --p-h: 300px; }
+  #medicos .stage > .at-rise > .ui-card { width: 300px; }
+  @media (max-width: 639px) { #medicos .panel { --p-h: 300px; } #medicos .stage > .at-rise > .ui-card { width: auto; } }
+  .ui-card { background: #fffdf5; color: #2e4d30; border-radius: 16px; padding: 14px; font: 400 13px/1.4 var(--font-text); box-shadow: 0 1px 0 rgb(46 77 48 / .05), 0 18px 40px -24px rgb(46 77 48 / .45); border: 1px solid rgb(46 77 48 / .08); display: grid; gap: 10px; }
+  .ui-card__title { font-size: 14px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+
+  .plan-panel { --p-h: 400px; }
+  @media (max-width: 1023px) { .plan-panel { --p-h: 260px; } }
+  .plan-panel .ui-card { width: 300px; }
+  @media (max-width: 639px) { .plan-panel .ui-card { width: auto; } }
+  #assistente.mo-lc, #assistente[data-moment] { --mo-gap: 18px; }
+  /* section 8: the privacy rows beside the photograph */
+  #privacidade .rows__name { font-weight: 500; }
+  @media (max-width: 639px) { #receita .stack-5 > p:last-child { display: none; } }
+  @media (max-width: 639px) { #privacidade > .wrap > .fill { flex: 1 0 auto; } }
+
+  /* section 10: the form on the alt ground; the consent box */
+  .form-panel { background: var(--g-alt); border-radius: var(--r-lg); padding: var(--s-7); }
+  @media (max-width: 639px) { .form-panel { padding: var(--s-5); } }
+  .field--check { grid-template-columns: 24px minmax(0, 1fr); align-items: start; column-gap: var(--s-3); font-weight: 400; font-size: var(--t-body); line-height: 1.5; }
+  .field--check input { width: 24px; height: 24px; margin: 0; accent-color: var(--action); }
+  .field--check label { min-height: 24px; }
+  .field--check .field__error { grid-column: 1 / -1; }
+  .form .field--full { grid-column: 1 / -1; }
+
+  /* the name across the .wrap: "Gestão Saúde" is twelve letters, so it is set to fit the 1280 line */
+  .close__word { font-size: clamp(56px, 13.4vw, 196px); line-height: 1.08; }
+  @media (max-width: 639px) { .close__word { font-size: clamp(40px, 14vw, 72px); } }
+  .nav__logo img { width: 26px; height: 26px; }
+</style>
+</head>
+<body>
+<!-- type: software (an Android app for the family's health; page type software, site-kind software)
+     deal: hero collage (deal.mjs --type software --has ui,photo), nav nav-cards, close close-word, footer footer-statement,
+     rhythm surface-pairs, buttons arrow, mark arc (replaced by the client's own leaf), grounds none (0 of 0-2), lit ground sage,
+     palette the client's own (start.mjs brand: bg #F8F3DE, ink #2E4D30, accent #1E603E, surface #F4E2BE, muted #5A6449),
+     type Nunito (the app's own face, start.mjs brand --type nunito --force), radius round, effect none, scene none
+     moments: letters-assemble in #frase (the app's own line builds itself, once, on the way down);
+              line-carries-colour in #assistente (the page turns to the warm surface band where the assistant answers) -->
+<header class="nav">
+  <div class="wrap nav__bar">
+    <a class="skip-link" href="#top">Pular para o conteúdo</a>
+    <a class="nav__logo" href="#top"><img src="img/folha.webp" alt="" width="26" height="26">Gestão Saúde</a>
+    <nav class="nav__links" aria-label="Principal">
+      <div class="nav__item">
+        <a class="nav__link" href="#remedios">Recursos <svg class="chev" viewBox="0 0 12 12" aria-hidden="true"><path d="M3 4.5l3 3 3-3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></a>
+        <div class="nav__menu">
+          <div class="wrap grid">
+            <a class="menu-card span-4" href="#remedios">
+              <div class="panel"><img class="frame__img" src="assets/img/photo-f89243691-500.webp" srcset="assets/img/photo-f89243691-500.webp 500w, assets/img/photo-f89243691-960.webp 960w" sizes="410px" width="500" height="333" alt="Porta-comprimidos aberto com cápsulas e comprimidos ao lado" decoding="async" data-source="stand-in" data-subject="remédios separados por dia"></div>
+              <span class="t-card">Remédios e lembretes</span>
+              <span class="t-small muted">Horários, doses tomadas e o estoque da caixa</span>
+            </a>
+            <a class="menu-card span-4" href="#familia">
+              <div class="panel"><img class="frame__img" src="assets/img/photo-f6490839-500.webp" srcset="assets/img/photo-f6490839-500.webp 500w, assets/img/photo-f6490839-960.webp 960w" sizes="410px" width="500" height="654" alt="Mãe sentada com o bebê no colo" decoding="async" style="object-position: 50% 62%" data-source="stand-in" data-subject="mãe com bebê"></div>
+              <span class="t-card">Família e acompanhante</span>
+              <span class="t-small muted">Cada pessoa com seus remédios e consultas</span>
+            </a>
+            <a class="menu-card span-4" href="#assistente">
+              <div class="panel"><img class="frame__img" src="assets/img/photo-f116757481-500.webp" srcset="assets/img/photo-f116757481-500.webp 500w, assets/img/photo-f116757481-960.webp 960w" sizes="410px" width="500" height="333" alt="Mulher na poltrona escrevendo no notebook" decoding="async" data-source="stand-in" data-subject="pessoa tirando uma dúvida"></div>
+              <span class="t-card">Assistente de Saúde</span>
+              <span class="t-small muted">Respostas com o link de cada fonte</span>
+            </a>
+          </div>
+        </div>
+      </div>
+      <div class="nav__item"><a class="nav__link" href="#familia">Família</a></div>
+      <div class="nav__item"><a class="nav__link" href="#medicos">Médicos</a></div>
+      <div class="nav__item"><a class="nav__link" href="#privacidade">Privacidade</a></div>
+      <div class="nav__item"><a class="nav__link" href="#planos">Planos</a></div>
+    </nav>
+    <div class="nav__actions">
+      <a class="btn btn--primary" href="#lista">Entrar na lista de espera</a>
+    </div>
+    <button class="nav__toggle" type="button" aria-expanded="false" aria-label="Menu">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 5h14M2 13h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="top">
+  <!-- 1. HERO (collage): the words on span-5, the app's home screen on the lit sage ground, the note of the 14:00 dose over it -->
+  <section class="hero hero--collage" data-enter aria-labelledby="hero-h">
+    <div class="wrap"><div class="hero-text grid hero__grid">
+      <div class="hero__text span-5">
+        <h1 id="hero-h">O app que cuida dos remédios da sua família</h1>
+        <p class="hero__lead">O Gestão Saúde avisa a hora de cada dose, mostra quando a caixa vai acabar e lê a receita por foto. Para Android, com 7 dias grátis do Premium.</p>
+        <div class="btn-row"><a class="btn btn--primary" href="#lista">Entrar na lista de espera<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a><a class="btn btn--secondary" href="#remedios">Ver as telas</a></div>
+        <p class="hero__proof">Remédios, lembretes e consultas são grátis para sempre.</p>
+      </div>
+      <div class="hero__art span-6 start-7" role="img" aria-label="Tela inicial do Gestão Saúde com Ana, Pedro e Vó Lúcia, os remédios de hoje e a próxima consulta, e o aviso da dose das 14:00 do Pedro marcada como tomada">
+        <div class="ly-piece ly-piece--main device ui ui-device" aria-hidden="true">
+          <div class="device__screen">
+            <div class="ph-status"><span>9:41</span><svg viewBox="0 0 38 10"><rect x="0" y="5" width="3" height="5" rx="1" fill="#2e4d30"/><rect x="5" y="3" width="3" height="7" rx="1" fill="#2e4d30"/><rect x="10" y="0" width="3" height="10" rx="1" fill="#2e4d30"/><rect x="18" y="1" width="18" height="8" rx="2.5" fill="none" stroke="#2e4d30"/><rect x="20" y="3" width="12" height="4" rx="1" fill="#2e4d30"/></svg></div>
+            <div class="ph">
+              <div class="ph-card">
+                <p class="ph-title">Bom dia, Ana</p>
+                <span class="ph-sub">Cuidando de quem você ama</span>
+                <div class="ph-people" style="margin-top: 12px">
+                  <span class="ph-person is-on"><span class="ph-av av-ana" data-i="AN"></span>Ana</span>
+                  <span class="ph-person"><span class="ph-av av-pedro" data-i="PE"></span>Pedro</span>
+                  <span class="ph-person"><span class="ph-av av-lucia" data-i="VL"></span>Vó Lúcia</span>
+                  <span class="ph-person"><span class="ph-av av-add" data-i="+"></span>Adicionar</span>
+                </div>
+              </div>
+              <div class="ph-label">Medicamentos de hoje <span>Ver todos</span></div>
+              <div class="ph-card ph-row">
+                <span class="ph-ico"><svg viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg></span>
+                <span><span class="ph-name">Amoxicilina 250mg/5ml</span><span class="ph-meta">5 ml · a cada 8 horas · Pedro</span><span class="ph-meta ph-ok">Tomada às 14:00</span></span>
+                <span class="ph-tick is-done"><svg viewBox="0 0 12 12"><path d="M2.5 6.2 5 8.5l4.5-5"/></svg></span>
+              </div>
+              <div class="ph-card ph-row">
+                <span class="ph-ico ph-ico--g"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="m6.5 17.5 11-11"/></svg></span>
+                <span><span class="ph-name">Losartana 50mg</span><span class="ph-meta">1 comprimido · 1x ao dia · Vó Lúcia</span><span class="ph-meta">Próxima dose amanhã, 08:00</span></span>
+                <span class="ph-tick is-done"><svg viewBox="0 0 12 12"><path d="M2.5 6.2 5 8.5l4.5-5"/></svg></span>
+              </div>
+              <div class="ph-label ph-appt">Próximas consultas <span>Ver todas</span></div>
+              <div class="ph-card ph-row ph-appt">
+                <span class="ph-av ph-av--sm av-pedro" style="width:38px;height:38px;font-size:12px" data-i="PE"></span>
+                <span><span class="ph-name">Pediatria · Dra. Helena Prado</span><span class="ph-meta">23 nov, 09:00 · consulta presencial</span></span>
+                <span></span>
+              </div>
+            </div>
+            <div class="ph-tabs">
+              <span class="is-on"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Início</span>
+              <span><svg viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg>Remédios</span>
+              <span><svg viewBox="0 0 24 24"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>Médicos</span>
+              <span><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Assistente</span>
+              <span><svg viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>Ajustes</span>
+            </div>
+          </div>
+        </div>
+        <div class="ly-piece ly-piece--note note" aria-hidden="true" data-ly-steps="700">
+          <div class="note__row"><b>Pedro · Amoxicilina, 14:00</b><span class="note__chip" data-step data-step-at="3">Tomada</span></div>
+          <div class="note__line" data-step><i>✓</i><span>Lembrete no celular às 14:00</span></div>
+          <div class="note__line" data-step><i>✓</i><span>Ana marcou a dose como tomada</span></div>
+          <div class="note__line" data-step><i class="warn">!</i><span>A caixa acaba em 5 dias</span></div>
+        </div>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- 2. REMÉDIOS (app-frame, in phones): the list, the open remedy and its schedule, side by side -->
+  <section class="section" id="remedios" aria-labelledby="remedios-h">
+    <div class="wrap">
+      <div class="grid lead-row">
+        <h2 id="remedios-h" class="span-5">Cada remédio com horário, dose e estoque</h2>
+        <p class="span-6 start-7">Horários fixos, a cada 8 horas, a cada 2 dias, em dias da semana ou por total de doses. O celular avisa, você marca a dose e o app conta o que resta na caixa. <a class="link" href="#receita">Ver a receita lida por foto</a></p>
+      </div>
+      <div class="phones ui ui-phones fill" role="img" aria-label="Três telas do app: a lista de remédios do Pedro e da Vó Lúcia, a Losartana com 42 doses tomadas e estoque para 6 dias, e o horário da Amoxicilina a cada 8 horas">
+        <div class="device" aria-hidden="true">
+          <div class="device__screen">
+            <div class="ph-status"><span>9:41</span><svg viewBox="0 0 38 10"><rect x="0" y="5" width="3" height="5" rx="1" fill="#2e4d30"/><rect x="5" y="3" width="3" height="7" rx="1" fill="#2e4d30"/><rect x="10" y="0" width="3" height="10" rx="1" fill="#2e4d30"/><rect x="18" y="1" width="18" height="8" rx="2.5" fill="none" stroke="#2e4d30"/><rect x="20" y="3" width="12" height="4" rx="1" fill="#2e4d30"/></svg></div>
+            <div class="ph">
+              <p class="ph-title" style="font-size:22px">Medicamentos</p>
+              <div class="ph-stats">
+                <div class="ph-card ph-stat"><span class="ph-meta">Hoje</span><b>5 doses</b><span class="ph-meta">de 4 remédios</span></div>
+                <div class="ph-card ph-stat"><span class="ph-meta">Próxima dose</span><b>22:00</b><span class="ph-meta">Amoxicilina</span></div>
+              </div>
+              <div class="ph-label">Pedro</div>
+              <div class="ph-card ph-row">
+                <span class="ph-ico"><svg viewBox="0 0 24 24"><path d="m10.5 20.5 10-10a4.95 4.95 0 1 0-7-7l-10 10a4.95 4.95 0 1 0 7 7Z"/><path d="m8.5 8.5 7 7"/></svg></span>
+                <span><span class="ph-name">Amoxicilina 250mg/5ml</span><span class="ph-meta">5 ml · a cada 8 horas</span></span>
+                <span class="ph-tick is-done"><svg viewBox="0 0 12 12"><path d="M2.5 6.2 5 8.5l4.5-5"/></svg></span>
+              </div>
+              <div class="ph-label">Vó Lúcia</div>
+              <div class="ph-card ph-row">
+                <span class="ph-ico ph-ico--g"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="m6.5 17.5 11-11"/></svg></span>
+                <span><span class="ph-name">Losartana 50mg</span><span class="ph-meta">1 comprimido · 1x ao dia</span></span>
+                <span class="ph-tick is-done"><svg viewBox="0 0 12 12"><path d="M2.5 6.2 5 8.5l4.5-5"/></svg></span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="device" aria-hidden="true">
+          <div class="device__screen">
+            <div class="ph-status"><span>9:41</span><svg viewBox="0 0 38 10"><rect x="0" y="5" width="3" height="5" rx="1" fill="#2e4d30"/><rect x="5" y="3" width="3" height="7" rx="1" fill="#2e4d30"/><rect x="10" y="0" width="3" height="10" rx="1" fill="#2e4d30"/><rect x="18" y="1" width="18" height="8" rx="2.5" fill="none" stroke="#2e4d30"/><rect x="20" y="3" width="12" height="4" rx="1" fill="#2e4d30"/></svg></div>
+            <div class="ph">
+              <div class="ph-bar"><span class="ph-bar__btn"><svg viewBox="0 0 16 16"><path d="M10 3 5 8l5 5"/></svg></span><span class="ph-av ph-av--sm av-lucia" data-i="VL"></span><span class="ph-meta">Vó Lúcia</span></div>
+              <p class="ph-title">Losartana 50mg</p>
+              <span class="ph-meta">1 comprimido às 08:00, todos os dias</span>
+              <div class="ph-stats">
+                <div class="ph-card ph-stat"><span class="ph-meta">Histórico</span><b>Tomou 42 vezes</b></div>
+                <div class="ph-card ph-stat"><span class="ph-meta">Estoque</span><b>6 comprimidos</b><span class="ph-chip ph-chip--warn" style="margin-top:4px">Acaba em 6 dias</span></div>
+              </div>
+              <div class="ph-card">
+                <div class="ph-label" style="margin:0 0 6px">Últimas doses</div>
+                <div class="ph-list">
+                  <div><span>Hoje, 08:00</span><span class="ph-ok">Tomada</span></div>
+                  <div><span>Ontem, 08:10</span><span class="ph-ok">Tomada</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="device" aria-hidden="true">
+          <div class="device__screen">
+            <div class="ph-status"><span>9:41</span><svg viewBox="0 0 38 10"><rect x="0" y="5" width="3" height="5" rx="1" fill="#2e4d30"/><rect x="5" y="3" width="3" height="7" rx="1" fill="#2e4d30"/><rect x="10" y="0" width="3" height="10" rx="1" fill="#2e4d30"/><rect x="18" y="1" width="18" height="8" rx="2.5" fill="none" stroke="#2e4d30"/><rect x="20" y="3" width="12" height="4" rx="1" fill="#2e4d30"/></svg></div>
+            <div class="ph">
+              <div class="ph-bar"><span class="ph-bar__btn"><svg viewBox="0 0 16 16"><path d="M10 3 5 8l5 5"/></svg></span><span class="ph-av ph-av--sm av-pedro" data-i="PE"></span><span class="ph-meta">Pedro</span></div>
+              <p class="ph-title">Como tomar</p>
+              <span class="ph-meta">Amoxicilina 250mg/5ml · 5 ml</span>
+              <div class="ph-opts">
+                <span class="ph-opt"><i></i>Horários fixos</span>
+                <span class="ph-opt is-on"><i></i>A cada 8 horas</span>
+                <span class="ph-opt"><i></i>A cada N dias</span>
+                <span class="ph-opt"><i></i>Dias da semana</span>
+              </div>
+              <div class="ph-card" style="display:grid;gap:8px">
+                <span class="ph-meta">Horários de hoje</span>
+                <div class="ph-times"><span class="ph-chip">06:00</span><span class="ph-chip">14:00</span><span class="ph-chip">22:00</span></div>
+                <div class="ph-list"><div><span>Total de doses</span><b>21</b></div><div><span>Última dose</span><span>15 nov, 22:00</span></div></div>
+              </div>
+              <div class="ph-card ph-row" style="grid-template-columns: minmax(0,1fr) auto">
+                <span><span class="ph-name">Lembrete no celular</span><span class="ph-meta">Na hora de cada dose</span></span>
+                <span class="ph-switch"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. RECEITA (split-text-left): the prescription read by AI, the first dose asked -->
+  <section class="section" id="receita" style="--hm: 2" aria-labelledby="receita-h">
+    <div class="wrap">
+      <div class="grid fill">
+        <div class="span-5 stack-5">
+          <h2 id="receita-h">Receita lida por foto no app, conferida por você</h2>
+          <p class="split-lead">Fotografe a receita ou a caixinha e a IA preenche nome, dose e horários. Uma receita com três remédios vira três cadastros de uma vez.</p>
+          <ul class="split-facts">
+            <li>Pergunta se a primeira dose já foi tomada, e quando, para marcar as próximas.</li>
+            <li>Em “Descreva como tomar”, escreva “1 comprimido a cada 8 horas por 7 dias” e o app monta os horários.</li>
+            <li>Nada é salvo antes de você conferir.</li>
+          </ul>
+          <p><a class="link" href="#assistente">Ver o Assistente de Saúde</a></p>
+        </div>
+        <div class="frame frame--split frame--phone span-6 start-7" role="img" aria-label="Tela da receita lida: três remédios encontrados para conferir e a pergunta se a primeira dose de Amoxicilina já foi tomada">
+          <div class="stage stage--fade-b">
+            <div class="at-rise" style="--ay: 40px; --ay-sm: 24px">
+              <div class="device ui ui-device" aria-hidden="true">
+                <div class="device__screen">
+                  <div class="ph-status"><span>9:41</span><svg viewBox="0 0 38 10"><rect x="0" y="5" width="3" height="5" rx="1" fill="#2e4d30"/><rect x="5" y="3" width="3" height="7" rx="1" fill="#2e4d30"/><rect x="10" y="0" width="3" height="10" rx="1" fill="#2e4d30"/><rect x="18" y="1" width="18" height="8" rx="2.5" fill="none" stroke="#2e4d30"/><rect x="20" y="3" width="12" height="4" rx="1" fill="#2e4d30"/></svg></div>
+                  <div class="ph">
+                    <p class="ph-title">Receita lida</p>
+                    <span class="ph-meta">3 remédios para o Pedro · confira antes de salvar</span>
+                    <div class="ph-q">
+                      <b>Já tomou a primeira dose de Amoxicilina?</b>
+                      <div class="ph-q__btns"><span>Ainda não</span><span class="is-on">Sim, às 08:00</span></div>
+                      <span class="ph-meta">Próximas doses: 16:00, 00:00 e 08:00</span>
+                    </div>
+                    <div class="ph-card ph-row" style="grid-template-columns: minmax(0,1fr) auto">
+                      <span><span class="ph-name">Amoxicilina 250mg/5ml</span><span class="ph-meta">5 ml a cada 8 horas, por 7 dias</span></span>
+                      <span class="ph-chip ph-chip--ai">Lido da foto</span>
+                    </div>
+                    <div class="ph-card ph-row" style="grid-template-columns: minmax(0,1fr) auto">
+                      <span><span class="ph-name">Prednisolona 3mg/ml</span><span class="ph-meta">5 ml 1x ao dia, por 5 dias</span></span>
+                      <span class="ph-chip ph-chip--ai">Lido da foto</span>
+                    </div>
+                    <div class="ph-card ph-row" style="grid-template-columns: minmax(0,1fr) auto">
+                      <span><span class="ph-name">Soro fisiológico 0,9%</span><span class="ph-meta">3 gotas em cada narina, 4x ao dia</span></span>
+                      <span class="ph-chip ph-chip--ai">Lido da foto</span>
+                    </div>
+                    <span class="ph-btn">Salvar 3 remédios</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. THE LINE (statement, letters-assemble): the app's own line, set large -->
+  <section class="section" id="frase" data-moment="letters-assemble" aria-labelledby="frase-h">
+    <div class="wrap">
+      <h2 id="frase-h" class="mo-la__type">Cuidando de quem você ama</h2>
+      <p class="mo-la__sub">É a frase da tela inicial do Gestão Saúde, logo acima das pessoas da sua família e dos remédios de hoje.</p>
+      <div class="frase-shot ui" role="img" aria-label="O topo da tela inicial do app: Bom dia, Ana, a frase Cuidando de quem você ama e as pessoas da família">
+        <div class="ph-card">
+          <p class="ph-title">Bom dia, Ana</p>
+          <span class="ph-sub">Cuidando de quem você ama</span>
+          <div class="ph-people" style="margin-top: 12px">
+            <span class="ph-person is-on"><span class="ph-av av-ana" data-i="AN"></span>Ana</span>
+            <span class="ph-person"><span class="ph-av av-pedro" data-i="PE"></span>Pedro</span>
+            <span class="ph-person"><span class="ph-av av-lucia" data-i="VL"></span>Vó Lúcia</span>
+            <span class="ph-person"><span class="ph-av av-add" data-i="+"></span>Adicionar</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. ASSISTENTE (surface band, line-carries-colour): the assistant answering with its sources -->
+  <section class="section ground-surface" id="assistente" data-moment="line-carries-colour" data-moment-opts='{"from": "base"}' aria-labelledby="assistente-h">
+    <div class="wrap">
+      <div class="grid fill">
+        <div class="span-5 stack-5">
+          <h2 id="assistente-h">Assistente de Saúde para as dúvidas da família</h2>
+          <p class="split-lead">Ele responde sobre os remédios, as doses e as consultas de quem você cadastrou. Quando pesquisa na internet, prefere Ministério da Saúde, Anvisa, Fiocruz e sociedades médicas, e mostra os links.</p>
+          <ul class="split-facts">
+            <li>Atalhos para remédios, sintomas, consultas e emergência.</li>
+            <li>Não dá diagnóstico nem receita remédio.</li>
+          </ul>
+          <p><a class="link" href="#planos">Ver os planos</a></p>
+        </div>
+        <div class="frame frame--split frame--phone span-6 start-7" role="img" aria-label="Conversa com o Assistente de Saúde sobre como guardar a amoxicilina do Pedro, com os links da Anvisa e do Ministério da Saúde">
+          <div class="stage stage--fade-b">
+            <div class="at-rise fit" style="--fit-max: 400px; --ax: max(24px, 50% - 200px); --ay: 56px; --ay-sm: 24px" data-ui-loop>
+              <div class="ui ui-panel ui-chat" data-ui="chat">
+                <div class="ui-head">
+                  <span class="ui-agent" aria-hidden="true"></span>
+                  <div class="ui-title">Assistente de Saúde</div>
+                  <span class="ui-chat__online">Disponível</span>
+                  <span class="ui-spacer"></span>
+                </div>
+                <div class="ui-chat__body">
+                  <div class="ui-chat__day">Hoje, 14:20</div>
+                  <div class="ui-msg ui-msg--me" data-chat-q>
+                    <span class="ui-msg__text">Como guardo a amoxicilina do Pedro depois de preparada?</span>
+                  </div>
+                  <div class="ui-msg ui-msg--bot" data-chat-a>
+                    <span class="ui-agent ui-msg__av" aria-hidden="true"></span>
+                    <span class="ui-msg__col">
+                      <span class="ui-chat__answer">Siga a <b>bula da caixa</b>: ela diz se vai na geladeira e por quantos dias vale depois de preparada. Na dúvida, pergunte na farmácia.</span>
+                      <span class="ui-chat__srcs">
+                        <span class="ui-chat__src"><svg class="ui-icon" viewBox="0 0 16 16"><path d="M4 2.5h5l3 3v8H4z"/><path d="M9 2.5v3h3"/></svg>Bulário · Anvisa</span>
+                        <span class="ui-chat__src"><svg class="ui-icon" viewBox="0 0 16 16"><path d="M4 2.5h5l3 3v8H4z"/><path d="M9 2.5v3h3"/></svg>Ministério da Saúde</span>
+                      </span>
+                    </span>
+                  </div>
+                  <div class="ui-msg ui-msg--me">
+                    <span class="ui-msg__text">Obrigada, vou olhar a caixa.</span>
+                  </div>
+                </div>
+                <div class="ui-chat__input">
+                  <span class="ui-chat__ph">Digite sua dúvida</span>
+                  <span class="ui-chat__send" aria-hidden="true"><svg viewBox="0 0 16 16" width="14" height="14"><path d="M8 13V3.5M3.8 7.5 8 3.3l4.2 4.2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. FAMÍLIA (pair): a photograph of the family beside the hub of people and the companion on WhatsApp -->
+  <section class="section" id="familia" aria-labelledby="familia-h">
+    <div class="wrap">
+      <div class="grid lead-row">
+        <h2 id="familia-h" class="span-5">A família inteira e quem ajuda a cuidar</h2>
+        <p class="span-6 start-7">Cada pessoa tem seus remédios e consultas: toque no nome dela para filtrar. Um acompanhante recebe pelo WhatsApp a hora da dose, a dose atrasada, o estoque baixo e a dose tomada.</p>
+      </div>
+      <div class="grid pair" style="margin-top: var(--s-7)">
+        <div class="frame frame--photo span-6">
+          <img class="frame__img" src="assets/img/photo-f70436290.webp" srcset="assets/img/photo-f70436290-500.webp 500w, assets/img/photo-f70436290-960.webp 960w, assets/img/photo-f70436290.webp 1280w" sizes="(max-width: 1023px) 100vw, 628px" width="1280" height="853" alt="Avós sentados ao ar livre com os dois netos pequenos no colo" loading="lazy" decoding="async" style="object-position: 50% 40%" data-source="stand-in" data-subject="avós com os netos">
+        </div>
+        <div class="panel span-6 start-7">
+          <div class="dg" data-diagram data-dg-still><script type="application/json">{"layout": "hub", "alt": "O Gestão Saúde reúne os remédios do Pedro, da Vó Lúcia e da Ana, lembra no celular e avisa a acompanhante pelo WhatsApp quando a dose atrasa ou o estoque fica baixo.", "center": {"label": "Gestão Saúde", "icon": "ui:leaf"}, "spokes": [{"label": "Pedro", "icon": "ui:baby"}, {"label": "Vó Lúcia", "icon": "ui:heart"}, {"label": "Ana", "icon": "ui:user"}, {"label": "Acompanhante", "icon": "whatsapp"}, {"label": "Dose atrasada", "icon": "ui:alarm-clock"}, {"label": "Estoque baixo", "icon": "ui:package"}], "ground": "none"}</script></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. MÉDICOS (three open cards): doctors, appointments, the symptom diary -->
+  <section class="section" id="medicos" style="--hm: 2" aria-labelledby="medicos-h">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="medicos-h">Médicos, consultas e diário de sintomas da família. <span class="muted">As notificações mostram o que precisa de atenção.</span></h2>
+      </div>
+      <div class="grid">
+        <article class="card card--row card--open span-4 m-nolift">
+          <h3>Guarda os médicos da família</h3>
+          <p>Lista e mapa, a distância até o consultório e uma nota de 1 a 5 estrelas que só você vê.</p>
+          <div class="panel">
+            <div class="stage stage--fade-b">
+              <div class="at-rise" style="--ax: 24px; --ay: 32px">
+                <div class="ui ui-card" role="img" aria-label="Lista de médicos com especialidade, distância e nota">
+                  <div class="ui-card__title">Médicos <span class="ph-chip">Lista · Mapa</span></div>
+                  <div class="ph-row" style="grid-template-columns: minmax(0,1fr) auto"><span><span class="ph-name">Dra. Helena Prado</span><span class="ph-meta">Pediatria · 2,4 km</span></span><span class="ph-stars">★★★★★</span></div>
+                  <div class="ph-row" style="grid-template-columns: minmax(0,1fr) auto"><span><span class="ph-name">Dr. Rui Matos</span><span class="ph-meta">Cardiologia · 5,1 km</span></span><span class="ph-stars">★★★★☆</span></div>
+                  <div class="ph-row" style="grid-template-columns: minmax(0,1fr) auto"><span><span class="ph-name">Dra. Clara Nunes</span><span class="ph-meta">Clínica geral · 1,2 km</span></span><span class="ph-stars">★★★★☆</span></div>
+                  <div class="ph-row" style="grid-template-columns: minmax(0,1fr) auto"><span><span class="ph-name">Dr. Paulo Reis</span><span class="ph-meta">Dermatologia · 3,8 km</span></span><span class="ph-stars">★★★☆☆</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="card card--row card--open span-4 m-nolift">
+          <h3>Marca as consultas no app</h3>
+          <p>Data, hora, médico e para quem é. A próxima aparece na tela inicial.</p>
+          <div class="panel">
+            <div class="stage stage--fade-b">
+              <div class="at-rise" style="--ax: 24px; --ay: 32px">
+                <div class="ui ui-card" role="img" aria-label="Próximas consultas do Pedro e da Vó Lúcia">
+                  <div class="ui-card__title">Próximas consultas</div>
+                  <div class="ph-row"><span class="ph-av ph-av--sm av-pedro" style="width:38px;height:38px;font-size:12px" data-i="PE"></span><span><span class="ph-name">Pediatria</span><span class="ph-meta">Dra. Helena Prado</span></span><span class="ph-chip">23 nov, 09:00</span></div>
+                  <div class="ph-row"><span class="ph-av ph-av--sm av-lucia" style="width:38px;height:38px;font-size:12px" data-i="VL"></span><span><span class="ph-name">Cardiologia</span><span class="ph-meta">Dr. Rui Matos</span></span><span class="ph-chip">2 dez, 10:30</span></div>
+                  <div class="ph-row"><span class="ph-av ph-av--sm av-ana" style="width:38px;height:38px;font-size:12px" data-i="AN"></span><span><span class="ph-name">Clínica geral</span><span class="ph-meta">Dra. Clara Nunes</span></span><span class="ph-chip">10 dez, 15:00</span></div>
+                  <div class="ph-row"><span class="ph-av ph-av--sm av-pedro" style="width:38px;height:38px;font-size:12px" data-i="PE"></span><span><span class="ph-name">Retorno</span><span class="ph-meta">Dra. Helena Prado</span></span><span class="ph-chip">14 jan, 09:30</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+        <article class="card card--row card--open span-4 m-nolift">
+          <h3>Anota febre, dor, humor e sono da família</h3>
+          <p>O diário de sintomas guarda a temperatura e o que cada um sentiu, com dia e hora.</p>
+          <div class="panel">
+            <div class="stage stage--fade-b">
+              <div class="at-rise" style="--ax: 24px; --ay: 32px">
+                <div class="ui ui-card" role="img" aria-label="Diário de sintomas com febre de 38,2 graus do Pedro hoje">
+                  <div class="ui-card__title">Diário de sintomas <span class="ph-chip">Pedro</span></div>
+                  <div class="ph-times"><span class="ph-chip ph-chip--warn">Febre</span><span class="ph-chip">Dor</span><span class="ph-chip">Humor</span><span class="ph-chip">Sono</span></div>
+                  <div class="ph-list">
+                    <div><span><span class="ph-name">Febre, 38,2 °C</span><span class="ph-meta">Hoje, 07:40</span></span><span class="ph-chip ph-chip--warn">Moderada</span></div>
+                    <div><span><span class="ph-name">Sono: acordou 2 vezes</span><span class="ph-meta">Ontem à noite</span></span><span class="ph-chip">Leve</span></div>
+                    <div><span><span class="ph-name">Febre, 37,6 °C</span><span class="ph-meta">Ontem, 19:15</span></span><span class="ph-chip">Leve</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8. PRIVACIDADE: what the privacy policy says, beside a photograph -->
+  <section class="section" id="privacidade" aria-labelledby="privacidade-h">
+    <div class="wrap">
+      <div class="grid fill">
+        <div class="span-5 stack-5">
+          <h2 id="privacidade-h">Dados de saúde guardados no Brasil</h2>
+          <ul class="rows">
+            <li><span class="rows__name">Banco de dados em São Paulo</span><p>Não vendemos seus dados e não mostramos anúncios.</p></li>
+            <li><span class="rows__name">A IA roda fora do Brasil</span><p>Perguntas ao assistente e fotos para ler vão para a Groq, só quando você toca no botão.</p></li>
+            <li><span class="rows__name">Apague quando quiser</span><p>Uma pessoa, um remédio ou a conta inteira, pelo próprio app.</p></li>
+          </ul>
+          <p><a class="link" href="https://app-gestao-saude.vercel.app/privacidade.html">Ler a Política de Privacidade</a></p>
+        </div>
+        <div class="frame frame--photo frame--fill span-6 start-7">
+          <img class="frame__img" src="assets/img/photo-f186148984-960.webp" srcset="assets/img/photo-f186148984-500.webp 500w, assets/img/photo-f186148984-960.webp 960w, assets/img/photo-f186148984.webp 1280w" sizes="(max-width: 1023px) 100vw, 628px" width="960" height="1440" alt="Casal de idosos lendo um livro juntos no sofá de casa" loading="lazy" decoding="async" style="object-position: 50% 30%" data-source="stand-in" data-subject="casal de idosos em casa">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. PLANOS (pricing-two) -->
+  <section class="section" id="planos" style="--hm: 2" aria-labelledby="planos-h">
+    <div class="wrap">
+      <div class="grid">
+        <div class="span-4 stack-5">
+          <h2 id="planos-h">Planos</h2>
+          <p class="split-lead">O dia a dia da família é grátis para sempre. O Premium traz a IA, com 7 dias grátis do Premium a partir do cadastro.</p>
+          <p>Os dois planos são para Android. A assinatura será feita pelo Google Play. <a class="link" href="#receita">Ver o que a IA faz</a></p>
+          <div class="panel plan-panel">
+            <div class="stage stage--fade-b">
+              <div class="at-rise" style="--ax: 24px; --ay: 28px">
+                <div class="ui ui-card" role="img" aria-label="Tela do Premium no app: 7 dias grátis a partir do cadastro, com as três funções de IA">
+                  <div class="ui-card__title">Premium <span class="ph-chip ph-chip--ai">7 dias grátis</span></div>
+                  <div class="ph-list">
+                    <div><span>Ler receita e caixinha</span><span class="ph-switch"></span></div>
+                    <div><span>Descreva como tomar</span><span class="ph-switch"></span></div>
+                    <div><span>Assistente de Saúde</span><span class="ph-switch"></span></div>
+                  </div>
+                  <span class="ph-meta">Contados a partir do cadastro</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <article class="card card--plan span-4 start-5 m-nolift">
+          <h3>Grátis</h3>
+          <p class="muted">Para sempre</p>
+                    <ul class="checks">
+            <li>Remédios, com todos os tipos de horário</li>
+            <li>Lembretes no celular e dose marcada</li>
+            <li>Consultas de cada pessoa</li>
+            <li>Diário de sintomas</li>
+            <li>Estoque e previsão de quando acaba</li>
+            <li>Médicos, com mapa e distância</li>
+          </ul>
+        </article>
+        <article class="card card--plan is-featured span-4 start-9 m-nolift">
+          <h3>Premium</h3>
+          <p class="muted">7 dias grátis do Premium a partir do cadastro</p>
+          <p class="price"><span class="t-lead">Preço anunciado no lançamento</span></p>
+          <ul class="checks">
+            <li>Tudo do plano Grátis</li>
+            <li>Ler receita e caixinha por foto, com vários remédios de uma vez</li>
+            <li>Descreva como tomar, nas suas palavras</li>
+            <li>Assistente de Saúde, com os links das fontes</li>
+          </ul>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10. LISTA DE ESPERA (booking-form): the words and a photograph left, the form on the alt ground right.
+       The form posts JSON to /api/lista-de-espera (the inline script at the end of the page); system.js checks the fields first. -->
+  <section class="section" id="lista" aria-labelledby="lista-h">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="lista-h">Lista de espera do Gestão Saúde</h2>
+        <p>Deixe seu e-mail e avisamos quando o Gestão Saúde chegar ao Google Play.</p>
+      </div>
+      <div class="grid grid--top">
+        <div class="span-5">
+          <form class="form" id="lista-form" action="/api/lista-de-espera" method="post" novalidate data-fix="Corrija o campo marcado ({n})." data-sending="Enviando">
+            <div class="field field--full"><label for="le-email">E-mail</label>
+              <input id="le-email" name="email" type="email" autocomplete="email" inputmode="email" required aria-describedby="le-email-err">
+              <p class="field__error" id="le-email-err" hidden>Escreva um e-mail com @, como nome@provedor.com.br.</p></div>
+            <div class="field field--full"><label for="le-nome">Nome (opcional)</label>
+              <input id="le-nome" name="nome" type="text" autocomplete="name" aria-describedby="le-nome-err">
+              <p class="field__error" id="le-nome-err" hidden></p></div>
+            <div class="hp" hidden aria-hidden="true"><label for="le-empresa">Empresa</label><input id="le-empresa" name="empresa" type="text" tabindex="-1" autocomplete="off"></div>
+            <div class="field field--check field--full">
+              <input id="le-ok" name="consentimento" type="checkbox" value="true" required aria-describedby="le-ok-err">
+              <label for="le-ok">Concordo em receber um e-mail sobre o lançamento e li a <a class="link" href="https://app-gestao-saude.vercel.app/privacidade.html">Política de Privacidade</a></label>
+              <p class="field__error" id="le-ok-err" hidden>Marque a caixa para entrar na lista.</p>
+            </div>
+            <div class="btn-row"><button class="btn btn--primary" type="submit">Entrar na lista de espera</button></div>
+            <p class="form__status" role="status" data-form-status></p>
+            <p class="t-small">Você recebe um e-mail no dia do lançamento.</p>
+          </form>
+        </div>
+        <div class="frame frame--photo span-6 start-7" style="--ratio: 75%">
+          <img class="frame__img" src="assets/img/photo-f24051233-960.webp" srcset="assets/img/photo-f24051233-500.webp 500w, assets/img/photo-f24051233-960.webp 960w, assets/img/photo-f24051233.webp 1280w" sizes="(max-width: 1023px) 100vw, 628px" width="960" height="640" alt="Mãe e filha conversando na cozinha de casa" loading="lazy" decoding="async" data-source="stand-in" data-subject="mãe com a filha">
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer closing footer--statement" id="contact" aria-labelledby="close-h">
+  <div class="wrap">
+    <div class="closing__cta close--word">
+      <div class="section-head--split">
+        <div><h2 id="close-h">Um e-mail no dia do lançamento</h2><p class="t-lead">Para Android, com 7 dias grátis do Premium.</p></div>
+        <a class="btn btn--primary" href="#lista">Entrar na lista de espera<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a>
+      </div>
+      <p class="close__word" aria-hidden="true">Gestão Saúde</p>
+    </div>
+    <div class="closing__links">
+      <div class="grid">
+        <div class="span-4 stack-4">
+          <a class="nav__logo" href="#top"><img src="img/folha.webp" alt="" width="26" height="26">Gestão Saúde</a>
+          <p class="footer__lede">Remédios e consultas da família num app só.</p>
+        </div>
+        <div class="span-2 footer__col"><h3>Recursos</h3><ul><li><a href="#remedios">Remédios</a></li><li><a href="#receita">Receita por foto</a></li><li><a href="#assistente">Assistente</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Família</h3><ul><li><a href="#familia">Acompanhante</a></li><li><a href="#medicos">Médicos</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Planos</h3><ul><li><a href="#planos">Grátis e Premium</a></li><li><a href="#lista">Lista de espera</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Privacidade</h3><ul><li><a href="#privacidade">Seus dados</a></li><li><a href="https://app-gestao-saude.vercel.app/privacidade.html">Política</a></li></ul></div>
+      </div>
+      <div class="footer__legal">
+        <span>&copy; 2026 Gestão Saúde &nbsp; Nomes e marcas de produtos pertencem aos seus donos.</span>
+        <div class="socials"></div>
+        <a class="credits" href="credits.html">Fotos via Wikimedia Commons</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<nav class="actionbar" aria-label="Ações rápidas">
+  <a class="btn btn--primary" href="#lista">Entrar na lista de espera</a>
+</nav>
+
+<script type="module" src="assets/system.js"></script>
+<script type="module" src="assets/motion/motion.js"></script>
+<script type="module" src="assets/layout/layout.js"></script>
+<script type="module" src="assets/diagrams/mount.js"></script>
+<!-- the waitlist: system.js checks the fields on submit (and stops a bad one); this sends a good one as JSON and shows
+     the answer: 201 the confirmation, 400 the reason under its field, anything else in the status line -->
+<script>
+document.addEventListener('submit', async (e) => {
+  const form = e.target;
+  if (!(form instanceof HTMLFormElement) || form.id !== 'lista-form' || e.defaultPrevented) return;
+  e.preventDefault();
+  const status = form.querySelector('[data-form-status]');
+  const button = form.querySelector('[type="submit"]');
+  const say = (t) => { status.textContent = t; };
+  const fields = { email: 'le-email', consentimento: 'le-ok' };
+  const showErr = (name, text) => {
+    const el = document.getElementById(fields[name]);
+    const err = document.getElementById(fields[name] + '-err');
+    el.setAttribute('aria-invalid', 'true');
+    err.textContent = text; err.hidden = false;
+    el.focus();
+  };
+  const body = { email: form.elements.email.value.trim(), consentimento: form.elements.consentimento.checked, empresa: form.elements.empresa.value };
+  const nome = form.elements.nome.value.trim();
+  if (nome) body.nome = nome;
+  const q = new URLSearchParams(location.search);
+  const origem = [q.get('utm_source'), q.get('utm_campaign')].filter(Boolean).join(' / ');
+  if (origem) body.origem = origem.slice(0, 120);
+  const wait = setTimeout(() => say('Enviando'), 300);
+  button.disabled = true; button.setAttribute('aria-busy', 'true');
+  try {
+    const res = await fetch(form.getAttribute('action'), { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body) });
+    let data = null;
+    try { data = await res.json(); } catch (_) { data = null; }
+    clearTimeout(wait);
+    if (res.status === 201 && data && data.ok === true) {
+      form.reset();
+      say('Pronto! Avisaremos você no lançamento.');
+    } else if (res.status === 400 && data && data.erro && fields[data.campo]) {
+      showErr(data.campo, data.erro);
+      say('Corrija o campo marcado (1).');
+    } else if (data && data.erro) {
+      say(data.erro);
+    } else {
+      say('Não foi possível entrar na lista agora. Seu e-mail continua aqui; tente de novo em alguns minutos.');
+    }
+  } catch (_) {
+    clearTimeout(wait);
+    say('Sem conexão: não foi possível enviar. Seu e-mail continua aqui; tente de novo.');
+  } finally {
+    button.disabled = false; button.removeAttribute('aria-busy');
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+# So a pagina, os assets e a funcao vao para o ar.
+.taste-skill
+shots
+sql
+node_modules
+*.md
+tsconfig.json
