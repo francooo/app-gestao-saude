@@ -248,6 +248,21 @@
     #assistente .split-facts { display: none; }
     #assistente > .wrap > .fill { flex: 1 0 auto; }
   }
+
+  /* "Ver as telas" é um link de texto com seta (data-buttons="arrow"): o hover do motion.css
+     desenhava uma caixa em volta só do texto, com a seta de fora. No hover só o sublinhado escurece. */
+  html[data-buttons="arrow"] .btn-row > .btn--secondary:hover,
+  html[data-buttons="arrow"] .btn-row > .btn--secondary:active { background: none; border-color: transparent; }
+
+  /* Rodapé: a marca ocupa a mesma linha dos títulos das colunas (Recursos, Família...) e a frase
+     começa na altura do primeiro link, no mesmo corpo de texto. */
+  @media (min-width: 1024px) {
+    .closing__links .grid { align-items: start; }
+    .closing__links .span-4 > .nav__logo { height: calc(var(--t-small) * 1.4); min-height: 0; margin-bottom: var(--s-4); font-size: 20px; }
+    .closing__links .span-4 > .nav__logo img { height: 22px; }
+    .closing__links .span-4.stack-4 > * + * { margin-top: 0; }
+    .closing__links .footer__lede { font: 400 var(--t-small)/1.6 var(--font-text); letter-spacing: 0; max-width: 34ch; color: var(--ink); }
+  }
 </style>
 </head>
 <body>
