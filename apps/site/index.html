@@ -7,7 +7,7 @@
 <meta name="description" content="Lembretes de dose, estoque dos remédios, receita lida por foto e um assistente de saúde para cuidar dos filhos, dos pais e de você. Para Android, com 7 dias grátis do Premium.">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Gestão Saúde: app de remédios e consultas para a família">
-<meta property="og:description" content="Lembretes de dose, estoque e receita lida por foto, para a família toda. Entre na lista de espera do lançamento.">
+<meta property="og:description" content="Lembretes de dose, estoque e receita lida por foto, para a família toda. Baixe grátis para Android.">
 <meta property="og:image" content="share.jpg">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="favicon.ico" sizes="any">
@@ -293,7 +293,7 @@
       <div class="nav__item"><a class="nav__link" href="#planos">Planos</a></div>
     </nav>
     <div class="nav__actions">
-      <a class="btn btn--primary" href="#lista">Entrar na lista de espera</a>
+      <a class="btn btn--primary" href="#baixar">Baixar o app</a>
     </div>
     <button class="nav__toggle" type="button" aria-expanded="false" aria-label="Menu">
       <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path d="M2 5h14M2 13h14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -308,7 +308,7 @@
       <div class="hero__text span-5">
         <h1 id="hero-h">O app que cuida dos remédios da sua família</h1>
         <p class="hero__lead">O Gestão Saúde avisa a hora de cada dose, mostra quando a caixa vai acabar e lê a receita por foto. Para Android, com 7 dias grátis do Premium.</p>
-        <div class="btn-row"><a class="btn btn--primary" href="#lista">Entrar na lista de espera<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a><a class="btn btn--secondary" href="#remedios">Ver as telas</a></div>
+        <div class="btn-row"><a class="btn btn--primary" href="/baixar">Baixar para Android<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a><a class="btn btn--secondary" href="#remedios">Ver as telas</a></div>
         <p class="hero__proof">Remédios, lembretes e consultas são grátis para sempre.</p>
       </div>
       <div class="hero__art span-6 start-7" role="img" aria-label="Tela inicial do Gestão Saúde com Ana, Pedro e Vó Lúcia, os remédios de hoje e a próxima consulta, e o aviso da dose das 14:00 do Pedro marcada como tomada">
@@ -724,33 +724,23 @@
     </div>
   </section>
 
-  <!-- 10. LISTA DE ESPERA (booking-form): the words and a photograph left, the form on the alt ground right.
-       The form posts JSON to /api/lista-de-espera (the inline script at the end of the page); system.js checks the fields first. -->
-  <section class="section" id="lista" aria-labelledby="lista-h">
+  <!-- 10. BAIXAR: the install steps left, a photograph right. /baixar is a redirect in vercel.json to the
+       latest EAS preview APK; a new APK only changes that one line. -->
+  <section class="section" id="baixar" aria-labelledby="baixar-h">
     <div class="wrap">
       <div class="section-head">
-        <h2 id="lista-h">Lista de espera do Gestão Saúde</h2>
-        <p>Deixe seu e-mail e avisamos quando o Gestão Saúde chegar ao Google Play.</p>
+        <h2 id="baixar-h">Baixe o Gestão Saúde</h2>
+        <p>Para celulares Android. O arquivo vem direto deste site, enquanto o app não chega ao Google Play.</p>
       </div>
       <div class="grid grid--top">
-        <div class="span-5">
-          <form class="form" id="lista-form" action="/api/lista-de-espera" method="post" novalidate data-fix="Corrija o campo marcado ({n})." data-sending="Enviando">
-            <div class="field field--full"><label for="le-email">E-mail</label>
-              <input id="le-email" name="email" type="email" autocomplete="email" inputmode="email" required aria-describedby="le-email-err">
-              <p class="field__error" id="le-email-err" hidden>Escreva um e-mail com @, como nome@provedor.com.br.</p></div>
-            <div class="field field--full"><label for="le-nome">Nome (opcional)</label>
-              <input id="le-nome" name="nome" type="text" autocomplete="name" aria-describedby="le-nome-err">
-              <p class="field__error" id="le-nome-err" hidden></p></div>
-            <div class="hp" hidden aria-hidden="true"><label for="le-empresa">Empresa</label><input id="le-empresa" name="empresa" type="text" tabindex="-1" autocomplete="off"></div>
-            <div class="field field--check field--full">
-              <input id="le-ok" name="consentimento" type="checkbox" value="true" required aria-describedby="le-ok-err">
-              <label for="le-ok">Concordo em receber um e-mail sobre o lançamento e li a <a class="link" href="https://app-gestao-saude.vercel.app/privacidade.html">Política de Privacidade</a></label>
-              <p class="field__error" id="le-ok-err" hidden>Marque a caixa para entrar na lista.</p>
-            </div>
-            <div class="btn-row"><button class="btn btn--primary" type="submit">Entrar na lista de espera</button></div>
-            <p class="form__status" role="status" data-form-status></p>
-            <p class="t-small">Você recebe um e-mail no dia do lançamento.</p>
-          </form>
+        <div class="span-5 stack-5">
+          <ol class="rows">
+            <li><span class="rows__name">1. Baixe o arquivo</span><p>Toque no botão abaixo pelo celular. O arquivo tem cerca de 155 MB; use o Wi-Fi, se puder.</p></li>
+            <li><span class="rows__name">2. Permita a instalação</span><p>O Android pergunta se o navegador pode instalar apps. Toque em Configurações e ative a opção.</p></li>
+            <li><span class="rows__name">3. Crie sua conta</span><p>Abra o app e cadastre-se. Os 7 dias grátis do Premium começam aí.</p></li>
+          </ol>
+          <div class="btn-row"><a class="btn btn--primary" href="/baixar">Baixar para Android</a></div>
+          <p class="t-small">Versão 0.2.0. As melhorias chegam sozinhas pelo próprio app.</p>
         </div>
         <div class="frame frame--photo span-6 start-7" style="--ratio: 75%">
           <img class="frame__img" src="assets/img/photo-f24051233-960.webp" srcset="assets/img/photo-f24051233-500.webp 500w, assets/img/photo-f24051233-960.webp 960w, assets/img/photo-f24051233.webp 1280w" sizes="(max-width: 1023px) 100vw, 628px" width="960" height="640" alt="Mãe e filha conversando na cozinha de casa" loading="lazy" decoding="async" data-source="stand-in" data-subject="mãe com a filha">
@@ -764,8 +754,8 @@
   <div class="wrap">
     <div class="closing__cta close--word">
       <div class="section-head--split">
-        <div><h2 id="close-h">Um e-mail no dia do lançamento</h2><p class="t-lead">Para Android, com 7 dias grátis do Premium.</p></div>
-        <a class="btn btn--primary" href="#lista">Entrar na lista de espera<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a>
+        <div><h2 id="close-h">Comece hoje, de graça</h2><p class="t-lead">Para Android, com 7 dias grátis do Premium.</p></div>
+        <a class="btn btn--primary" href="/baixar">Baixar para Android<svg class="m-arrow" viewBox="0 0 12 12" aria-hidden="true"><path class="m-arrow__stem" d="M1 6h8"/><path class="m-arrow__head" d="M4.5 2.5 8 6l-3.5 3.5"/></svg></a>
       </div>
       <p class="close__word" aria-hidden="true">Gestão Saúde</p>
     </div>
@@ -777,7 +767,7 @@
         </div>
         <div class="span-2 footer__col"><h3>Recursos</h3><ul><li><a href="#remedios">Remédios</a></li><li><a href="#receita">Receita por foto</a></li><li><a href="#assistente">Assistente</a></li></ul></div>
         <div class="span-2 footer__col"><h3>Família</h3><ul><li><a href="#familia">Acompanhante</a></li><li><a href="#medicos">Médicos</a></li></ul></div>
-        <div class="span-2 footer__col"><h3>Planos</h3><ul><li><a href="#planos">Grátis e Premium</a></li><li><a href="#lista">Lista de espera</a></li></ul></div>
+        <div class="span-2 footer__col"><h3>Planos</h3><ul><li><a href="#planos">Grátis e Premium</a></li><li><a href="#baixar">Baixar o app</a></li></ul></div>
         <div class="span-2 footer__col"><h3>Privacidade</h3><ul><li><a href="#privacidade">Seus dados</a></li><li><a href="https://app-gestao-saude.vercel.app/privacidade.html">Política</a></li></ul></div>
       </div>
       <div class="footer__legal">
@@ -790,62 +780,12 @@
 </footer>
 
 <nav class="actionbar" aria-label="Ações rápidas">
-  <a class="btn btn--primary" href="#lista">Entrar na lista de espera</a>
+  <a class="btn btn--primary" href="/baixar">Baixar para Android</a>
 </nav>
 
 <script type="module" src="assets/system.js"></script>
 <script type="module" src="assets/motion/motion.js"></script>
 <script type="module" src="assets/layout/layout.js"></script>
 <script type="module" src="assets/diagrams/mount.js"></script>
-<!-- the waitlist: system.js checks the fields on submit (and stops a bad one); this sends a good one as JSON and shows
-     the answer: 201 the confirmation, 400 the reason under its field, anything else in the status line -->
-<script>
-document.addEventListener('submit', async (e) => {
-  const form = e.target;
-  if (!(form instanceof HTMLFormElement) || form.id !== 'lista-form' || e.defaultPrevented) return;
-  e.preventDefault();
-  const status = form.querySelector('[data-form-status]');
-  const button = form.querySelector('[type="submit"]');
-  const say = (t) => { status.textContent = t; };
-  const fields = { email: 'le-email', consentimento: 'le-ok' };
-  const showErr = (name, text) => {
-    const el = document.getElementById(fields[name]);
-    const err = document.getElementById(fields[name] + '-err');
-    el.setAttribute('aria-invalid', 'true');
-    err.textContent = text; err.hidden = false;
-    el.focus();
-  };
-  const body = { email: form.elements.email.value.trim(), consentimento: form.elements.consentimento.checked, empresa: form.elements.empresa.value };
-  const nome = form.elements.nome.value.trim();
-  if (nome) body.nome = nome;
-  const q = new URLSearchParams(location.search);
-  const origem = [q.get('utm_source'), q.get('utm_campaign')].filter(Boolean).join(' / ');
-  if (origem) body.origem = origem.slice(0, 120);
-  const wait = setTimeout(() => say('Enviando'), 300);
-  button.disabled = true; button.setAttribute('aria-busy', 'true');
-  try {
-    const res = await fetch(form.getAttribute('action'), { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify(body) });
-    let data = null;
-    try { data = await res.json(); } catch (_) { data = null; }
-    clearTimeout(wait);
-    if (res.status === 201 && data && data.ok === true) {
-      form.reset();
-      say('Pronto! Avisaremos você no lançamento.');
-    } else if (res.status === 400 && data && data.erro && fields[data.campo]) {
-      showErr(data.campo, data.erro);
-      say('Corrija o campo marcado (1).');
-    } else if (data && data.erro) {
-      say(data.erro);
-    } else {
-      say('Não foi possível entrar na lista agora. Seu e-mail continua aqui; tente de novo em alguns minutos.');
-    }
-  } catch (_) {
-    clearTimeout(wait);
-    say('Sem conexão: não foi possível enviar. Seu e-mail continua aqui; tente de novo.');
-  } finally {
-    button.disabled = false; button.removeAttribute('aria-busy');
-  }
-});
-</script>
 </body>
 </html>

@@ -5,6 +5,13 @@
   "outputDirectory": ".",
   "regions": ["gru1"],
   "cleanUrls": true,
+  "redirects": [
+    {
+      "source": "/baixar",
+      "destination": "https://expo.dev/artifacts/eas/Im0gdlPS_5XyhfNY_d55ErCeKn1p7tmOTGDqvo_oDAg.apk",
+      "permanent": false
+    }
+  ],
   "functions": {
     "api/lista-de-espera.ts": { "maxDuration": 10 }
   },
