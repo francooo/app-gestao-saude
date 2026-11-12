@@ -1,6 +1,7 @@
 import * as Notifications from 'expo-notifications';
 
 import { esquecerAvisosLidos } from '@/lib/prefs';
+import { descartarTodosOsRascunhos } from '@/lib/rascunhoDeMedicamento';
 import { cancelarTodosOsLembretes } from '@/lib/reminders';
 
 /**
@@ -15,6 +16,10 @@ import { cancelarTodosOsLembretes } from '@/lib/reminders';
  * Nunca lanca: falhar aqui nao pode impedir ninguem de sair.
  */
 export async function limparDadosLocaisDaConta(): Promise<void> {
+  // Rascunhos de receita/remedio em memoria: sincrono e antes de tudo, para
+  // nao depender de nenhuma das limpezas abaixo terminar.
+  descartarTodosOsRascunhos();
+
   await Promise.allSettled([
     cancelarTodosOsLembretes(),
     Notifications.dismissAllNotificationsAsync(),

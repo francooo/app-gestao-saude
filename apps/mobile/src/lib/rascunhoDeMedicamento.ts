@@ -269,6 +269,22 @@ export function temFotoParaLeitura(): boolean {
   return true;
 }
 
+export function descartarFotoParaLeitura(): void {
+  fotoPendente = null;
+}
+
+/**
+ * Esvazia as TRES vagas de uma vez. Usado ao sair da conta: tudo aqui e dado
+ * de saude da conta que esta saindo (foto de receita, remedios lidos), e a
+ * validade por tempo nao basta — outra conta pode entrar no mesmo aparelho
+ * antes de ela vencer.
+ */
+export function descartarTodosOsRascunhos(): void {
+  vaga = null;
+  lote = null;
+  fotoPendente = null;
+}
+
 /** Le e esvazia. Vencida, devolve null. */
 export function consumirFotoParaLeitura(): string | null {
   if (!fotoPendente) return null;
