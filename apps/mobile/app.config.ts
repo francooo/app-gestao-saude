@@ -19,7 +19,8 @@ const config: ExpoConfig = {
    * REGRA: toda vez que uma dependencia NATIVA entrar ou sair, suba a versao
    * no mesmo commit em que ela muda.
    */
-  version: '0.2.0',
+  // 0.3.0: expo-print e expo-sharing (relatorio para o medico).
+  version: '0.3.0',
   orientation: 'portrait',
   scheme: 'gestaosaude',
   userInterfaceStyle: 'light',
@@ -58,6 +59,8 @@ const config: ExpoConfig = {
   plugins: [
     'expo-router',
     'expo-secure-store',
+    // Compartilhar o PDF do relatorio para o medico (WhatsApp, e-mail...).
+    'expo-sharing',
     // No SDK 57 o splash deixou de ser campo do ExpoConfig e passou a ser
     // configuracao do proprio plugin.
     [

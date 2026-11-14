@@ -697,6 +697,18 @@ export const healthApi = {
   },
 
   /**
+   * O resumo do relatorio para o medico, escrito pela IA (assinatura). Vai o
+   * texto de `dadosParaResumo` (@gestao/shared/lib/relatorio).
+   */
+  resumoDoRelatorio(dados: string): Promise<string> {
+    return request(
+      '/api/assistant/resumo-relatorio',
+      { method: 'POST', body: { dados }, authenticated: true, timeoutMs: ASSISTANT_TIMEOUT_MS },
+      (data) => z.object({ resumo: z.string() }).parse(data).resumo,
+    );
+  },
+
+  /**
    * O diario de sintomas de um periodo.
    *
    * A janela e obrigatoria e tem teto de 31 dias no servidor, pelo mesmo

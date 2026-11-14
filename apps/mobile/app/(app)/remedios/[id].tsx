@@ -444,6 +444,7 @@ function Conteudo({
   onEncerrar,
   onApagar,
 }: ConteudoProps) {
+  const router = useRouter();
   const estado = estadoHoje(m, agora);
   const titulo = tituloDoMedicamento(m);
   // Mesmo limiar e mesma fonte de verdade que o OpcaoDeFoto ja usa.
@@ -650,6 +651,15 @@ function Conteudo({
         >
           <Feather name="edit-2" size={18} color={colors.onAccent} />
           <Text style={styles.primarioTexto}>Editar</Text>
+        </Pressable>
+
+        <Pressable
+          onPress={() => router.push(`/relatorio?pessoa=${m.profileId}`)}
+          accessibilityRole="button"
+          accessibilityHint="Monta o PDF com os remédios, doses e sintomas para levar à consulta"
+          style={({ pressed }) => [styles.contorno, pressed && styles.pressionado]}
+        >
+          <Text style={styles.contornoTexto}>Relatório para o médico</Text>
         </Pressable>
 
         <Pressable

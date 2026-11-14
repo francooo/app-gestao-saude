@@ -268,6 +268,12 @@ export default function AjustesScreen() {
             {/* Fora da chave de notificacoes: o WhatsApp chega no celular de
                 OUTRA pessoa, e silenciar este aparelho nao deve cala-lo. */}
             <SettingsRow
+              marcador={<IconTile icone="file-text" {...AMBAR} />}
+              rotulo="Relatório para o médico"
+              valor="Remédios, doses e sintomas em PDF"
+              onPress={() => router.push('/relatorio')}
+            />
+            <SettingsRow
               marcador={<IconTile icone={ICONES.whatsapp} {...VERDE} />}
               rotulo="Lembretes por WhatsApp"
               onPress={() => router.push('/conta/whatsapp')}

@@ -445,6 +445,17 @@ function FormularioDeMembro() {
                   <Text style={styles.cancelarTexto}>Cancelar</Text>
                 </Pressable>
 
+                {!novo ? (
+                  <Pressable
+                    onPress={() => router.push(`/relatorio?pessoa=${id}`)}
+                    disabled={salvando}
+                    accessibilityRole="button"
+                    style={styles.secundario}
+                  >
+                    <Text style={styles.cancelarTexto}>Relatório para o médico</Text>
+                  </Pressable>
+                ) : null}
+
                 {/* O titular e a propria conta: sair da propria familia nao
                     quer dizer nada, e o servidor recusa de qualquer forma. */}
                 {!novo && !titular ? (
