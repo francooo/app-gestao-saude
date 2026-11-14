@@ -177,3 +177,89 @@
   gap: var(--espaco-md);
   margin-top: var(--espaco-md);
 }
+
+/* --- Foto em destaque, no topo do detalhe --- */
+
+.destaque {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  width: 200px;
+}
+
+.quadro {
+  position: relative;
+  width: 200px;
+  height: 200px;
+}
+
+.quadroAlvo {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 3px solid #3f7a52;
+  border-radius: 24px;
+  background: var(--cor-pill-tablet);
+  cursor: zoom-in;
+}
+
+.quadroAlvo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.quadroVazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espaco-sm);
+  height: 100%;
+  padding: var(--espaco-md);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cor-pill-tablet-icon);
+  text-align: center;
+  cursor: pointer;
+}
+
+.quadroAlvo:has(.quadroVazio) {
+  border-style: dashed;
+  border-color: var(--cor-pill-tablet-icon);
+}
+
+.trocarFoto {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border: 3px solid var(--cor-surface);
+  border-radius: 50%;
+  background: #3f7a52;
+  color: var(--cream-50);
+}
+
+.trocarFoto:hover {
+  filter: brightness(1.08);
+}
+
+.legendaDaFoto {
+  margin-top: var(--espaco-md);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--moss-800);
+  text-align: center;
+}
+
+.removerFoto {
+  margin-top: var(--espaco-xs);
+  font-size: 14px;
+}

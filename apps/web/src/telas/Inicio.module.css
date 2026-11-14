@@ -247,6 +247,14 @@
   }
 }
 
+/* Item de grid encolhe abaixo do conteudo: sem isto, um nome de remedio
+   comprido (cortado com reticencias) esticaria a coluna para fora da tela. */
+.dia > *,
+.resumos > *,
+.destaques > * {
+  min-width: 0;
+}
+
 .lateral {
   display: flex;
   flex-direction: column;

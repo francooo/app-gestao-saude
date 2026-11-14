@@ -5,7 +5,7 @@
 }
 
 .secao {
-  margin-top: var(--espaco-xl);
+  margin-top: var(--espaco-xxl);
 }
 
 .cartao {
@@ -71,48 +71,6 @@
 
 /* --- Lista e detalhe lado a lado (tela larga) --- */
 
-.doisPaineis {
-  position: relative;
-  z-index: 1;
-  display: grid;
-  grid-template-columns: minmax(380px, 460px) minmax(0, 1fr);
-  align-items: start;
-  max-width: 1320px;
-  margin: 0 auto;
-}
-
-/* A lista fica presa no topo e rola por conta propria. */
-.painelDaLista {
-  position: sticky;
-  top: 0;
-  max-height: 100dvh;
-  overflow-y: auto;
-  scrollbar-width: thin;
-}
-
-.painelDoDetalhe {
-  min-width: 0;
-}
-
-.painelVazio {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 70dvh;
-  padding: var(--espaco-xxl);
-  text-align: center;
-}
-
-.painelVazioTexto {
-  max-width: 320px;
-  margin-top: var(--espaco-lg);
-  font-size: 15px;
-  color: var(--cor-text-secondary);
-}
-
-/* --- Detalhe: cartao do remedio --- */
-
 .heroiLinha {
   display: flex;
   align-items: center;
@@ -121,11 +79,11 @@
 .heroiTextos {
   flex: 1;
   min-width: 0;
-  margin: 0 var(--espaco-lg);
+  margin-right: var(--espaco-lg);
 }
 
 .heroiNome {
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 800;
   line-height: 1.2;
   color: var(--cor-section-title);
@@ -137,8 +95,8 @@
   align-items: center;
   gap: var(--espaco-xs);
   margin-top: var(--espaco-xs);
-  font-size: 15px;
-  color: var(--cor-text-secondary);
+  font-size: 18px;
+  color: var(--moss-700);
 }
 
 .chip {
@@ -230,7 +188,344 @@
 
 .acoes {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: var(--espaco-md);
   margin-top: var(--espaco-xxl);
+}
+
+@media (max-width: 599px) {
+  .acoes > * {
+    width: 100%;
+  }
+}
+
+/* --- Detalhe: os dois cartoes do topo --- */
+
+.detalheTopo,
+.detalheBase {
+  display: grid;
+  gap: var(--espaco-lg);
+  margin-top: var(--espaco-xl);
+}
+
+@media (min-width: 1100px) {
+  .detalheTopo {
+    grid-template-columns: minmax(0, 1.12fr) minmax(0, 1fr);
+    align-items: stretch;
+  }
+
+  .detalheBase {
+    grid-template-columns: minmax(0, 2.4fr) minmax(0, 1fr);
+    margin-top: var(--espaco-lg);
+  }
+}
+
+.principal {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--espaco-xl);
+}
+
+.principalTextos {
+  flex: 1 1 260px;
+  min-width: 0;
+}
+
+.selos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-sm) var(--espaco-md);
+  margin-top: var(--espaco-lg);
+}
+
+.selos .chip {
+  margin-top: 0;
+}
+
+.selos > :first-child {
+  min-height: 44px;
+  padding: 6px var(--espaco-lg) 6px var(--espaco-md);
+  font-size: 17px;
+}
+
+.nivel {
+  margin-top: var(--espaco-xl);
+}
+
+.restantes {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+  margin-bottom: var(--espaco-md);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--cor-accent-green);
+}
+
+.previsao {
+  margin-top: var(--espaco-md);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--moss-700);
+}
+
+.semEstoque {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+  margin-top: var(--espaco-xl);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cor-accent-green);
+  text-decoration: none;
+}
+
+.semEstoque:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.cartaoTitulo {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--cor-section-title);
+}
+
+.informacoes .infos {
+  margin-top: var(--espaco-sm);
+}
+
+.informacoes .infoRotulo {
+  color: var(--cor-accent-green);
+}
+
+.verReceita {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+  margin-top: var(--espaco-sm);
+  padding: var(--espaco-sm) 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--cor-accent-green);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* --- Detalhe: lembretes e atualizar estoque --- */
+
+.lembretes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-lg) var(--espaco-xl);
+}
+
+.lembretesTextos {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+.lembretesRotulo {
+  margin-top: var(--espaco-xs);
+  font-size: 15px;
+  color: var(--moss-700);
+}
+
+.lembretesValor {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.atualizar {
+  display: flex;
+  align-items: center;
+}
+
+.atualizarBotao {
+  min-height: 64px;
+  font-size: 18px;
+}
+
+/* --- Meus medicamentos: barra de ferramentas --- */
+
+.ferramentas {
+  display: grid;
+  gap: var(--espaco-md);
+  margin-top: var(--espaco-xl);
+}
+
+@media (min-width: 900px) {
+  .ferramentas {
+    grid-template-columns: minmax(240px, 1fr) minmax(0, 1.5fr) auto;
+    gap: var(--espaco-lg);
+    align-items: center;
+  }
+}
+
+.ferramentaPessoa {
+  min-width: 0;
+}
+
+.adicionar {
+  min-height: 56px;
+  padding: 0 var(--espaco-xxl);
+  font-size: 17px;
+}
+
+/* --- Faixa "Cadastrar por foto" --- */
+
+.porFoto {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-xl);
+  margin-top: var(--espaco-xl);
+  padding: var(--espaco-lg) var(--espaco-xl);
+  overflow: hidden;
+  border-radius: var(--raio-card);
+  background: var(--cor-surface-card);
+  box-shadow: var(--sombra-cartao);
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (hover: hover) {
+  .porFoto {
+    transition:
+      box-shadow 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  .porFoto:hover {
+    box-shadow: var(--sombra-flutuante);
+    transform: translateY(-1px);
+  }
+}
+
+.porFotoIcone {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 76px;
+  height: 76px;
+  border-radius: 20px;
+  background: #6f9a73;
+  color: var(--cream-50);
+}
+
+.porFotoTextos {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.porFotoTitulo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-sm);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.porFotoTexto {
+  max-width: 460px;
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--moss-700);
+}
+
+.porFotoRamo {
+  position: absolute;
+  right: 56px;
+  bottom: -18px;
+  width: 140px;
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .porFotoRamo {
+    display: none;
+  }
+
+  .porFoto {
+    gap: var(--espaco-lg);
+    padding: var(--espaco-lg);
+  }
+
+  .porFotoIcone {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+  }
+
+  .porFotoTitulo {
+    font-size: 18px;
+  }
+}
+
+.porFotoSeta {
+  position: relative;
+  flex-shrink: 0;
+  color: var(--moss-700);
+}
+
+.seloAssinatura {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px var(--espaco-sm);
+  border-radius: var(--raio-pill);
+  background: var(--sage-100);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--cor-accent-green);
+}
+
+/* --- Indicadores e lista --- */
+
+.indicadores {
+  display: grid;
+  gap: var(--espaco-lg);
+  margin-top: var(--espaco-lg);
+}
+
+@media (min-width: 900px) {
+  .indicadores {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.listaTopo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaco-md);
+  margin-bottom: var(--espaco-lg);
+}
+
+.listaTitulo {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--cor-section-title);
+}
+
+.notaLembretes {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+  margin-top: var(--espaco-xl);
+  font-size: 14px;
+  color: var(--cor-text-secondary);
 }

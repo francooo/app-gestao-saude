@@ -55,7 +55,7 @@ export function Ajustes() {
 
   return (
     <Pagina area="settings" largura="larga">
-      <ScreenHeader title="Ajustes" voltar="/inicio" />
+      <ScreenHeader title="Ajustes" subtitle="Sua conta, a família e as preferências" />
 
       <div className={estilos.colunas}>
         <div className={estilos.coluna}>

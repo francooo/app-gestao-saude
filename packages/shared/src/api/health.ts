@@ -270,6 +270,11 @@ export const medicationSchema = z.object({
    * ele simplesmente nao vem. `nullish` cobre as quatro.
    */
   packagePhoto: z.string().nullish(),
+  /**
+   * De que foto a IA leu este remedio, quando ele nasceu de uma leitura. So o
+   * detalhe devolve, e so servidores novos: ausente vale como "nao foi lido".
+   */
+  photoReadKind: z.enum(['caixa', 'receita']).nullish(),
   times: z.array(z.string()).default([]),
   doses: z.array(doseSchema).default([]),
   /**

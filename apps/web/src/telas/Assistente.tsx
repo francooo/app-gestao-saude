@@ -217,7 +217,10 @@ export function Assistente() {
 
   return (
     <Pagina area="assistant" largura="larga">
-      <ScreenHeader title="Assistente de Saúde" mostrarSino />
+      <ScreenHeader
+        title="Assistente de Saúde"
+        subtitle="Tire dúvidas sobre os remédios e as consultas da família"
+      />
 
       <div className={estilos.grade}>
         <div className={estilos.seletor}>

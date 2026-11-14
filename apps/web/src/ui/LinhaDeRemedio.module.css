@@ -1,0 +1,130 @@
+.linha {
+  position: relative;
+  padding: var(--espaco-lg) var(--espaco-lg) var(--espaco-md);
+  border-radius: var(--raio-card);
+  background: var(--cor-surface-card);
+  box-shadow: var(--sombra-cartao);
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+@media (hover: hover) {
+  .linha:has(a:hover) {
+    box-shadow: var(--sombra-flutuante);
+    transform: translateY(-1px);
+  }
+}
+
+.corpo {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    'ladrilho nome'
+    'meio meio'
+    'direita direita';
+  gap: var(--espaco-md) var(--espaco-lg);
+  align-items: center;
+}
+
+.corpo > :first-child {
+  grid-area: ladrilho;
+}
+
+.nome {
+  grid-area: nome;
+  min-width: 0;
+}
+
+.meio {
+  grid-area: meio;
+  min-width: 0;
+}
+
+/* Celular: o selo e o botao de dose numa faixa propria, embaixo. */
+.direita {
+  grid-area: direita;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaco-sm);
+}
+
+.direita:empty {
+  display: none;
+}
+
+/* Tela larga: nome | estoque e termino | selo e dose, numa linha so. */
+@media (min-width: 1024px) {
+  .linha {
+    padding: var(--espaco-lg) var(--espaco-xl) var(--espaco-md);
+  }
+
+  .corpo {
+    /* Colunas de largura fixa no selo: as linhas da lista ficam alinhadas
+       entre si, como uma tabela, mesmo com nomes de tamanhos diferentes. */
+    grid-template-columns: 64px minmax(0, 1fr) minmax(0, 1fr) 250px;
+    grid-template-areas: 'ladrilho nome meio direita';
+    gap: var(--espaco-xl);
+  }
+
+  .direita {
+    justify-content: flex-end;
+    gap: var(--espaco-lg);
+  }
+}
+
+.titulo {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--cor-accent-green);
+  overflow-wrap: anywhere;
+}
+
+.dado {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+  margin-top: 4px;
+  font-size: 15px;
+  color: var(--moss-700);
+}
+
+.dado svg {
+  flex-shrink: 0;
+}
+
+.rodape {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaco-md);
+  margin-top: var(--espaco-md);
+  padding: var(--espaco-sm) var(--espaco-lg);
+  border-radius: 14px;
+  background: rgba(221, 232, 216, 0.55);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--moss-800);
+}
+
+@media (min-width: 1024px) {
+  .rodape {
+    margin-left: calc(64px + var(--espaco-xl));
+  }
+}
+
+.receita {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+  min-width: 0;
+}
+
+.verDetalhes {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 2px;
+  color: var(--moss-700);
+}

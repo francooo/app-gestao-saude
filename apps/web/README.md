@@ -1,4 +1,4 @@
-# Gestão Saúde — versão web
+# Família Saúde — versão web
 
 A versão para navegador do aplicativo, para o usuário final. Mesma conta, mesma API e mesmo banco do app mobile (`apps/mobile`); o que muda é o layout, adaptado a tablet e desktop.
 
@@ -14,6 +14,7 @@ navegador  ──►  apps/web (Vite + React)  ──►  /api/*  (BFF: api/rota
 - **BFF** (`server/rotas.ts`, uma função só na Vercel): repassa as chamadas à API do aplicativo. Existe porque a API não tem CORS e porque o refresh token não pode ficar ao alcance do JavaScript da página — o BFF o guarda num cookie `HttpOnly` restrito a `/api/auth`. O access token (15 min) fica só em memória.
 - **Regras e contratos:** vêm de `packages/shared` (`@gestao/shared/api/*` e `@gestao/shared/lib/*`), os mesmos módulos do aplicativo.
 - **Design:** `src/estilos/tokens.css` é gerado de `packages/shared/src/theme.ts`. Depois de mudar o tema, rode `pnpm --filter @gestao/web tokens`.
+- **Pele da web:** `src/estilos/tema-web.css` vem depois dos tokens e remapeia as cores para o layout web "Família Saúde" (sálvia, musgo, creme, caramelo), seguindo as telas de referência de `familia-saude-web-completo.zip`. O tema do aplicativo não muda. As ilustrações `inicio-mae-bebe.jpg`, `receita-por-foto.jpg` e `assistente-medica.png` são recortes dessas telas; o logo (`src/ui/Logo.tsx`) é o conceito do pacote redesenhado em SVG — troque pelos arquivos oficiais quando existirem.
 
 ## Desenvolvimento
 
@@ -60,6 +61,10 @@ Conferir no primeiro preview: fazer um login errado pela web e olhar o `ip` grav
 
 ## O que a web faz diferente do aplicativo
 
+- **Nome e marca:** o site se chama "Família Saúde", com o logo novo; o aplicativo continua "Gestão Saúde".
+- **Lembrar de mim:** no login. Marcado, a sessão dura 60 dias; desmarcado, o cookie some ao fechar o navegador. Quem decide é o BFF (`gs_lembrar`); a API não muda.
+- **Remédios:** a lista ocupa a tela inteira (com busca e filtro "Em uso / Hoje / Todos") e o detalhe tem tela própria; o layout de lista e detalhe lado a lado saiu.
+- **Foto identificada pela IA:** a legenda aparece quando o remédio nasceu da leitura da foto da caixa. Depende do campo `photoReadKind` no detalhe do remédio, que só a API atualizada devolve; sem ele, a legenda simplesmente não aparece.
 - **Ajustes:** saem os interruptores de notificação do aparelho e o cartão de versão; no lugar, uma nota dizendo que os lembretes tocam no celular.
 - **Avisos lidos:** ficam no `localStorage` do navegador, separados por conta. Não há nada de saúde ali — só ids e um horário. "Marcar todas como lidas" inclui o aviso da política (no aplicativo ele fica de fora).
 - **Diário de sintomas:** cada registro tem um botão de lixeira; no aplicativo, tocar na linha é o que oferece apagar. O horário é o campo de hora do navegador.

@@ -4,7 +4,9 @@ import {
   dataDeTermino,
   diaPorExtenso,
   estoqueBaixo,
+  nivel,
   quantidadeDoEstoque,
+  validadeCurta,
 } from '@gestao/shared/lib/estoque';
 import {
   diaCurto,
@@ -23,7 +25,6 @@ import { Link, useNavigate, useParams } from 'react-router';
 import { CHAVES, useRemedio } from '@/api/consultas';
 import { mensagemDoErro, useMarcarDose } from '@/api/doses';
 import { escolherFotoDeDocumento } from '@/lib/foto';
-import { Avatar } from '@/ui/Avatar';
 import botoes from '@/ui/botoes.module.css';
 import { Carregando } from '@/ui/Carregando';
 import { useDialogos } from '@/ui/Dialogo';
@@ -38,9 +39,10 @@ import {
 import { Aviso, Pagina } from '@/ui/Pagina';
 import { ScreenHeader } from '@/ui/ScreenHeader';
 import { SectionHeader } from '@/ui/SectionHeader';
+import { BarraDeProgresso, SeloDeStatus } from '@/ui/Selo';
 import { SurfaceCard } from '@/ui/SurfaceCard';
 
-import { FotoDaEmbalagem, PrescriptionCard } from './Anexos';
+import { FotoDoRemedio, PrescriptionCard } from './Anexos';
 import { HistoricoDeDoses } from './HistoricoDeDoses';
 import estilos from './remedios.module.css';
 import { useAreaDeRemedios } from './RemediosLayout';
@@ -52,7 +54,7 @@ export function RemedioDetalhe() {
   const consulta = useRemedio(id);
 
   return (
-    <Pagina area="medications">
+    <Pagina area="medications" largura="larga">
       {/* Com a lista ao lado, o voltar nao tem para onde ir. */}
       <ScreenHeader
         title="Detalhes do medicamento"
@@ -95,7 +97,6 @@ function Conteudo({ m, agora }: { m: Medication; agora: Date }) {
   const forma = LADRILHO_POR_FORMA[formaVisual(m.form)];
   const chip = chipDeStatus(estado, agora);
   const dose = linhaDaProximaDose(m, estado, agora);
-  const estoque = linhaDoEstoque(m, agora);
 
   const repetivel = m.scheduleType === 'as_needed';
   const marcado = estado.tipo === 'tomado' && !repetivel;
@@ -193,75 +194,153 @@ function Conteudo({ m, agora }: { m: Medication; agora: Date }) {
     }
   }
 
+  const estoqueAtual = m.stock ?? null;
+  const baixo = estoqueAtual ? estoqueBaixo(m, estoqueAtual) : false;
+  const termino = estoqueAtual ? dataDeTermino(m, estoqueAtual, agora) : null;
+  const legendaDaFoto =
+    m.photoReadKind === 'caixa' ? 'Foto identificada pela IA' : undefined;
+
   return (
     <>
-      <SurfaceCard className={`${estilos.cartao} ${estilos.secao}`}>
-        <div className={estilos.heroiLinha}>
-          <IconTile {...forma} size={54} />
-          <div className={estilos.heroiTextos}>
-            <h2 className={estilos.heroiNome}>{titulo}</h2>
-            {m.profileName ? (
-              <p className={estilos.vinculo}>
-                <Avatar nome={m.profileName} color={m.profileColor ?? undefined} size={20} />
-                Vinculado a {m.profileName.split(' ')[0]}
-              </p>
-            ) : null}
-          </div>
-          <DoseButton
-            checked={marcado}
-            repetivel={repetivel}
-            disabled={semAcao}
-            enviando={emVoo.has(m.id)}
-            label={rotuloDaDose(titulo, estado, repetivel)}
-            onClick={() => void marcar(m, agora)}
-            size={44}
+      <div className={estilos.detalheTopo}>
+        {/* Cartao principal: foto, nome, de quem e, estoque. */}
+        <SurfaceCard className={estilos.principal}>
+          <FotoDoRemedio
+            foto={m.packagePhoto ?? null}
+            doQue={titulo}
+            ocupada={fotoCaixa}
+            legenda={legendaDaFoto}
+            onEscolher={() => void anexar('caixa')}
+            onRemover={() => void removerFoto('caixa')}
           />
-        </div>
 
-        <p className={estilos.chip} data-ativo={chip.ativo ? '' : undefined}>
-          <Icone nome={chip.icone} size={15} />
-          <span className="so-leitor-de-tela">Situação: </span>
-          {chip.texto}
-        </p>
+          <div className={estilos.principalTextos}>
+            <div className={estilos.heroiLinha}>
+              <div className={estilos.heroiTextos}>
+                <h2 className={estilos.heroiNome}>{titulo}</h2>
+                {m.profileName ? (
+                  <p className={estilos.vinculo}>Vinculado a {m.profileName}</p>
+                ) : null}
+              </div>
+              <DoseButton
+                checked={marcado}
+                repetivel={repetivel}
+                disabled={semAcao}
+                enviando={emVoo.has(m.id)}
+                label={rotuloDaDose(titulo, estado, repetivel)}
+                onClick={() => void marcar(m, agora)}
+                size={48}
+              />
+            </div>
 
-        <hr className={estilos.divisorLargo} />
+            <div className={estilos.selos}>
+              {estoqueAtual ? (
+                <SeloDeStatus tom={baixo ? 'atencao' : 'sucesso'} icone={baixo ? 'alert-triangle' : undefined}>
+                  {baixo ? 'Estoque baixo' : 'Estoque suficiente'}
+                </SeloDeStatus>
+              ) : null}
+              <p className={estilos.chip} data-ativo={chip.ativo ? '' : undefined}>
+                <Icone nome={chip.icone} size={15} />
+                <span className="so-leitor-de-tela">Situação: </span>
+                {chip.texto}
+              </p>
+            </div>
 
-        <FotoDaEmbalagem
-          foto={m.packagePhoto ?? null}
-          doQue={titulo}
-          ocupada={fotoCaixa}
-          onEscolher={() => void anexar('caixa')}
-          onRemover={() => void removerFoto('caixa')}
-        />
-      </SurfaceCard>
+            {estoqueAtual ? (
+              <div className={estilos.nivel}>
+                <p className={estilos.restantes}>
+                  <Icone nome="mci:pill" size={22} />
+                  {quantidadeDoEstoque(estoqueAtual.remaining, m.form)} restantes
+                </p>
+                <BarraDeProgresso nivel={nivel(estoqueAtual)} baixo={baixo} />
+                {termino && estoqueAtual.remaining > 0 ? (
+                  <p className={estilos.previsao}>
+                    Previsão de término: {diaPorExtenso(termino, agora)}
+                  </p>
+                ) : null}
+              </div>
+            ) : (
+              <Link to={`/remedios/compra?id=${m.id}`} className={estilos.semEstoque}>
+                <Icone nome="mci:store-plus-outline" size={20} />
+                Registrar a compra para acompanhar o estoque
+                <Icone nome="chevron-right" size={18} />
+              </Link>
+            )}
+          </div>
+        </SurfaceCard>
 
-      <section className={estilos.secao}>
-        <SectionHeader title="Informações da medicação" />
-        <SurfaceCard className={estilos.cartao}>
+        <SurfaceCard className={estilos.informacoes}>
+          <h2 className={estilos.cartaoTitulo}>Informações do medicamento</h2>
           <dl className={estilos.infos}>
-            {/* Neutro: o ambar da forma ja esta no heroi, e aqui competiria com
-                o ambar de "Proxima dose", que significa acao. */}
-            <Info tile={{ ...LADRILHO_NEUTRO, icone: 'mci:pill' }} rotulo="Posologia" valor={posologia(m)} />
             <Info
-              tile={{ ...(dose.atencao ? LADRILHO_ATENCAO : LADRILHO_NEUTRO), icone: 'clock' }}
-              rotulo={dose.rotulo}
-              valor={dose.valor}
+              tile={{ ...LADRILHO_NEUTRO, icone: 'mci:pill' }}
+              rotulo="Orientação de uso do medicamento"
+              valor={posologia(m)}
+            />
+            <Info
+              tile={{ ...LADRILHO_NEUTRO, icone: 'box' }}
+              rotulo="Quantidade por caixa"
+              valor={
+                m.packageAmount
+                  ? quantidadeDoEstoque(m.packageAmount, m.form)
+                  : 'Não informada'
+              }
             />
             <Info
               tile={{ ...LADRILHO_NEUTRO, icone: 'calendar' }}
+              rotulo="Validade"
+              valor={
+                estoqueAtual?.expiresOn
+                  ? validadeCurta(estoqueAtual.expiresOn)
+                  : 'Informe ao registrar a compra'
+              }
+            />
+            <Info
+              tile={{ ...LADRILHO_NEUTRO, icone: 'flag' }}
               rotulo="Tratamento"
               valor={periodoDoTratamento(m)}
             />
-            {/* A unica linha clicavel do cartao, e por isso leva a seta. */}
-            <Info
-              tile={estoque.tile}
-              rotulo={estoque.rotulo}
-              valor={estoque.valor}
-              para={m.stock ? '/remedios/estoque' : `/remedios/compra?id=${m.id}`}
-            />
           </dl>
+          <a href="#receita" className={estilos.verReceita}>
+            <Icone nome="file-text" size={20} />
+            {m.prescriptionPhoto ? 'Ver receita completa' : 'Anexar a receita'}
+            <Icone nome="chevron-right" size={18} />
+          </a>
         </SurfaceCard>
+      </div>
+
+      <section id="receita" className={estilos.bloco} aria-label="Receita médica vinculada">
+        <PrescriptionCard
+          foto={m.prescriptionPhoto ?? null}
+          doQue={titulo}
+          prescritor={m.prescriberName}
+          ocupado={anexando}
+          onEscolher={() => void anexar('receita')}
+          onRemover={() => void removerFoto('receita')}
+        />
       </section>
+
+      <div className={estilos.detalheBase}>
+        <SurfaceCard className={estilos.lembretes}>
+          <IconTile {...(dose.atencao ? LADRILHO_ATENCAO : LADRILHO_NEUTRO)} icone="clock" size={64} />
+          <div className={estilos.lembretesTextos}>
+            <h2 className={estilos.cartaoTitulo}>Lembretes</h2>
+            <p className={estilos.lembretesRotulo}>{dose.rotulo}</p>
+            <p className={estilos.lembretesValor}>{dose.valor}</p>
+          </div>
+          <Link to={`/medicamento/form/${m.id}`} className={botoes.contorno}>
+            <Icone nome="edit-2" size={18} />
+            Editar lembretes
+          </Link>
+        </SurfaceCard>
+
+        <SurfaceCard className={estilos.atualizar}>
+          <Link to={`/remedios/compra?id=${m.id}`} className={`${botoes.ambar} ${botoes.largo} ${estilos.atualizarBotao}`}>
+            <Icone nome="refresh-cw" size={22} />
+            Atualizar estoque
+          </Link>
+        </SurfaceCard>
+      </div>
 
       {/* A secao inteira some quando nao ha orientacoes: um cartao dizendo "sem
           orientacoes" gastaria rolagem para comunicar um nada sem saida. */}
@@ -275,37 +354,17 @@ function Conteudo({ m, agora }: { m: Medication; agora: Date }) {
         </section>
       ) : null}
 
-      <section className={estilos.secao}>
-        <SectionHeader title="Prescrição médica" />
-        <PrescriptionCard
-          foto={m.prescriptionPhoto ?? null}
-          doQue={titulo}
-          prescritor={m.prescriberName}
-          ocupado={anexando}
-          onEscolher={() => void anexar('receita')}
-          onRemover={() => void removerFoto('receita')}
-        />
-      </section>
-
       <HistoricoDeDoses medicationId={m.id} nome={m.name} />
 
       <div className={estilos.acoes}>
-        <Link to={`/medicamento/form/${m.id}`} className={`${botoes.verde} ${botoes.largo}`}>
+        <Link to={`/medicamento/form/${m.id}`} className={botoes.verde}>
           <Icone nome="edit-2" size={18} />
-          Editar
+          Editar medicamento
         </Link>
-        <button
-          type="button"
-          className={`${botoes.contorno} ${botoes.largo}`}
-          onClick={() => void encerrar()}
-        >
+        <button type="button" className={botoes.contorno} onClick={() => void encerrar()}>
           {m.isActive ? 'Encerrar tratamento' : 'Retomar tratamento'}
         </button>
-        <button
-          type="button"
-          className={`${botoes.perigo} ${botoes.largo}`}
-          onClick={() => void apagar()}
-        >
+        <button type="button" className={botoes.perigo} onClick={() => void apagar()}>
           Apagar remédio e histórico
         </button>
       </div>
@@ -414,24 +473,6 @@ function periodoDoTratamento(m: Medication): string {
   if (inicio) return `Desde ${inicio}`;
   if (fim) return `Até ${fim}`;
   return 'Conforme orientação médica';
-}
-
-function linhaDoEstoque(m: Medication, agora: Date): { tile: Tile; rotulo: string; valor: string } {
-  const icone = 'mci:store-plus-outline';
-  if (!m.stock) {
-    return { tile: { ...LADRILHO_NEUTRO, icone }, rotulo: 'Estoque', valor: 'Registrar compra' };
-  }
-  const baixo = estoqueBaixo(m, m.stock);
-  const termino = dataDeTermino(m, m.stock, agora);
-  const restante = `${quantidadeDoEstoque(m.stock.remaining, m.form)} restantes`;
-  return {
-    tile: { ...(baixo ? LADRILHO_ATENCAO : LADRILHO_NEUTRO), icone },
-    rotulo: baixo ? 'Estoque baixo' : 'Estoque',
-    valor:
-      termino && m.stock.remaining > 0
-        ? `${restante} · acaba por volta de ${diaPorExtenso(termino, agora)}`
-        : restante,
-  };
 }
 
 function diaRelativo(d: Date, agora: Date): string {

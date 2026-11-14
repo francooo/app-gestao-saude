@@ -174,7 +174,11 @@ export function Sintomas() {
 
   return (
     <Pagina area="medications" largura="larga">
-      <ScreenHeader title="Diário de sintomas" voltar="historico" mostrarSino />
+      <ScreenHeader
+        title="Diário de sintomas"
+        subtitle="Anote como cada pessoa está se sentindo"
+        voltar="historico"
+      />
 
       {perfis.isPending ? (
         <Carregando />

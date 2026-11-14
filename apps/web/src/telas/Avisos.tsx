@@ -83,7 +83,11 @@ export function Avisos() {
   return (
     <Pagina area="home">
       {/* Sem sino: um sino que abre a tela em que voce ja esta e botao morto. */}
-      <ScreenHeader title="Notificações" voltar="historico" />
+      <ScreenHeader
+        title="Notificações"
+        subtitle="O que precisa da sua atenção agora"
+        voltar="historico"
+      />
 
       <div className={estilos.filtros}>
         <FilterChips chips={CHIPS} selected={filtro} onSelect={setFiltro} rotulo="Tipo de aviso" />

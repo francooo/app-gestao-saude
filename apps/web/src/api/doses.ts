@@ -46,10 +46,20 @@ export function useMarcarDose() {
         const aplicar = (x: Medication) =>
           r.tipo === 'registrada' ? comDose(x, r.dose) : semDose(x, r.doseId);
 
-        queryClient.setQueriesData<ListaDeRemedios>({ queryKey: CHAVES.remedios }, (lista) =>
-          lista
-            ? { ...lista, remedios: lista.remedios.map((x) => (x.id === m.id ? aplicar(x) : x)) }
-            : lista,
+        // Sob a raiz 'remedios' ha dois formatos: as listas das telas
+        // ({ remedios, agora }) e as buscas dos Avisos e do Assistente (so o
+        // array). As duas recebem a dose — e o aviso de "dose atrasada" some
+        // na hora, sem esperar a proxima busca.
+        const trocar = (lista: Medication[]) =>
+          lista.map((x) => (x.id === m.id ? aplicar(x) : x));
+        queryClient.setQueriesData<ListaDeRemedios | Medication[]>(
+          { queryKey: CHAVES.remedios },
+          (lista) =>
+            !lista
+              ? lista
+              : Array.isArray(lista)
+                ? trocar(lista)
+                : { ...lista, remedios: trocar(lista.remedios) },
         );
         queryClient.setQueryData<{ remedio: Medication; agora: Date }>(
           CHAVES.remedio(m.id),

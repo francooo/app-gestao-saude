@@ -12,6 +12,7 @@ import { db } from '../../src/db/client';
 import {
   medicationAttachments,
   medicationDoses,
+  medicationPhotoReads,
   medicationStockEntries,
   medicationTimes,
   medications,
@@ -102,10 +103,17 @@ async function montar(id: string) {
       profileName: profiles.fullName,
       profileColor: profiles.avatarColor,
       prescriberName: professionals.name,
+      /**
+       * De que foto a IA leu este remedio ('caixa' | 'receita'), quando ele
+       * nasceu de uma leitura. O site usa para a legenda "Foto identificada
+       * pela IA". Campo novo e opcional: o aplicativo atual o ignora.
+       */
+      photoReadKind: medicationPhotoReads.kind,
     })
     .from(medications)
     .innerJoin(profiles, eq(profiles.id, medications.profileId))
     .leftJoin(professionals, eq(professionals.id, medications.prescriberId))
+    .leftJoin(medicationPhotoReads, eq(medicationPhotoReads.id, medications.photoReadId))
     .where(eq(medications.id, id))
     .limit(1);
 
@@ -159,6 +167,7 @@ async function montar(id: string) {
     profileName: linha.profileName,
     profileColor: linha.profileColor,
     prescriberName: linha.prescriberName,
+    photoReadKind: linha.photoReadKind ?? null,
     prescriptionPhoto: anexos.find((a) => a.kind === 'receita')?.photo ?? null,
     packagePhoto: anexos.find((a) => a.kind === 'caixa')?.photo ?? null,
     times: horarios.map((h) => horaCurta(h.timeOfDay)),

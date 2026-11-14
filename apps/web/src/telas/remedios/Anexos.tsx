@@ -245,3 +245,83 @@ export function PrescriptionCard({
     </SurfaceCard>
   );
 }
+
+/**
+ * A foto da caixinha em destaque, no topo do detalhe — como na tela de
+ * referencia da web: miniatura grande com o selo da camera e uma legenda.
+ *
+ * Sem foto, o quadro e o convite para adicionar uma. Com foto, clicar amplia;
+ * o selo da camera troca; "Remover" fica embaixo.
+ */
+export function FotoDoRemedio({
+  foto,
+  doQue,
+  ocupada = null,
+  legenda,
+  onEscolher,
+  onRemover,
+}: PropsDaEmbalagem & { legenda?: string }) {
+  const [ampliada, setAmpliada] = useState(false);
+  const [falhou, setFalhou] = useState(false);
+  useEffect(() => setFalhou(false), [foto]);
+
+  const mostrarFoto = Boolean(foto) && !falhou;
+  const inerte = ocupada !== null;
+
+  return (
+    <div className={estilos.destaque}>
+      <div className={estilos.quadro}>
+        <button
+          type="button"
+          className={estilos.quadroAlvo}
+          disabled={inerte}
+          onClick={() => (mostrarFoto ? setAmpliada(true) : onEscolher())}
+          aria-label={
+            mostrarFoto ? `Ampliar a foto da caixinha de ${doQue}` : 'Adicionar foto da caixinha'
+          }
+        >
+          {mostrarFoto ? (
+            <img src={foto!} alt="" onError={() => setFalhou(true)} />
+          ) : (
+            <span className={estilos.quadroVazio}>
+              <Icone nome={falhou ? 'image' : 'camera'} size={34} />
+              <span>{falhou ? 'Não consegui abrir a foto' : 'Adicionar foto da caixinha'}</span>
+            </span>
+          )}
+          {inerte ? (
+            <span className={estilos.veu}>
+              <span className={botoes.girando} />
+            </span>
+          ) : null}
+        </button>
+
+        {mostrarFoto && !inerte ? (
+          <button
+            type="button"
+            className={estilos.trocarFoto}
+            onClick={onEscolher}
+            aria-label="Trocar a foto da caixinha"
+            title="Trocar a foto"
+          >
+            <Icone nome="camera" size={20} />
+          </button>
+        ) : null}
+      </div>
+
+      {legenda && mostrarFoto ? <p className={estilos.legendaDaFoto}>{legenda}</p> : null}
+
+      {foto && !inerte ? (
+        <button type="button" className={`${botoes.perigo} ${estilos.removerFoto}`} onClick={onRemover}>
+          Remover foto
+        </button>
+      ) : null}
+
+      <ImageViewer
+        uri={foto ?? ''}
+        visivel={ampliada && mostrarFoto}
+        descricao={`Foto da caixinha de ${doQue}`}
+        onClose={() => setAmpliada(false)}
+      />
+    </div>
+  );
+}

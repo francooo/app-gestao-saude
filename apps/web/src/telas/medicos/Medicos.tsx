@@ -141,7 +141,7 @@ export function Medicos() {
 
   const conteudo = (
     <>
-      <ScreenHeader title="Médicos" mostrarSino />
+      <ScreenHeader title="Médicos" subtitle="Quem cuida da sua família, e onde" />
 
       <div className={estilos.bloco}>
         <ProfileSelector
