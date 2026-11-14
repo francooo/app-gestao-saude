@@ -25,20 +25,46 @@ const DURACAO_S = 60 * 24 * 60 * 60;
 /** Abaixo do maxDuration da funcao (60 s), para o erro sair daqui e nao da plataforma. */
 const PRAZO_MS = 58_000;
 
-function cookieDaSessao(token: string): string {
-  return `${COOKIE}=${encodeURIComponent(token)}; Path=/api/auth; HttpOnly; Secure; SameSite=Strict; Max-Age=${DURACAO_S}`;
+/**
+ * "Lembrar de mim".
+ *
+ * Marcado, o cookie da sessao dura os 60 dias do refresh token. Desmarcado,
+ * ele nasce SEM prazo: e um cookie de sessao, que o navegador apaga ao ser
+ * fechado — o que se espera num computador dividido.
+ *
+ * A escolha precisa sobreviver a rotacao (o cookie e regravado a cada
+ * renovacao), entao ela mora num segundo cookie, `gs_lembrar`, que so existe
+ * quando a pessoa marcou a caixa.
+ */
+const COOKIE_LEMBRAR = 'gs_lembrar';
+const ATRIBUTOS = 'Path=/api/auth; HttpOnly; Secure; SameSite=Strict';
+
+function cookiesDaSessao(token: string, lembrar: boolean): Headers {
+  const headers = new Headers();
+  const prazo = lembrar ? `; Max-Age=${DURACAO_S}` : '';
+  headers.append('Set-Cookie', `${COOKIE}=${encodeURIComponent(token)}; ${ATRIBUTOS}${prazo}`);
+  headers.append(
+    'Set-Cookie',
+    lembrar
+      ? `${COOKIE_LEMBRAR}=1; ${ATRIBUTOS}; Max-Age=${DURACAO_S}`
+      : `${COOKIE_LEMBRAR}=; ${ATRIBUTOS}; Max-Age=0`,
+  );
+  return headers;
 }
 
-function cookieApagado(): string {
-  return `${COOKIE}=; Path=/api/auth; HttpOnly; Secure; SameSite=Strict; Max-Age=0`;
+function cookiesApagados(): Headers {
+  const headers = new Headers();
+  headers.append('Set-Cookie', `${COOKIE}=; ${ATRIBUTOS}; Max-Age=0`);
+  headers.append('Set-Cookie', `${COOKIE_LEMBRAR}=; ${ATRIBUTOS}; Max-Age=0`);
+  return headers;
 }
 
-function lerCookie(request: Request): string | null {
+function lerCookie(request: Request, nome = COOKIE): string | null {
   const cabecalho = request.headers.get('cookie');
   if (!cabecalho) return null;
   for (const parte of cabecalho.split(';')) {
     const [chave, ...resto] = parte.trim().split('=');
-    if (chave === COOKIE) {
+    if (chave === nome) {
       try {
         return decodeURIComponent(resto.join('=')) || null;
       } catch {
@@ -163,7 +189,22 @@ function origemEstranha(request: Request): boolean {
 
 /** Login e cadastro: a sessao nasce aqui, e o refresh token vira cookie. */
 async function abrirSessao(request: Request, caminho: string, query: string): Promise<Response> {
-  const resposta = await chamarApi(request, caminho, query, await request.text());
+  // `lembrar` e assunto do site, nao da API: sai do corpo antes do repasse.
+  // O cadastro nao tem a caixa e segue lembrando, como sempre foi.
+  let corpo = await request.text();
+  let lembrar = caminho === 'auth/register';
+  try {
+    const dado: unknown = JSON.parse(corpo);
+    if (dado && typeof dado === 'object' && 'lembrar' in dado) {
+      const { lembrar: escolha, ...resto } = dado as Record<string, unknown>;
+      lembrar = escolha === true;
+      corpo = JSON.stringify(resto);
+    }
+  } catch {
+    // Corpo que nao e JSON segue como veio; a API responde o erro de validacao.
+  }
+
+  const resposta = await chamarApi(request, caminho, query, corpo);
   if (!resposta.ok) return devolver(resposta);
 
   const dado = await lerJson(resposta);
@@ -171,7 +212,7 @@ async function abrirSessao(request: Request, caminho: string, query: string): Pr
   if (!dado || typeof refreshToken !== 'string') return falha(502, 'INTERNAL_ERROR');
 
   const { refreshToken: _fora, ...resto } = dado;
-  return json(resposta.status, resto, { 'Set-Cookie': cookieDaSessao(refreshToken) });
+  return json(resposta.status, resto, cookiesDaSessao(refreshToken, lembrar));
 }
 
 /** Troca o cookie por um access token novo. A API rotaciona o refresh a cada uso. */
@@ -183,7 +224,7 @@ async function renovar(request: Request, query: string): Promise<Response> {
   if (!resposta.ok) {
     // Falha da API (5xx) nao e sessao morta: o cookie fica, e a proxima tenta.
     const morta = resposta.status >= 400 && resposta.status < 500 && resposta.status !== 429;
-    return devolver(resposta, morta ? { 'Set-Cookie': cookieApagado() } : undefined);
+    return devolver(resposta, morta ? cookiesApagados() : undefined);
   }
 
   const dado = await lerJson(resposta);
@@ -191,7 +232,7 @@ async function renovar(request: Request, query: string): Promise<Response> {
   if (!dado || typeof novo !== 'string') return falha(502, 'INTERNAL_ERROR');
 
   const { refreshToken: _fora, ...resto } = dado;
-  return json(200, resto, { 'Set-Cookie': cookieDaSessao(novo) });
+  return json(200, resto, cookiesDaSessao(novo, lerCookie(request, COOKIE_LEMBRAR) === '1'));
 }
 
 /** Sai: revoga na API se der, e apaga o cookie de qualquer jeito. */
@@ -204,7 +245,7 @@ async function sair(request: Request, query: string): Promise<Response> {
       // Sair deste navegador importa mais que revogar no servidor.
     }
   }
-  return new Response(null, { status: 204, headers: { 'Set-Cookie': cookieApagado() } });
+  return new Response(null, { status: 204, headers: cookiesApagados() });
 }
 
 export async function rotear(request: Request): Promise<Response> {

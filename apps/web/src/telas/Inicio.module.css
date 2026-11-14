@@ -1,73 +1,256 @@
 .tela {
   position: relative;
   z-index: 1;
+  width: 100%;
   max-width: var(--largura-conteudo);
   margin: 0 auto;
-  padding: var(--espaco-md) var(--espaco-xl) var(--espaco-xl);
+  padding: var(--espaco-lg) var(--espaco-lg) var(--espaco-xl);
 }
+
+@media (min-width: 768px) {
+  .tela {
+    padding: var(--espaco-xl) var(--espaco-xxl) var(--espaco-xxl);
+  }
+}
+
+@media (min-width: 1280px) {
+  .tela {
+    padding: 36px 48px 48px;
+  }
+}
+
+/* A mae com o bebe no canto de cima, por tras do cabecalho. So em tela larga:
+   em tela estreita ela disputaria o espaco com a saudacao. */
+.ilustracao {
+  display: none;
+}
+
+@media (min-width: 1280px) {
+  .ilustracao {
+    display: block;
+    position: absolute;
+    z-index: 0;
+    top: 0;
+    right: 0;
+    width: 380px;
+    height: auto;
+    /* O recorte tem o fundo do proprio mock: as bordas somem no degrade. */
+    mask-image:
+      linear-gradient(90deg, transparent 0%, #000 22%),
+      linear-gradient(180deg, #000 72%, transparent 100%);
+    mask-composite: intersect;
+    pointer-events: none;
+  }
+}
+
+/* --- Cabecalho: saudacao, quem esta sendo mostrado, sino --- */
 
 .topo {
   position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-lg);
 }
 
-/* O sino flutua sobre a faixa ilustrada, no canto do cartao. */
-.sino {
-  position: absolute;
-  top: var(--espaco-md);
-  right: var(--espaco-md);
-  display: grid;
-  place-items: center;
-  width: 48px;
-  height: 48px;
-  border-radius: 20px;
-  background: var(--cor-surface);
-  box-shadow: var(--sombra-cartao);
+.saudacao {
+  flex: 1 1 300px;
+  min-width: 0;
+}
+
+.ola {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-md);
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.6px;
   color: var(--cor-section-title);
 }
 
-.sino:hover {
-  background: var(--cor-chip-more);
+.coracao {
+  flex-shrink: 0;
+  fill: var(--mustard-400);
 }
 
-/*
- * Celular: uma coluna, na ordem do aplicativo — leitura de receita,
- * assistente, diario, remedios, medicos, consultas. Os dois grupos se
- * desmancham (display: contents) e cada bloco ganha a sua posicao.
- */
-.colunas {
+.apoio {
+  margin-top: var(--espaco-xs);
+  font-size: 16px;
+  color: var(--moss-700);
+}
+
+@media (min-width: 1024px) {
+  .ola {
+    font-size: 44px;
+  }
+
+  .apoio {
+    font-size: 20px;
+  }
+}
+
+.seletor {
+  flex: 1 1 260px;
+  max-width: 400px;
+}
+
+.sino {
+  margin-left: 0;
+}
+
+/* Em tela larga o cabecalho deixa livre o canto da ilustracao. */
+@media (min-width: 1280px) {
+  .topo {
+    min-height: 150px;
+    padding-right: 360px;
+  }
+}
+
+/* --- Os tres resumos --- */
+
+.resumos {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: var(--espaco-lg);
+  margin-top: var(--espaco-xl);
+}
+
+@media (min-width: 900px) {
+  .resumos {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* --- Leitura de receita e assistente --- */
+
+.destaques {
+  display: grid;
+  gap: var(--espaco-lg);
+  margin-top: var(--espaco-lg);
+}
+
+@media (min-width: 1024px) {
+  .destaques {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+}
+
+/* --- Minha familia --- */
+
+.familia {
+  margin-top: var(--espaco-lg);
+}
+
+.familiaTopo {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaco-md);
+  margin-bottom: var(--espaco-lg);
+}
+
+.familiaTitulo {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-md);
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--cor-section-title);
+}
+
+.adicionar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+  min-height: 44px;
+  padding: 0 var(--espaco-lg);
+  border-radius: var(--raio-pill);
+  background: var(--cor-tab-active);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cor-accent-green);
+  text-decoration: none;
+}
+
+.adicionar:hover {
+  filter: brightness(0.96);
+}
+
+.membros {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--espaco-lg);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.membro {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-lg);
+  min-width: 0;
+  padding: var(--espaco-md) var(--espaco-lg);
+  border-radius: 20px;
+  background: rgba(255, 253, 247, 0.7);
+  color: var(--moss-700);
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.membro:hover {
+  background: var(--cream-50);
+}
+
+.membroTextos {
+  display: flex;
+  flex: 1;
   flex-direction: column;
+  align-items: flex-start;
+  gap: var(--espaco-xs);
+  min-width: 0;
+}
+
+.membroNome {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+  overflow-wrap: anywhere;
+}
+
+.voce {
+  padding: 2px var(--espaco-md);
+  border-radius: var(--raio-pill);
+  background: var(--sage-100);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cor-accent-green);
+}
+
+/* --- O dia: remedios de hoje, consultas, diario --- */
+
+.dia {
+  display: grid;
   gap: var(--espaco-xxl);
   margin-top: var(--espaco-xxl);
 }
 
-.principal,
+@media (min-width: 1024px) {
+  .dia {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    align-items: start;
+  }
+}
+
 .lateral {
-  display: contents;
-}
-
-.lerReceita {
-  order: 1;
-}
-
-.assistente {
-  order: 2;
-}
-
-.diario {
-  order: 3;
-}
-
-.remedios {
-  order: 4;
-}
-
-.medicos {
-  order: 5;
-}
-
-.consultas {
-  order: 6;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-xl);
 }
 
 .pilha {
@@ -77,48 +260,43 @@
 }
 
 .vazio {
-  font-size: 14px;
+  font-size: 15px;
   color: var(--cor-text-secondary);
   text-align: center;
 }
 
 .recado {
-  padding: var(--espaco-md) 0;
-  font-size: 14px;
+  padding: var(--espaco-sm) 0;
+  font-size: 15px;
   color: var(--cor-text-secondary);
 }
 
 .esqueleto {
-  height: 86px;
-  border-radius: var(--raio-card);
+  height: 88px;
+  border-radius: 20px;
   background: var(--cor-surface-card);
-  opacity: 0.55;
-  animation: pulsar 1.4s ease-in-out infinite;
+  opacity: 0.6;
 }
-
-@keyframes pulsar {
-  50% {
-    opacity: 0.3;
-  }
-}
-
-/* --- Diario de sintomas --- */
 
 .diario {
   display: flex;
   align-items: center;
+  gap: var(--espaco-lg);
   padding: var(--espaco-lg);
   border-radius: var(--raio-card);
   background: var(--cor-surface-card);
   box-shadow: var(--sombra-cartao);
   color: inherit;
   text-decoration: none;
-  transition:
-    box-shadow 0.15s ease,
-    transform 0.15s ease;
 }
 
 @media (hover: hover) {
+  .diario {
+    transition:
+      box-shadow 0.15s ease,
+      transform 0.15s ease;
+  }
+
   .diario:hover {
     box-shadow: var(--sombra-flutuante);
     transform: translateY(-1px);
@@ -130,7 +308,6 @@
   flex: 1;
   flex-direction: column;
   min-width: 0;
-  margin-left: var(--espaco-lg);
 }
 
 .diarioTitulo {
@@ -140,43 +317,6 @@
 }
 
 .diarioAjuda {
-  margin-top: 2px;
-  font-size: 13px;
+  font-size: 14px;
   color: var(--cor-text-secondary);
-}
-
-/* --- Tablet: os dois cartoes de IA lado a lado --- */
-
-@media (min-width: 768px) {
-  .tela {
-    padding: var(--espaco-xl) var(--espaco-xxl) var(--espaco-xxl);
-  }
-
-  /* O menu lateral ja tem o item Avisos. */
-  .sino {
-    display: none;
-  }
-}
-
-/* --- Tela larga: coluna principal e lateral --- */
-
-@media (min-width: 1100px) {
-  .colunas {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 380px;
-    align-items: start;
-    gap: var(--espaco-xxl);
-  }
-
-  .principal,
-  .lateral {
-    display: flex;
-    flex-direction: column;
-    gap: var(--espaco-xxl);
-    min-width: 0;
-  }
-
-  .lateral {
-    gap: var(--espaco-xl);
-  }
 }

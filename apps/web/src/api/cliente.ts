@@ -76,8 +76,12 @@ function guardar(dado: unknown): PublicUser {
 }
 
 export const authApi = {
-  login(payload: LoginRequest): Promise<PublicUser> {
-    return request('/api/auth/login', { method: 'POST', body: payload }, guardar);
+  /**
+   * `lembrar` nao vai para a API: o servidor do site (BFF) o le para decidir
+   * se o cookie da sessao dura 60 dias ou so ate o navegador fechar.
+   */
+  login(payload: LoginRequest, lembrar = false): Promise<PublicUser> {
+    return request('/api/auth/login', { method: 'POST', body: { ...payload, lembrar } }, guardar);
   },
 
   register(payload: RegisterRequest): Promise<PublicUser> {

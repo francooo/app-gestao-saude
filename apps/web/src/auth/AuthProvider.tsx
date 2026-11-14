@@ -11,7 +11,8 @@ type AuthState = {
   user: PublicUser | null;
   /** true enquanto a sessao e restaurada a partir do cookie, na abertura. */
   initializing: boolean;
-  signIn: (credentials: LoginRequest) => Promise<void>;
+  /** `lembrar`: manter a sessao neste navegador depois de fecha-lo. */
+  signIn: (credentials: LoginRequest, lembrar?: boolean) => Promise<void>;
   signUp: (data: RegisterRequest) => Promise<void>;
   signOut: () => Promise<void>;
 };
@@ -65,8 +66,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [limparDadosLocais]);
 
   const signIn = useCallback(
-    async (credentials: LoginRequest) => {
-      const novo = await authApi.login(credentials);
+    async (credentials: LoginRequest, lembrar = false) => {
+      const novo = await authApi.login(credentials, lembrar);
       limparDadosLocais();
       setUser(novo);
     },

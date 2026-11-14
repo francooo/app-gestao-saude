@@ -17,6 +17,8 @@ export function Login() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  // Nasce desmarcado: num computador dividido, o padrao seguro e nao lembrar.
+  const [lembrar, setLembrar] = useState(false);
   const [erros, setErros] = useState<ErrosPorCampo>({});
   const [erroGeral, setErroGeral] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -41,7 +43,7 @@ export function Login() {
     setErros({});
     setEnviando(true);
     try {
-      await signIn(parsed.data);
+      await signIn(parsed.data, lembrar);
       // A navegacao acontece sozinha: a guarda das rotas publicas redireciona
       // assim que o usuario entra no contexto.
     } catch (erro) {
@@ -54,7 +56,8 @@ export function Login() {
   return (
     <TelaDeEntrada>
       <form onSubmit={enviar} noValidate>
-        <h1 className={estilos.tituloSozinho}>Bem-vinda</h1>
+        <h1 className={estilos.titulo}>Entrar na sua conta</h1>
+        <p className={estilos.apoio}>Cuide da saúde da sua família em um só lugar</p>
 
         <PillInput
           label="E-mail"
@@ -86,7 +89,16 @@ export function Login() {
           readOnly={enviando}
         />
 
-        <div className={estilos.esqueci}>
+        <div className={estilos.lembrarLinha}>
+          <label className={estilos.lembrar}>
+            <input
+              type="checkbox"
+              checked={lembrar}
+              onChange={(e) => setLembrar(e.target.checked)}
+              disabled={enviando}
+            />
+            Lembrar de mim
+          </label>
           <Link to="/esqueci-senha" className={estilos.link}>
             Esqueci minha senha
           </Link>
@@ -102,7 +114,7 @@ export function Login() {
 
         {/* Peso normal na frase, negrito so no "Criar conta": o destaque recai sobre a acao. */}
         <p className={estilos.rodape}>
-          Ainda não tem conta?{' '}
+          Ainda não tem uma conta?{' '}
           <Link to="/cadastro" className={estilos.link}>
             Criar conta
           </Link>

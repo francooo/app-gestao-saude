@@ -1,122 +1,132 @@
-/* Os dois cartoes em degrade ambar-verde: Ler receita e Assistente. */
+/* --- "Ler receita com IA": cartao em degrade caramelo -> verde --- */
 
-.cartao {
+.receita {
   position: relative;
-  display: block;
-  padding: var(--espaco-xl);
+  display: flex;
+  min-height: 260px;
   overflow: hidden;
   border-radius: var(--raio-card);
-  background: linear-gradient(
-    135deg,
-    var(--cor-assistant-gradient-from),
-    var(--cor-assistant-gradient-to)
-  );
-  box-shadow: 0 4px 12px rgba(44, 53, 32, 0.16);
+  background: linear-gradient(100deg, #c5872b 0%, #a98433 34%, #6f7c3c 62%, #567a45 100%);
+  box-shadow: var(--sombra-cartao);
   color: var(--cor-on-accent);
-  text-decoration: none;
 }
 
-.cartaoLink {
-  transition:
-    box-shadow 0.15s ease,
-    transform 0.15s ease;
+/* A ilustracao ocupa a direita do cartao e some para a esquerda. */
+.ilustracao {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: auto;
+  max-width: none;
+  height: 100%;
+  object-fit: cover;
+  mask-image: linear-gradient(90deg, transparent 0%, #000 34%);
 }
 
-@media (hover: hover) {
-  .cartaoLink:hover {
-    box-shadow: var(--sombra-flutuante);
-    transform: translateY(-1px);
+/* Em cartao estreito o desenho passaria por baixo do texto: sai. */
+@media (max-width: 599px) {
+  .ilustracao {
+    opacity: 0.28;
   }
 }
 
-.cartaoLink:active {
-  opacity: 0.9;
+.receitaConteudo {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--espaco-xl);
+  width: 100%;
+  max-width: 560px;
+  padding: var(--espaco-xl);
 }
 
-/* Sobre o degrade, o anel de foco ambar some; aqui ele e creme. */
-.cartaoLink:focus-visible,
-.botao:focus-visible,
-.galeria:focus-visible {
-  outline-color: var(--cor-surface);
-}
-
-.ramo {
-  position: absolute;
-  top: -24px;
-  right: -36px;
-  width: 190px;
-  height: 190px;
-  object-fit: contain;
-  opacity: 0.4;
-  pointer-events: none;
+@media (min-width: 768px) {
+  .receitaConteudo {
+    padding: var(--espaco-xxl);
+  }
 }
 
 .cabecalho {
-  position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  gap: var(--espaco-xl);
 }
 
-.seloCamera,
-.seloBrilho {
-  position: relative;
+.seloDocumento {
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  margin-right: var(--espaco-lg);
-  background: rgba(255, 255, 255, 0.22);
-}
-
-.seloCamera {
-  width: 52px;
-  height: 52px;
-  border-radius: 16px;
-}
-
-.seloBrilho {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-}
-
-/* Brilho dourado no canto SUPERIOR direito da moldura, selo "IA" no INFERIOR. */
-.brilho {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-}
-
-.seloIA {
-  position: absolute;
-  right: -6px;
-  bottom: -6px;
-  display: grid;
-  place-items: center;
-  min-width: 22px;
-  height: 20px;
-  padding: 0 4px;
-  border: 1.5px solid var(--cor-on-accent);
-  border-radius: 10px;
-  background: var(--cor-accent-green);
-  font-size: 10px;
-  font-weight: 800;
+  width: 76px;
+  height: 76px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.24);
 }
 
 .textos {
-  flex: 1;
   min-width: 0;
 }
 
 .titulo {
-  font-size: 19px;
+  font-size: 26px;
   font-weight: 800;
-  line-height: 1.25;
+  line-height: 1.2;
 }
 
 .subtitulo {
-  margin-top: 2px;
-  font-size: 14px;
-  color: rgba(255, 255, 255, 0.85);
+  max-width: 320px;
+  margin-top: var(--espaco-xs);
+  font-size: 17px;
+  line-height: 1.4;
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-sm) var(--espaco-lg);
+}
+
+.botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espaco-md);
+  min-height: 58px;
+  padding: 0 var(--espaco-xxl);
+  border: 0;
+  border-radius: var(--raio-pill);
+  background: var(--cream-50);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--cor-accent-green);
+  text-decoration: none;
+  transition: filter 0.15s ease;
+}
+
+.botao:hover {
+  filter: brightness(0.96);
+}
+
+.arquivo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-xs);
+  min-height: 44px;
+  padding: 0 var(--espaco-md);
+  border: 0;
+  border-radius: var(--raio-pill);
+  background: transparent;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cor-on-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.arquivo:hover {
+  background: rgba(255, 255, 255, 0.16);
 }
 
 .seloAssinatura {
@@ -126,89 +136,79 @@
   margin-top: var(--espaco-sm);
   padding: 3px var(--espaco-sm);
   border-radius: var(--raio-pill);
-  background: var(--cor-surface);
+  background: var(--cream-50);
   font-size: 11px;
   font-weight: 700;
   color: var(--cor-accent-green);
 }
 
-.botao,
-.galeria {
-  position: relative;
+/* --- Cartao do assistente --- */
+
+.assistente {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: var(--espaco-sm);
-  width: 100%;
-  padding: var(--espaco-md);
-  border: 0;
-  border-radius: var(--raio-pill);
+  gap: var(--espaco-md);
+  min-height: 260px;
+  padding: var(--espaco-xl);
+  border-radius: var(--raio-card);
+  background: var(--cor-surface-card);
+  box-shadow: var(--sombra-cartao);
+  color: inherit;
+  text-align: center;
   text-decoration: none;
 }
 
-.botao {
-  margin-top: var(--espaco-xl);
-  background: var(--cor-on-accent);
-  font-size: 16px;
-  font-weight: 700;
+@media (hover: hover) {
+  .assistente {
+    transition:
+      box-shadow 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  .assistente:hover {
+    box-shadow: var(--sombra-flutuante);
+    transform: translateY(-1px);
+  }
+}
+
+.medica {
+  width: 116px;
+  height: 116px;
+  border-radius: 50%;
+}
+
+.pergunta {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
   color: var(--cor-accent-green);
 }
 
-.botao:hover {
-  background: var(--cor-surface);
-}
-
-.galeria {
-  margin-top: var(--espaco-xs);
-  background: transparent;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--cor-on-accent);
-}
-
-.galeria:hover {
-  background: rgba(255, 255, 255, 0.14);
-}
-
-.chips {
-  position: relative;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--espaco-sm);
-  margin: var(--espaco-md) 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 6px var(--espaco-md);
-  border-radius: var(--raio-pill);
-  background: var(--cor-surface);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--cor-accent-green);
+.assistente .seloAssinatura {
+  margin-top: 0;
+  background: var(--sage-100);
 }
 
 .campo {
-  position: relative;
   display: flex;
   align-items: center;
-  margin-top: var(--espaco-xl);
-  padding: var(--espaco-xs) var(--espaco-xs) var(--espaco-xs) var(--espaco-xl);
-  border-radius: var(--raio-pill);
-  background: var(--cor-on-accent);
+  gap: var(--espaco-md);
+  width: 100%;
+  max-width: 420px;
 }
 
-.placeholder {
+.falso {
   flex: 1;
   min-width: 0;
-  margin-right: var(--espaco-sm);
   overflow: hidden;
+  padding: 12px var(--espaco-lg);
+  border-radius: var(--raio-pill);
+  background: #e7ead8;
   font-size: 14px;
   color: var(--cor-text-placeholder);
+  text-align: left;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -217,9 +217,9 @@
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  width: 44px;
-  height: 40px;
-  border-radius: 14px;
-  background: var(--cor-accent-green-bright);
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: #3d9a6c;
   color: var(--cor-on-accent);
 }

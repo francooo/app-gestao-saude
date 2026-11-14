@@ -1,9 +1,12 @@
 .tela {
+  /* O verde do proprio desenho: a pele clara da area logada nao vale aqui,
+     senao a ilustracao ficaria com as bordas aparecendo. */
+  --verde-entrada: #7f8e5c;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
   min-height: 100dvh;
-  background: var(--cor-sage);
+  background: var(--verde-entrada);
 }
 
 .areaDoCartao {
@@ -12,16 +15,31 @@
   padding: var(--espaco-xl) var(--espaco-xl) var(--espaco-lg);
 }
 
-/* O GlassCard do aplicativo: creme translucido, a ilustracao aparece atenuada por tras. */
+/* Cartao creme opaco, como na tela de referencia. */
 .cartao {
   width: 100%;
-  max-width: var(--tamanho-card-max-width);
+  max-width: 520px;
   margin: 0 auto;
   padding: var(--espaco-xl) 20px;
-  border: 1px solid var(--cor-card-border);
-  border-radius: var(--raio-card);
-  background: var(--cor-card-fill);
-  box-shadow: 0 8px 20px rgba(44, 53, 32, 0.18);
+  border-radius: 32px;
+  background: #f1efdc;
+  box-shadow: 0 10px 28px rgba(44, 53, 32, 0.22);
+}
+
+.marca {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--espaco-lg);
+}
+
+.protegido {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espaco-sm);
+  margin-top: var(--espaco-xl);
+  font-size: 13px;
+  color: var(--moss-700);
 }
 
 .ilustracao {
@@ -48,7 +66,7 @@
   z-index: 1;
   inset: 0 0 auto;
   height: 28px;
-  background: linear-gradient(var(--cor-sage), transparent);
+  background: linear-gradient(var(--verde-entrada), transparent);
 }
 
 /* Celular deitado ou tablet em pe: a ilustracao nao pode esticar a largura toda. */
@@ -75,16 +93,17 @@
   .areaDoCartao {
     display: flex;
     align-items: center;
-    flex: 0 1 480px;
+    flex: 0 1 560px;
     padding: var(--espaco-xxl) 0;
   }
 
   .cartao {
-    padding: var(--espaco-xxl) 28px;
+    max-width: 560px;
+    padding: 40px 56px 32px;
   }
 
   .ilustracao {
-    flex: 0 1 560px;
+    flex: 0 1 720px;
     min-height: 0;
   }
 

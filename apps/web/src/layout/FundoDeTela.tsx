@@ -23,20 +23,12 @@ type Ramo = {
  * a folha continuar saindo da janela — e nao boiar no meio — quando ela e larga.
  */
 const ARRANJOS: Record<'home' | 'padrao', Ramo[]> = {
-  home: [
-    { ramo: 'a', lado: 'esquerda', top: -0.02, largura: 0.42, rotacao: 8 },
-    { ramo: 'b', lado: 'direita', top: 0.05, largura: 0.45, rotacao: -10 },
-    { ramo: 'c', lado: 'esquerda', top: 0.4, largura: 0.34, rotacao: 15 },
-    { ramo: 'a', lado: 'direita', top: 0.46, largura: 0.38, rotacao: -6 },
-    { ramo: 'b', lado: 'esquerda', top: 0.72, largura: 0.46, rotacao: 4 },
-    { ramo: 'c', lado: 'direita', top: 0.8, largura: 0.3, rotacao: -12 },
-  ],
-  // Telas de lista e formulario: menos ramos, para nao competir com o conteudo.
+  // Na web os ramos ficam so nos cantos da direita: o da esquerda e o do pe
+  // do menu lateral (layout/Casca). O miolo da tela fica livre para o conteudo.
+  home: [{ ramo: 'c', lado: 'direita', top: 0.7, largura: 0.22, rotacao: -12 }],
   padrao: [
-    { ramo: 'b', lado: 'direita', top: -0.03, largura: 0.44, rotacao: -10 },
-    { ramo: 'a', lado: 'esquerda', top: 0.3, largura: 0.4, rotacao: 8 },
-    { ramo: 'c', lado: 'direita', top: 0.62, largura: 0.3, rotacao: -12 },
-    { ramo: 'b', lado: 'esquerda', top: 0.78, largura: 0.42, rotacao: 4 },
+    { ramo: 'b', lado: 'direita', top: -0.06, largura: 0.24, rotacao: -10 },
+    { ramo: 'c', lado: 'direita', top: 0.72, largura: 0.2, rotacao: -12 },
   ],
 };
 

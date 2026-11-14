@@ -15,7 +15,7 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Celular: a barra de abas flutuante do aplicativo.
+ * Celular: a barra de abas flutuante, embaixo.
  * ------------------------------------------------------------------------- */
 .menu {
   position: fixed;
@@ -27,7 +27,7 @@
   padding: 8px;
   border-radius: var(--raio-card);
   background: var(--cor-surface);
-  box-shadow: 0 4px 12px rgba(44, 53, 32, 0.16);
+  box-shadow: 0 4px 14px rgba(48, 70, 55, 0.18);
 }
 
 .casca[data-sem-barra] .menu {
@@ -35,7 +35,7 @@
 }
 
 .marca,
-.avisos {
+.ramo {
   display: none;
 }
 
@@ -52,15 +52,6 @@
   min-width: 0;
 }
 
-.item,
-.avisos {
-  color: var(--cor-text-secondary);
-  text-decoration: none;
-  transition:
-    background-color 0.15s ease,
-    color 0.15s ease;
-}
-
 .item {
   display: flex;
   flex-direction: column;
@@ -68,7 +59,12 @@
   justify-content: center;
   gap: 2px;
   height: 100%;
-  border-radius: 20px;
+  border-radius: 18px;
+  color: var(--muted);
+  text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .rotulo {
@@ -77,40 +73,43 @@
   white-space: nowrap;
 }
 
-.item:global(.active),
-.avisos:global(.active) {
+.item:global(.active) {
   background: var(--cor-tab-active);
   color: var(--cor-accent-green);
 }
 
-.item:global(.active) .rotulo,
-.avisos:global(.active) .rotulo {
+.item:global(.active) .rotulo {
   font-weight: 800;
 }
 
 @media (hover: hover) {
-  .item:hover:not(:global(.active)),
-  .avisos:hover:not(:global(.active)) {
+  .item:hover:not(:global(.active)) {
     background: var(--cor-chip-more);
-    color: var(--cor-text-primary);
+    color: var(--cor-section-title);
   }
 }
 
 /* ---------------------------------------------------------------------------
- * Tablet: a barra vira coluna a esquerda, so com os icones.
+ * Tablet: painel lateral de cima a baixo, recolhido em icones.
  * ------------------------------------------------------------------------- */
 @media (min-width: 768px) {
   .menu,
   .casca[data-sem-barra] .menu {
     display: flex;
     flex-direction: column;
-    top: 12px;
+    top: 0;
     right: auto;
-    bottom: 12px;
-    width: calc(var(--largura-menu-recolhido) - 24px);
+    bottom: 0;
+    left: 0;
+    width: var(--largura-menu-recolhido);
     height: auto;
-    padding: var(--espaco-md) 8px;
-    overflow-y: auto;
+    padding: var(--espaco-lg) var(--espaco-md);
+    overflow: hidden auto;
+    border-right: 1px solid rgba(48, 70, 55, 0.08);
+    border-radius: 0;
+    background: rgba(244, 242, 224, 0.82);
+    box-shadow: none;
+    backdrop-filter: blur(6px);
   }
 
   .conteudo,
@@ -121,56 +120,60 @@
 
   .marca {
     display: flex;
-    align-items: center;
     justify-content: center;
-    gap: var(--espaco-md);
-    padding: var(--espaco-sm) 0 var(--espaco-lg);
+    padding: var(--espaco-sm) 0 var(--espaco-xl);
+    border-radius: 16px;
+    text-decoration: none;
   }
 
-  .nomeDaMarca {
+  .marcaCompleta {
     display: none;
-    font-size: 18px;
-    font-weight: 800;
-    letter-spacing: -0.2px;
-    color: var(--cor-section-title);
   }
 
   .areas {
+    position: relative;
+    z-index: 1;
     flex-direction: column;
-    gap: var(--espaco-xs);
+    gap: var(--espaco-sm);
     height: auto;
   }
 
-  .item,
-  .avisos {
+  .item {
     flex-direction: row;
     justify-content: center;
-    gap: var(--espaco-md);
-    height: 48px;
+    gap: var(--espaco-lg);
+    height: 56px;
     border-radius: var(--raio-pill);
-  }
-
-  .avisos {
-    display: flex;
-    align-items: center;
-    margin-top: auto;
+    color: var(--moss-700);
   }
 
   .rotulo {
     display: none;
-    font-size: 15px;
-    font-weight: 700;
+    font-size: 17px;
+    font-weight: 600;
+  }
+
+  /* O ramo do pe do menu: enfeite, por tras dos itens. */
+  .ramo {
+    display: block;
+    position: absolute;
+    bottom: -8px;
+    left: -18px;
+    width: 150%;
+    max-width: 260px;
+    opacity: 0.85;
+    pointer-events: none;
   }
 }
 
 /* ---------------------------------------------------------------------------
- * Tela larga: menu fixo, com rotulos.
+ * Tela larga: painel aberto, com a marca e os rotulos.
  * ------------------------------------------------------------------------- */
 @media (min-width: 1024px) {
   .menu,
   .casca[data-sem-barra] .menu {
-    width: calc(var(--largura-menu) - 24px);
-    padding: var(--espaco-lg) var(--espaco-md);
+    width: var(--largura-menu);
+    padding: var(--espaco-xl) var(--espaco-lg);
   }
 
   .conteudo,
@@ -179,28 +182,23 @@
   }
 
   .marca {
-    justify-content: flex-start;
-    padding: var(--espaco-sm) var(--espaco-md) var(--espaco-xl);
+    padding: var(--espaco-sm) 0 var(--espaco-xxl);
   }
 
-  .nomeDaMarca,
+  .marcaCompleta {
+    display: inline-flex;
+  }
+
+  .marcaRecolhida {
+    display: none;
+  }
+
   .rotulo {
     display: inline;
   }
 
-  .item,
-  .avisos {
+  .item {
     justify-content: flex-start;
-    padding: 0 var(--espaco-lg);
+    padding: 0 var(--espaco-xl);
   }
-}
-
-/* O sino do menu: a caixa do icone e a ancora do ponto de "ha novidades". */
-.sino {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  margin: 0 -11px;
 }

@@ -1,0 +1,117 @@
+.cartao {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-lg);
+  min-width: 0;
+  min-height: 104px;
+  padding: var(--espaco-lg) var(--espaco-xl);
+  border-radius: var(--raio-card);
+  background: var(--cor-surface-card);
+  box-shadow: var(--sombra-cartao);
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (hover: hover) {
+  a.cartao {
+    transition:
+      box-shadow 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  a.cartao:hover {
+    box-shadow: var(--sombra-flutuante);
+    transform: translateY(-1px);
+  }
+}
+
+.ladrilho {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: #a9cfb0;
+  color: var(--cor-accent-green);
+}
+
+.cartao[data-tom='atencao'] .ladrilho {
+  background: var(--cor-tile-sun);
+  color: #6b4a10;
+}
+
+.cartao[data-tom='escuro'] .ladrilho {
+  background: var(--moss-700);
+  color: var(--cream-50);
+}
+
+.textos {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.rotulo {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--cor-accent-green);
+}
+
+.cartao[data-tom='atencao'] .rotulo {
+  color: var(--atencao-texto);
+}
+
+.valor {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.apoio {
+  font-size: 15px;
+  color: var(--muted);
+}
+
+.seta {
+  flex-shrink: 0;
+  color: var(--moss-700);
+}
+
+/* --- Indicador: ladrilho quadrado e o dado em numero grande --- */
+
+.cartao[data-formato='indicador'] {
+  min-height: 92px;
+}
+
+.cartao[data-formato='indicador'] .ladrilho {
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: #5c7a55;
+  color: var(--cream-50);
+}
+
+.cartao[data-formato='indicador'][data-tom='atencao'] .ladrilho {
+  background: var(--cor-tile-sun);
+}
+
+.cartao[data-formato='indicador'][data-tom='escuro'] .ladrilho {
+  background: var(--moss-700);
+}
+
+.cartao[data-formato='indicador'] .rotulo,
+.cartao[data-formato='indicador'][data-tom='atencao'] .rotulo {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--moss-700);
+}
+
+.cartao[data-formato='indicador'] .valor {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--cor-section-title);
+}

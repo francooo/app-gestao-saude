@@ -12,6 +12,8 @@ import { ApiRequestError } from './api/cliente';
 import { App } from './App';
 import { AuthProvider } from './auth/AuthProvider';
 import './estilos/global.css';
+// Depois do global: a pele da web remapeia as variaveis do tema do aplicativo.
+import './estilos/tema-web.css';
 import { DialogoProvider } from './ui/Dialogo';
 
 const queryClient = new QueryClient({

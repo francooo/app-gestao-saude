@@ -2,13 +2,13 @@
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 720px;
+  max-width: var(--largura-coluna);
   margin: 0 auto;
-  padding: var(--espaco-md) var(--espaco-xl) var(--espaco-xl);
+  padding: var(--espaco-lg) var(--espaco-lg) var(--espaco-xl);
 }
 
 .pagina[data-largura='formulario'] {
-  max-width: 640px;
+  max-width: var(--largura-formulario);
 }
 
 .pagina[data-largura='larga'] {
@@ -18,6 +18,13 @@
 @media (min-width: 768px) {
   .pagina {
     padding: var(--espaco-xl) var(--espaco-xxl) var(--espaco-xxl);
+  }
+}
+
+/* Tela larga: mais respiro em volta, como nas telas de referencia. */
+@media (min-width: 1280px) {
+  .pagina {
+    padding: 36px 48px 48px;
   }
 }
 

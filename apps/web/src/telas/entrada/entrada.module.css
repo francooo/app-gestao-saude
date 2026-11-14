@@ -1,9 +1,9 @@
 .titulo {
-  font-size: var(--texto-title-tamanho);
-  font-weight: var(--texto-title-peso);
-  letter-spacing: var(--texto-title-espacamento);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
   line-height: 1.2;
-  color: var(--cor-text-primary);
+  color: var(--moss-700);
   text-align: center;
 }
 
@@ -14,7 +14,7 @@
 }
 
 .apoio {
-  margin: var(--espaco-md) 0 var(--espaco-xl);
+  margin: var(--espaco-sm) 0 var(--espaco-xl);
   font-size: var(--texto-subtitle-tamanho);
   font-weight: var(--texto-subtitle-peso);
   color: var(--cor-text-secondary);
@@ -37,6 +37,34 @@
   display: flex;
   justify-content: flex-end;
   margin-top: calc(-1 * var(--espaco-sm));
+}
+
+/* "Lembrar de mim" de um lado, "Esqueci minha senha" do outro. */
+.lembrarLinha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaco-sm) var(--espaco-lg);
+  margin-top: calc(-1 * var(--espaco-xs));
+}
+
+.lembrar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+  min-height: 40px;
+  font-size: 15px;
+  color: var(--cor-text-primary);
+  cursor: pointer;
+}
+
+.lembrar input {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--cor-accent-green);
+  cursor: pointer;
 }
 
 .erroGeral {

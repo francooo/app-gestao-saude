@@ -1,53 +1,69 @@
-.linha {
+.cabecalho {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  min-height: 48px;
+  gap: var(--espaco-lg);
+  min-height: 52px;
 }
 
-.lado {
+.textos {
+  flex: 1;
+  min-width: 0;
+}
+
+.titulo {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.4px;
+  color: var(--cor-section-title);
+  overflow-wrap: anywhere;
+}
+
+.subtitulo {
+  margin-top: 2px;
+  font-size: 15px;
+  color: var(--moss-700);
+}
+
+@media (min-width: 768px) {
+  .titulo {
+    font-size: 32px;
+  }
+
+  .subtitulo {
+    font-size: 17px;
+  }
+}
+
+.acoes {
   display: flex;
   flex-shrink: 0;
-  width: 48px;
+  align-items: center;
+  gap: var(--espaco-md);
 }
 
-.lado:last-child {
-  justify-content: flex-end;
-}
-
+/* Voltar e sino: redondos, creme, com sombra leve. */
 .botao {
   position: relative;
   display: grid;
   place-items: center;
+  flex-shrink: 0;
   width: 48px;
   height: 48px;
   padding: 0;
   border: 0;
-  border-radius: 20px;
+  border-radius: 50%;
   background: var(--cor-surface);
+  box-shadow: var(--sombra-cartao);
   color: var(--cor-section-title);
+  transition: background-color 0.15s ease;
 }
 
 .botao:hover {
   background: var(--cor-chip-more);
 }
 
-.titulo {
-  flex: 1;
-  min-width: 0;
-  padding: 0 var(--espaco-sm);
-  font-size: 27px;
-  font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -0.3px;
-  color: var(--cor-section-title);
-  text-align: center;
-  overflow-wrap: anywhere;
-}
-
-/* Em tela larga o menu lateral ja tem o item Avisos. */
-@media (min-width: 768px) {
-  .sino {
-    display: none;
-  }
+/* Sem acoes entre o titulo e o sino, o sino nao encosta no titulo. */
+.sino {
+  margin-left: auto;
 }

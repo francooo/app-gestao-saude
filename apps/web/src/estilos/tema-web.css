@@ -1,0 +1,100 @@
+/*
+ * A pele da versao web ("Familia Saude").
+ *
+ * O tokens.css e GERADO do tema do aplicativo (packages/shared/src/theme.ts) e
+ * nao muda: o celular continua com a paleta dele. Esta folha vem depois e faz
+ * duas coisas:
+ *
+ *  1. define os tokens do DESIGN-SYSTEM-WEB.md (sage, moss, cream, caramel...);
+ *  2. REMAPEIA as variaveis semanticas que os componentes ja usam (--cor-*,
+ *     --fundo-*), para o site inteiro trocar de cara sem tocar em cada tela.
+ *
+ * Tres valores saem um pouco do documento, de proposito:
+ *  - os fundos seguem a cor amostrada das telas de referencia (um salvia mais
+ *    quente que o #EEF3E9 da tabela), porque e a tela que a pessoa aprovou;
+ *  - `muted` e o caramelo dos botoes sao um tom mais escuros que os da tabela:
+ *    com os valores originais, texto auxiliar sobre creme e texto branco sobre
+ *    caramelo ficam abaixo do contraste minimo de leitura.
+ */
+:root {
+  /* --- Tokens do design system web --- */
+  --sage-50: #eef3e9;
+  --sage-100: #dde8d8;
+  --sage-300: #b7c9ad;
+  --moss-700: #3f5a45;
+  --moss-800: #304637;
+  --cream-50: #fffdf7;
+  --cream-100: #f8f3e8;
+  --caramel-500: #c9854b;
+  --caramel-600: #a96839;
+  --mustard-400: #d6b45a;
+  --sucesso: #5d9b72;
+  --atencao: #c9854b;
+  --erro: #b95b54;
+  --ink: #27352b;
+  --muted: #5d6c61;
+
+  /* Fundos claros dos selos de status: cor E texto, nunca so cor. */
+  --sucesso-fundo: #dcebdd;
+  --sucesso-texto: #2f6b47;
+  --atencao-fundo: #f8e3cc;
+  --atencao-texto: #9a521f;
+  --erro-fundo: #f6dcd8;
+  --erro-texto: #9a3f38;
+
+  /* --- Remapeamento das variaveis que os componentes usam --- */
+  --cor-sage: #e6e9cc;
+  --cor-text-primary: var(--ink);
+  --cor-text-secondary: var(--muted);
+  --cor-text-placeholder: #869186;
+  --cor-text-error: var(--erro-texto);
+  --cor-link: var(--moss-700);
+  --cor-section-title: #224a32;
+
+  --cor-surface: var(--cream-50);
+  --cor-surface-card: rgba(250, 249, 238, 0.9);
+  --cor-surface-warm: #f8ebcf;
+  --cor-on-accent: #ffffff;
+
+  --cor-accent: #b06f38;
+  --cor-accent-pressed: var(--caramel-600);
+  --cor-input-border: rgba(48, 70, 55, 0.22);
+  --cor-input-border-focused: var(--caramel-500);
+  --cor-input-border-error: var(--erro);
+
+  --cor-tab-active: #e1e7cf;
+  --cor-chip-more: #eceedb;
+  --cor-pill-sage: var(--sage-100);
+  --cor-pill-tablet: #dbe5d0;
+  --cor-pill-tablet-icon: #4f7a58;
+  --cor-tile-sun: #d4a733;
+  --cor-tile-clock: #3f5a45;
+  --cor-star-empty: #cfd4c2;
+  --cor-divider: rgba(48, 70, 55, 0.12);
+  --cor-assistant-bubble: #eef0df;
+  --cor-assistant-gradient-from: #c5872b;
+  --cor-assistant-gradient-to: #5b7c44;
+
+  /* Um fundo so, claro, para todas as areas: no desktop a identidade de cada
+     area vem do menu e do titulo, nao de um degrade diferente por tela. */
+  --fundo-web: linear-gradient(180deg, #e2e6c6 0%, #e9ebd0 38%, #ecedd6 100%);
+  --fundo-home: var(--fundo-web);
+  --fundo-doctors: var(--fundo-web);
+  --fundo-medications: var(--fundo-web);
+  --fundo-family: var(--fundo-web);
+  --fundo-assistant: var(--fundo-web);
+  --fundo-settings: var(--fundo-web);
+
+  --raio-card: 24px;
+  --raio-campo: 16px;
+
+  --sombra-cartao: 0 2px 10px rgba(48, 70, 55, 0.08);
+  --sombra-flutuante: 0 8px 24px rgba(48, 70, 55, 0.16);
+  --sombra-botao: 0 3px 8px rgba(120, 76, 30, 0.22);
+
+  --largura-menu: 264px;
+  --largura-menu-recolhido: 88px;
+  --largura-conteudo: 1360px;
+  --largura-coluna: 960px;
+  --largura-formulario: 880px;
+}
