@@ -8,6 +8,7 @@
   },
   "scripts": {
     "mobile": "pnpm --filter @gestao/mobile start",
+    "web": "pnpm --filter @gestao/web dev",
     "api:dev": "pnpm --filter @gestao/api dev",
     "db:generate": "pnpm --filter @gestao/api db:generate",
     "db:migrate": "pnpm --filter @gestao/api db:migrate",

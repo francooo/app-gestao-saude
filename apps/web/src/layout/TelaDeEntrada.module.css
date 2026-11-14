@@ -1,0 +1,100 @@
+.tela {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: var(--cor-sage);
+}
+
+.areaDoCartao {
+  position: relative;
+  z-index: 1;
+  padding: var(--espaco-xl) var(--espaco-xl) var(--espaco-lg);
+}
+
+/* O GlassCard do aplicativo: creme translucido, a ilustracao aparece atenuada por tras. */
+.cartao {
+  width: 100%;
+  max-width: var(--tamanho-card-max-width);
+  margin: 0 auto;
+  padding: var(--espaco-xl) 20px;
+  border: 1px solid var(--cor-card-border);
+  border-radius: var(--raio-card);
+  background: var(--cor-card-fill);
+  box-shadow: 0 8px 20px rgba(44, 53, 32, 0.18);
+}
+
+.ilustracao {
+  position: relative;
+  flex: 1;
+  /* Garante que a ilustracao nao suma de vez em tela baixa. */
+  min-height: 240px;
+  overflow: hidden;
+}
+
+.ilustracao img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: bottom center;
+}
+
+/* Emenda entre o verde chapado da tela e o do JPEG. */
+.ilustracao::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  inset: 0 0 auto;
+  height: 28px;
+  background: linear-gradient(var(--cor-sage), transparent);
+}
+
+/* Celular deitado ou tablet em pe: a ilustracao nao pode esticar a largura toda. */
+@media (min-width: 600px) {
+  .ilustracao img {
+    left: 50%;
+    width: min(100%, 560px);
+    transform: translateX(-50%);
+    /* As laterais do desenho terminariam em corte reto; somem no verde. */
+    mask-image: linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+  }
+}
+
+/* Tela larga: ilustracao a esquerda, cartao a direita. */
+@media (min-width: 1024px) {
+  .tela {
+    flex-direction: row-reverse;
+    align-items: stretch;
+    justify-content: center;
+    gap: var(--espaco-xxl);
+    padding: 0 var(--espaco-xxl);
+  }
+
+  .areaDoCartao {
+    display: flex;
+    align-items: center;
+    flex: 0 1 480px;
+    padding: var(--espaco-xxl) 0;
+  }
+
+  .cartao {
+    padding: var(--espaco-xxl) 28px;
+  }
+
+  .ilustracao {
+    flex: 0 1 560px;
+    min-height: 0;
+  }
+
+  .ilustracao::before {
+    display: none;
+  }
+
+  .ilustracao img {
+    left: 0;
+    width: 100%;
+    transform: none;
+  }
+}

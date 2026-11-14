@@ -1,0 +1,72 @@
+.dialogo {
+  width: min(420px, calc(100vw - 2 * var(--espaco-xl)));
+  max-height: calc(100dvh - 2 * var(--espaco-xl));
+  padding: 0;
+  border: 0;
+  border-radius: var(--raio-card);
+  background: var(--cor-surface);
+  box-shadow: var(--sombra-flutuante);
+  color: var(--cor-text-primary);
+}
+
+.dialogo::backdrop {
+  background: rgba(30, 38, 22, 0.45);
+}
+
+.caixa {
+  padding: var(--espaco-xl);
+}
+
+.titulo {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--cor-section-title);
+}
+
+.mensagem {
+  margin-top: var(--espaco-sm);
+  font-size: 15px;
+  color: var(--cor-text-secondary);
+}
+
+.acoes {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: var(--espaco-sm);
+  margin-top: var(--espaco-xl);
+}
+
+.cancelar,
+.acao {
+  min-height: 46px;
+  padding: 0 var(--espaco-xl);
+  border-radius: var(--raio-pill);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+/* Terceiro degrau: so texto. */
+.cancelar {
+  border: 0;
+  background: transparent;
+  color: var(--cor-text-secondary);
+}
+
+.cancelar:hover {
+  background: var(--cor-chip-more);
+}
+
+.acao {
+  border: 0;
+  background: var(--cor-accent-green);
+  color: var(--cor-on-accent);
+}
+
+.acao[data-destrutiva] {
+  background: var(--cor-terracotta);
+}
+
+.acao:hover {
+  filter: brightness(0.93);
+}

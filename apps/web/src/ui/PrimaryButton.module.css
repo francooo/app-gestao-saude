@@ -1,0 +1,56 @@
+.botao {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: var(--tamanho-button-height);
+  padding: 0 var(--espaco-xl);
+  border: 0;
+  border-radius: var(--raio-pill);
+  background: var(--cor-accent);
+  box-shadow: var(--sombra-botao);
+  color: var(--cor-on-accent);
+  font-size: var(--texto-button-tamanho);
+  font-weight: var(--texto-button-peso);
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.botao:hover:not(:disabled),
+.botao:active:not(:disabled) {
+  background: var(--cor-accent-pressed);
+}
+
+.botao:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.botao[data-tom='terracota'] {
+  background: var(--cor-terracotta);
+  box-shadow: 0 4px 8px rgba(107, 58, 36, 0.25);
+}
+
+.botao[data-tom='terracota']:hover:not(:disabled) {
+  background: var(--cor-terracotta);
+  opacity: 0.85;
+}
+
+.botao:disabled {
+  opacity: 0.65;
+}
+
+.girando {
+  width: 22px;
+  height: 22px;
+  border: 3px solid rgba(255, 255, 255, 0.4);
+  border-top-color: var(--cor-on-accent);
+  border-radius: 50%;
+  animation: girar 0.8s linear infinite;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,53 @@
+/* O resumo aqui e um cartao so: sem o respiro que separa das linhas no detalhe. */
+.resumo > div {
+  padding-bottom: 0;
+}
+
+.mes {
+  margin: var(--espaco-lg) 0 var(--espaco-sm);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.mes::first-letter {
+  text-transform: uppercase;
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Cada dose e uma faixa creme propria, e nao linhas de um cartao so. */
+.lista > li {
+  padding: var(--espaco-md) var(--espaco-lg);
+  border-top: 0;
+  border-radius: 16px;
+  background: var(--cor-surface);
+}
+
+.vazio {
+  margin-top: var(--espaco-xl);
+  font-size: 14px;
+  color: var(--cor-text-secondary);
+  text-align: center;
+}
+
+.mais {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espaco-sm);
+  margin-top: var(--espaco-xl);
+}
+
+.erro {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cor-text-error);
+}

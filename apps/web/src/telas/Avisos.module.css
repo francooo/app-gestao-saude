@@ -1,0 +1,123 @@
+.filtros {
+  margin-top: var(--espaco-lg);
+}
+
+.secao {
+  margin-top: var(--espaco-xl);
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-md);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Cada aviso e o PROPRIO cartao: e coisa para ler um por um. */
+.cartao {
+  display: flex;
+  align-items: flex-start;
+  min-height: 88px;
+  padding: var(--espaco-lg);
+  border-radius: var(--raio-card);
+  background: var(--cor-surface-card);
+  box-shadow: var(--sombra-cartao);
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (hover: hover) {
+  a.cartao {
+    transition:
+      box-shadow 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  a.cartao:hover {
+    box-shadow: var(--sombra-flutuante);
+    transform: translateY(-1px);
+  }
+}
+
+.textos {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  margin: 2px 0 0 var(--espaco-lg);
+}
+
+.titulo {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.subtitulo {
+  margin-top: 1px;
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}
+
+.carimbo {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-xs);
+  margin-top: var(--espaco-xs);
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}
+
+.ponto {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  margin: 6px var(--espaco-sm) 0;
+  border-radius: 50%;
+  background: var(--cor-dose-taken);
+}
+
+/* A seta fica na altura do meio do ladrilho. */
+.seta {
+  flex-shrink: 0;
+  margin-top: 18px;
+  color: var(--cor-text-secondary);
+}
+
+.parcial {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-xs);
+  margin-top: var(--espaco-lg);
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}
+
+.vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: var(--espaco-xl);
+  text-align: center;
+}
+
+.vazioTitulo {
+  margin-top: var(--espaco-md);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.vazioTexto {
+  max-width: 440px;
+  margin-top: var(--espaco-sm);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--cor-text-secondary);
+}
+
+.marcarTodas {
+  margin-top: var(--espaco-xxl);
+}

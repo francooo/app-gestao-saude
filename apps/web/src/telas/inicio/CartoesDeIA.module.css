@@ -1,0 +1,225 @@
+/* Os dois cartoes em degrade ambar-verde: Ler receita e Assistente. */
+
+.cartao {
+  position: relative;
+  display: block;
+  padding: var(--espaco-xl);
+  overflow: hidden;
+  border-radius: var(--raio-card);
+  background: linear-gradient(
+    135deg,
+    var(--cor-assistant-gradient-from),
+    var(--cor-assistant-gradient-to)
+  );
+  box-shadow: 0 4px 12px rgba(44, 53, 32, 0.16);
+  color: var(--cor-on-accent);
+  text-decoration: none;
+}
+
+.cartaoLink {
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+@media (hover: hover) {
+  .cartaoLink:hover {
+    box-shadow: var(--sombra-flutuante);
+    transform: translateY(-1px);
+  }
+}
+
+.cartaoLink:active {
+  opacity: 0.9;
+}
+
+/* Sobre o degrade, o anel de foco ambar some; aqui ele e creme. */
+.cartaoLink:focus-visible,
+.botao:focus-visible,
+.galeria:focus-visible {
+  outline-color: var(--cor-surface);
+}
+
+.ramo {
+  position: absolute;
+  top: -24px;
+  right: -36px;
+  width: 190px;
+  height: 190px;
+  object-fit: contain;
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.cabecalho {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.seloCamera,
+.seloBrilho {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  margin-right: var(--espaco-lg);
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.seloCamera {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+}
+
+.seloBrilho {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+}
+
+/* Brilho dourado no canto SUPERIOR direito da moldura, selo "IA" no INFERIOR. */
+.brilho {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+}
+
+.seloIA {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  display: grid;
+  place-items: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 4px;
+  border: 1.5px solid var(--cor-on-accent);
+  border-radius: 10px;
+  background: var(--cor-accent-green);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.textos {
+  flex: 1;
+  min-width: 0;
+}
+
+.titulo {
+  font-size: 19px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.subtitulo {
+  margin-top: 2px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.seloAssinatura {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: var(--espaco-sm);
+  padding: 3px var(--espaco-sm);
+  border-radius: var(--raio-pill);
+  background: var(--cor-surface);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--cor-accent-green);
+}
+
+.botao,
+.galeria {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espaco-sm);
+  width: 100%;
+  padding: var(--espaco-md);
+  border: 0;
+  border-radius: var(--raio-pill);
+  text-decoration: none;
+}
+
+.botao {
+  margin-top: var(--espaco-xl);
+  background: var(--cor-on-accent);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--cor-accent-green);
+}
+
+.botao:hover {
+  background: var(--cor-surface);
+}
+
+.galeria {
+  margin-top: var(--espaco-xs);
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cor-on-accent);
+}
+
+.galeria:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.chips {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-sm);
+  margin: var(--espaco-md) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px var(--espaco-md);
+  border-radius: var(--raio-pill);
+  background: var(--cor-surface);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--cor-accent-green);
+}
+
+.campo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-top: var(--espaco-xl);
+  padding: var(--espaco-xs) var(--espaco-xs) var(--espaco-xs) var(--espaco-xl);
+  border-radius: var(--raio-pill);
+  background: var(--cor-on-accent);
+}
+
+.placeholder {
+  flex: 1;
+  min-width: 0;
+  margin-right: var(--espaco-sm);
+  overflow: hidden;
+  font-size: 14px;
+  color: var(--cor-text-placeholder);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.enviar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 40px;
+  border-radius: 14px;
+  background: var(--cor-accent-green-bright);
+  color: var(--cor-on-accent);
+}

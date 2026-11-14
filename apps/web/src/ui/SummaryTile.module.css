@@ -1,0 +1,55 @@
+.cartao {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: var(--espaco-md);
+  min-width: 0;
+  padding: var(--espaco-lg);
+  border-radius: var(--raio-card);
+  background: var(--cor-surface-card);
+  box-shadow: var(--sombra-cartao);
+}
+
+.ladrilho {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  color: var(--cor-on-accent);
+}
+
+.textos {
+  flex: 1;
+  min-width: 0;
+}
+
+/* O numero fica numa linha so; rotulo e detalhe quebram em tela estreita. */
+.valor {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rotulo,
+.detalhe {
+  overflow-wrap: anywhere;
+}
+
+.rotulo {
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}
+
+.valor {
+  font-size: clamp(17px, 5vw, 21px);
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--cor-section-title);
+}
+
+.detalhe {
+  font-size: 12px;
+  color: var(--cor-text-secondary);
+}

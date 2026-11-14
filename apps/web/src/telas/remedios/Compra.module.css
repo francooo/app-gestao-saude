@@ -1,0 +1,29 @@
+.linha {
+  display: flex;
+  gap: var(--espaco-md);
+}
+
+.estreito {
+  flex: 1;
+  min-width: 0;
+}
+
+.largo {
+  flex: 2;
+  min-width: 0;
+}
+
+.total {
+  margin: calc(-1 * var(--espaco-sm)) 0 var(--espaco-lg);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cor-accent-green);
+}
+
+.erroGeral {
+  margin-bottom: var(--espaco-md);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cor-text-error);
+  text-align: center;
+}

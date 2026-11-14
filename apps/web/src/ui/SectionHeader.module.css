@@ -1,0 +1,44 @@
+.linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaco-sm);
+  margin-bottom: var(--espaco-md);
+}
+
+.tituloLinha {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+  min-width: 0;
+}
+
+.titulo {
+  min-width: 0;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--cor-section-title);
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 2px;
+  /* Alvo de clique maior que o texto, sem deslocar o alinhamento. */
+  margin: -8px -4px -8px 0;
+  padding: 8px 4px 8px 8px;
+  border: 0;
+  border-radius: var(--raio-pill);
+  background: transparent;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cor-accent-green);
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

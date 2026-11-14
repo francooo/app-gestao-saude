@@ -1,0 +1,25 @@
+.lista {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-sm);
+}
+
+.chip {
+  padding: var(--espaco-md) var(--espaco-xl);
+  border: 0;
+  border-radius: var(--raio-pill);
+  background: var(--cor-surface);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cor-section-title);
+  white-space: nowrap;
+}
+
+.chip:hover {
+  background: var(--cor-chip-more);
+}
+
+.chip[aria-pressed='true'] {
+  background: var(--cor-chip-active);
+  color: var(--cor-on-accent);
+}

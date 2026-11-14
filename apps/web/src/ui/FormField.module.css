@@ -1,0 +1,153 @@
+.grupo {
+  margin-bottom: var(--espaco-lg);
+}
+
+.linhaDoRotulo {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+  margin-bottom: var(--espaco-sm);
+}
+
+.rotulo {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.campo {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: var(--tamanho-input-height);
+  padding: 0 var(--espaco-lg);
+  border: 1px solid rgba(57, 67, 44, 0.12);
+  border-radius: 18px;
+  background: var(--cor-on-accent);
+  transition: border-color 0.15s ease;
+}
+
+.campo:hover {
+  border-color: var(--cor-input-border);
+}
+
+.campo:focus-within {
+  border-color: var(--cor-input-border-focused);
+  box-shadow: 0 0 0 3px rgba(183, 136, 66, 0.22);
+}
+
+.campo[data-erro] {
+  border-color: var(--cor-input-border-error);
+}
+
+.campo[data-multilinha] {
+  align-items: flex-start;
+  min-height: 96px;
+  padding-top: var(--espaco-md);
+  padding-bottom: var(--espaco-md);
+}
+
+.entrada {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 16px;
+  color: var(--cor-text-primary);
+}
+
+input.entrada {
+  height: calc(var(--tamanho-input-height) - 2px);
+}
+
+textarea.entrada {
+  min-height: 72px;
+  line-height: 1.4;
+  resize: vertical;
+}
+
+/* O anel de foco fica na caixa (.campo:focus-within). */
+.entrada:focus {
+  outline: none;
+}
+
+.entrada::placeholder {
+  color: var(--cor-text-placeholder);
+  opacity: 1;
+}
+
+.select {
+  height: calc(var(--tamanho-input-height) - 2px);
+  /* A seta e o icone ao lado; a do navegador sai. */
+  padding-right: 28px;
+  appearance: none;
+  cursor: pointer;
+}
+
+.select[data-vazio] {
+  color: var(--cor-text-placeholder);
+}
+
+.select option {
+  color: var(--cor-text-primary);
+}
+
+.seta {
+  position: absolute;
+  right: var(--espaco-lg);
+  color: var(--cor-section-title);
+  pointer-events: none;
+}
+
+.girando {
+  margin-left: var(--espaco-sm);
+  color: var(--cor-accent-green);
+}
+
+.olho {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-right: -8px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--cor-text-secondary);
+}
+
+.olho:hover {
+  background: var(--cor-chip-more);
+}
+
+.erro,
+.ajuda,
+.aviso {
+  margin-top: var(--espaco-xs);
+  font-size: 13px;
+}
+
+.erro {
+  font-weight: 600;
+  color: var(--cor-text-error);
+}
+
+.ajuda {
+  color: var(--cor-text-secondary);
+}
+
+.aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espaco-xs);
+  font-weight: 600;
+  line-height: 18px;
+  /* O ambar sozinho nao tem contraste para texto pequeno sobre o creme. */
+  color: var(--cor-accent-pressed);
+}
+
+.aviso svg {
+  margin-top: 2px;
+}

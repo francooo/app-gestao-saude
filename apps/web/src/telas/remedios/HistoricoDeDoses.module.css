@@ -1,0 +1,113 @@
+.secao {
+  margin-top: var(--espaco-xl);
+}
+
+.chips {
+  margin-bottom: var(--espaco-md);
+}
+
+.cartao {
+  padding: var(--espaco-lg);
+}
+
+.resumo {
+  display: flex;
+  align-items: center;
+  padding-bottom: var(--espaco-md);
+}
+
+.resumoIcone {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--cor-accent-green);
+  color: var(--cor-on-accent);
+}
+
+.resumoTitulo {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--cor-section-title);
+}
+
+.textos {
+  flex: 1;
+  min-width: 0;
+  margin-left: var(--espaco-md);
+}
+
+.lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.dose {
+  display: flex;
+  align-items: center;
+  padding: var(--espaco-md) 0;
+  border-top: 1px solid var(--cor-divider);
+}
+
+.doseMarca {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--cor-dose-taken);
+  color: var(--cor-on-accent);
+}
+
+.doseMarca[data-pulada] {
+  background: var(--cor-pill-tablet);
+  color: var(--cor-pill-tablet-icon);
+}
+
+.doseTexto {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cor-text-primary);
+}
+
+.ajuda {
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}
+
+.vazio {
+  padding-top: var(--espaco-md);
+  border-top: 1px solid var(--cor-divider);
+}
+
+.erro {
+  width: 100%;
+  padding: var(--espaco-sm) 0;
+  border: 0;
+  background: transparent;
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+  text-align: left;
+}
+
+.verTudo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espaco-xs);
+  padding-top: var(--espaco-md);
+  border-top: 1px solid var(--cor-divider);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cor-accent-green);
+  text-decoration: none;
+}
+
+.verTudo:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}

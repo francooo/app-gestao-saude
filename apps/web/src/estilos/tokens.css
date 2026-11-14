@@ -1,0 +1,109 @@
+/*
+ * GERADO por scripts/gerar-tokens.mjs a partir de packages/shared/src/theme.ts.
+ * Nao edite a mao: mude o theme.ts e rode `pnpm --filter @gestao/web tokens`.
+ */
+:root {
+  /* Cores */
+  --cor-sage: #7F8E5C;
+  --cor-sage-deep: #8A9564;
+  --cor-card-fill: rgba(245, 243, 230, 0.78);
+  --cor-card-border: rgba(255, 255, 255, 0.35);
+  --cor-input-fill: rgba(255, 253, 245, 0.88);
+  --cor-input-border: rgba(110, 124, 84, 0.38);
+  --cor-input-border-focused: #B78842;
+  --cor-input-border-error: #9E4B36;
+  --cor-text-primary: #39432C;
+  --cor-text-secondary: #5A6449;
+  --cor-text-placeholder: #878F78;
+  --cor-text-error: #8C3A28;
+  --cor-link: #52613C;
+  --cor-accent: #B78842;
+  --cor-accent-pressed: #9E7436;
+  --cor-accent-disabled: #B78842A0;
+  --cor-on-accent: #FFFFFF;
+  --cor-home-background-top: #99A270;
+  --cor-home-background-bottom: #A5AD7C;
+  --cor-surface: #F8F3DE;
+  --cor-surface-card: rgba(248,243,222,0.85);
+  --cor-surface-warm: #F4E2BE;
+  --cor-accent-green: #1E603E;
+  --cor-accent-green-soft: #3E765B;
+  --cor-accent-green-bright: #2E8A62;
+  --cor-section-title: #2E4D30;
+  --cor-assistant-gradient-from: #B77C32;
+  --cor-assistant-gradient-to: #49623A;
+  --cor-chip-active: #326F3C;
+  --cor-action-green: #467C43;
+  --cor-star: #E8A62A;
+  --cor-star-empty: #CBC9B2;
+  --cor-tab-active: #E5E6C8;
+  --cor-chip-more: #EFEBD6;
+  --cor-pill-sage: #E4E6C8;
+  --cor-pill-tablet: #D8DCBE;
+  --cor-pill-tablet-icon: #7B8F63;
+  --cor-tile-sun: #CF9E31;
+  --cor-tile-clock: #768658;
+  --cor-dose-taken: #3E8F64;
+  --cor-dose-ring: #40996B;
+  --cor-switch-on: #4D8D60;
+  --cor-avatar-empty: #A9B287;
+  --cor-assistant-panel: #F6F2E3;
+  --cor-assistant-bubble: #EFECDA;
+  --cor-assistant-send: #598B54;
+  --cor-quick-meds: #CED29F;
+  --cor-quick-symptoms: #D8AF4F;
+  --cor-quick-appointments: #96A263;
+  --cor-terracotta: #C97550;
+  --cor-divider: rgba(90, 100, 73, 0.18);
+  --cor-veil: rgba(248, 243, 222, 0.75);
+  --cor-overlay: rgba(24, 28, 18, 0.92);
+
+  /* Fundos de tela: degrade vertical de cada area */
+  --fundo-doctors: linear-gradient(180deg, #B3B87B, #DAD9AE, #E1DEB8);
+  --fundo-home: linear-gradient(180deg, #96A06A, #ABAE78, #E2DDB9);
+  --fundo-medications: linear-gradient(180deg, #A6B078, #D3D3AA, #E3DDB9);
+  --fundo-family: linear-gradient(180deg, #A7B081, #A2AD7B, #909D6A);
+  --fundo-assistant: linear-gradient(180deg, #D0D0A8, #EAE6CA, #DEDDB9, #ECE8CA);
+  --fundo-settings: linear-gradient(180deg, #ECE9CD, #EAE8CC, #E2E0BE);
+
+  /* Avatares */
+  --cor-avatar-1: #3E765B;
+  --cor-avatar-2: #D19628;
+  --cor-avatar-3: #6A774B;
+  --cor-avatar-4: #BF6A4F;
+
+  /* Raios */
+  --raio-card: 28px;
+  --raio-pill: 999px;
+
+  /* Espacamentos */
+  --espaco-xs: 4px;
+  --espaco-sm: 8px;
+  --espaco-md: 12px;
+  --espaco-lg: 16px;
+  --espaco-xl: 24px;
+  --espaco-xxl: 32px;
+
+  /* Tamanhos */
+  --tamanho-input-height: 56px;
+  --tamanho-button-height: 58px;
+  --tamanho-icon-size: 20px;
+  --tamanho-card-max-width: 420px;
+
+  /* Tipografia */
+  --texto-title-tamanho: 30px;
+  --texto-title-peso: 800;
+  --texto-title-espacamento: -0.3px;
+  --texto-subtitle-tamanho: 15px;
+  --texto-subtitle-peso: 400;
+  --texto-label-tamanho: 15px;
+  --texto-label-peso: 700;
+  --texto-input-tamanho: 16px;
+  --texto-input-peso: 400;
+  --texto-button-tamanho: 18px;
+  --texto-button-peso: 700;
+  --texto-link-tamanho: 14px;
+  --texto-link-peso: 700;
+  --texto-error-tamanho: 13px;
+  --texto-error-peso: 600;
+}

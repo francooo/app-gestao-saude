@@ -1,0 +1,59 @@
+/* Alvo de 48 px em volta do circulo, que e menor. */
+.botao {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  margin: -7px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.circulo {
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--cor-dose-ring);
+  border-radius: 50%;
+  color: var(--cor-dose-ring);
+  transition:
+    background-color 0.15s ease,
+    transform 0.1s ease;
+}
+
+.circulo[data-cheio] {
+  border-color: var(--cor-dose-taken);
+  background: var(--cor-dose-taken);
+  color: var(--cor-on-accent);
+}
+
+.circulo[data-apagado] {
+  opacity: 0.35;
+}
+
+@media (hover: hover) {
+  .botao:hover:not(:disabled) .circulo:not([data-cheio]) {
+    background: rgba(64, 153, 107, 0.16);
+  }
+}
+
+.botao:active:not(:disabled) .circulo {
+  transform: scale(0.92);
+}
+
+.girando {
+  width: 55%;
+  height: 55%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: girar 0.8s linear infinite;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,124 @@
+.grupo {
+  padding: var(--espaco-xs) 0;
+  overflow: hidden;
+  border-radius: var(--raio-card);
+  background: var(--cor-surface-card);
+  box-shadow: var(--sombra-cartao);
+}
+
+.linha {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  width: 100%;
+  /* min-height, nunca height: a linha precisa poder crescer. */
+  min-height: 68px;
+  padding: var(--espaco-md) var(--espaco-lg);
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+}
+
+/* O filete comeca alinhado ao TEXTO: a coluna de marcadores segue inteira. */
+.grupo > .linha + .linha::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: var(--espaco-lg);
+  left: calc(var(--espaco-lg) + 44px + var(--espaco-md));
+  height: 1px;
+  background: var(--cor-divider);
+}
+
+.linha:not([data-inerte]):hover:not(:disabled) {
+  background: rgba(90, 100, 73, 0.06);
+}
+
+.linha:focus-visible {
+  outline-offset: -3px;
+}
+
+.marcador {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.textos {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  margin: 2px var(--espaco-md) 0;
+}
+
+.rotulo {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.valor {
+  margin-top: 1px;
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.linha:disabled .marcador,
+.linha:disabled .textos,
+.linha[data-apagada] .marcador,
+.linha[data-apagada] .textos {
+  opacity: 0.45;
+}
+
+.seta {
+  flex-shrink: 0;
+  margin-top: 12px;
+  color: var(--cor-text-secondary);
+}
+
+.interruptor {
+  position: relative;
+  flex-shrink: 0;
+  width: 48px;
+  height: 28px;
+  margin-top: 8px;
+  border-radius: 14px;
+  background: var(--cor-star-empty);
+  transition: background-color 0.15s ease;
+}
+
+.interruptor::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--cor-surface);
+  box-shadow: 0 1px 3px rgba(44, 53, 32, 0.3);
+  transition: transform 0.15s ease;
+}
+
+.interruptor[data-ligado] {
+  background: var(--cor-switch-on);
+}
+
+.interruptor[data-ligado]::after {
+  transform: translateX(20px);
+}
+
+:disabled > .interruptor {
+  opacity: 0.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .interruptor,
+  .interruptor::after {
+    transition: none;
+  }
+}

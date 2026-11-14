@@ -1,0 +1,645 @@
+/* Classes divididas pelas telas de conta, familia e acompanhantes. */
+
+.secao {
+  margin-top: var(--espaco-xxl);
+}
+
+.bloco {
+  margin-top: var(--espaco-xl);
+}
+
+.cartao {
+  padding: var(--espaco-xl);
+}
+
+/* Duas secoes lado a lado quando ha largura (e-mail | senha). */
+@media (min-width: 1024px) {
+  .duasColunas {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--espaco-xxl);
+    align-items: start;
+  }
+}
+
+.ajuda {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--cor-text-secondary);
+}
+
+.ajudaAntesDoBotao {
+  margin-bottom: var(--espaco-lg);
+}
+
+.destaque {
+  font-weight: 700;
+  color: var(--cor-section-title);
+  overflow-wrap: anywhere;
+}
+
+.erroGeral {
+  margin-bottom: var(--espaco-lg);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cor-text-error);
+  text-align: center;
+}
+
+.rotuloPequeno {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  color: var(--cor-text-secondary);
+}
+
+.emailAtual {
+  margin-top: 2px;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+  overflow-wrap: anywhere;
+}
+
+.divisor {
+  height: 1px;
+  margin: var(--espaco-lg) 0;
+  border: 0;
+  background: var(--cor-divider);
+}
+
+/* Ladrilho a esquerda, titulo e texto a direita. */
+.linhaIcone {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espaco-lg);
+}
+
+.linhaTextos {
+  flex: 1;
+  min-width: 0;
+}
+
+.titulo {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.titulo + .ajuda {
+  margin-top: var(--espaco-xs);
+}
+
+.acaoDeTexto {
+  margin-top: var(--espaco-sm);
+}
+
+.centro {
+  display: flex;
+  justify-content: center;
+}
+
+/* Botoes empilhados no fim de um formulario. */
+.acoes {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espaco-xs);
+  margin-top: var(--espaco-lg);
+}
+
+.rodape {
+  margin-top: var(--espaco-lg);
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+  text-align: center;
+}
+
+/* --- Familia --- */
+
+.adicionar {
+  margin-top: var(--espaco-xl);
+}
+
+.esqueletoLinha {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-md);
+  padding: var(--espaco-md) var(--espaco-lg);
+}
+
+.esqueletoAvatar {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--cor-star-empty);
+  opacity: 0.5;
+}
+
+.esqueletoBarra {
+  display: block;
+  height: 16px;
+  border-radius: 6px;
+  background: var(--cor-star-empty);
+  opacity: 0.5;
+}
+
+/* --- Membro --- */
+
+.foto {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--espaco-xl);
+}
+
+.fotoBotao {
+  position: relative;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.avatarVazio {
+  display: grid;
+  place-items: center;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  background: var(--cor-pill-tablet-icon);
+  color: var(--cor-surface);
+}
+
+.fotoSelo {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 2px solid var(--cor-surface);
+  border-radius: 50%;
+  background: var(--cor-surface);
+  box-shadow: var(--sombra-cartao);
+  color: var(--cor-accent-green);
+}
+
+.fotoDica {
+  margin-top: var(--espaco-md);
+  font-size: 14px;
+  color: var(--cor-text-secondary);
+}
+
+.linha {
+  display: flex;
+  gap: var(--espaco-md);
+}
+
+.linha > * {
+  flex: 1;
+  min-width: 0;
+}
+
+.subtitulo {
+  margin: var(--espaco-sm) 0 var(--espaco-md);
+}
+
+.titularAviso {
+  margin-top: var(--espaco-md);
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+  text-align: center;
+}
+
+/* --- Assinatura --- */
+
+.estado {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-lg);
+  margin-top: var(--espaco-xl);
+}
+
+.estadoTitulo {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--cor-section-title);
+}
+
+.estadoApoio {
+  margin-top: 2px;
+  font-size: 14px;
+  color: var(--cor-text-secondary);
+}
+
+.beneficios {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-lg);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.beneficios li {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espaco-lg);
+}
+
+.beneficioTitulo {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.beneficioTexto {
+  margin-top: 1px;
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chips li {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px var(--espaco-md);
+  border-radius: var(--raio-pill);
+  background: var(--cor-chip-more);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.chips svg {
+  color: var(--cor-accent-green);
+}
+
+.assinar {
+  max-width: 420px;
+  margin: var(--espaco-xxl) auto 0;
+}
+
+.explicacao {
+  margin-top: var(--espaco-md);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--cor-text-secondary);
+  text-align: center;
+}
+
+/* --- Privacidade --- */
+
+.reaceite {
+  margin-top: var(--espaco-md);
+  padding: 0 var(--espaco-sm);
+}
+
+.reaceite p {
+  margin-bottom: var(--espaco-md);
+  font-size: 14px;
+  color: var(--cor-text-secondary);
+}
+
+.resumo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-md);
+  margin: var(--espaco-md) 0 var(--espaco-lg);
+  padding: 0;
+  list-style: none;
+}
+
+.resumo li {
+  display: flex;
+  gap: var(--espaco-sm);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--cor-text-primary);
+}
+
+.resumo svg {
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.destrutivo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: var(--espaco-xxl);
+  text-align: center;
+}
+
+.destrutivo .titulo {
+  margin-top: var(--espaco-md);
+}
+
+.destrutivo .ajuda {
+  max-width: 520px;
+}
+
+/*
+ * O quarto degrau de botao, e ele existe SO na exclusao da conta: ambar diria
+ * "tem coisa para fazer", verde "gerencie este registro", e texto puro seria
+ * fraco demais para uma acao irreversivel.
+ */
+.botaoApagar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 52px;
+  margin-top: var(--espaco-lg);
+  border: 0;
+  border-radius: var(--raio-pill);
+  background: var(--cor-text-error);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--cor-on-accent);
+}
+
+.botaoApagar:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+
+.botaoApagar:disabled {
+  opacity: 0.45;
+}
+
+.painel {
+  width: min(480px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  overflow-y: auto;
+  border: 0;
+  border-radius: var(--raio-card);
+  background: var(--cor-surface);
+  box-shadow: var(--sombra-flutuante);
+  color: var(--cor-text-primary);
+}
+
+.painel::backdrop {
+  background: rgba(44, 53, 32, 0.45);
+}
+
+.painelCaixa {
+  padding: var(--espaco-xl);
+}
+
+.painelTitulo {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--cor-section-title);
+}
+
+.painelTexto {
+  margin: var(--espaco-md) 0 var(--espaco-lg);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--cor-text-secondary);
+}
+
+/* --- WhatsApp e acompanhante --- */
+
+.apresentacao {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-lg);
+  margin-top: var(--espaco-xl);
+}
+
+.circulo {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--cor-accent-green);
+  color: var(--cor-surface);
+}
+
+.naoConfigurado {
+  display: flex;
+  gap: var(--espaco-sm);
+  margin-top: var(--espaco-lg);
+  padding: 0 var(--espaco-sm);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--cor-text-secondary);
+}
+
+.naoConfigurado svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: var(--espaco-xl);
+  text-align: center;
+}
+
+.vazio .titulo {
+  margin-top: var(--espaco-md);
+}
+
+.vazioBotao {
+  margin-top: var(--espaco-lg);
+}
+
+.ativar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 56px;
+  margin-top: var(--espaco-lg);
+  padding: var(--espaco-sm) var(--espaco-xl);
+  border: 0;
+  border-radius: var(--raio-pill);
+  background: var(--cor-surface-card);
+  box-shadow: var(--sombra-cartao);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+  text-align: left;
+}
+
+.ativar > span:last-child {
+  margin-top: 0;
+}
+
+.tituloDoCartao {
+  margin-bottom: var(--espaco-md);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.tituloComRecuo {
+  margin: 0;
+  padding: var(--espaco-lg) var(--espaco-lg) var(--espaco-xs);
+}
+
+.pessoa {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-md);
+  margin: 0 calc(-1 * var(--espaco-md)) var(--espaco-xs);
+  padding: var(--espaco-md);
+  border: 1px solid transparent;
+  border-radius: 18px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.pessoa:hover {
+  background: rgba(90, 100, 73, 0.06);
+}
+
+.pessoa[data-escolhida] {
+  border-color: var(--cor-accent-green);
+  background: var(--cor-chip-more);
+}
+
+.pessoaTextos {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pessoaNome {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-xs);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.pessoaNome > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pessoaApoio {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-xs);
+  margin-top: 1px;
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}
+
+.pausado {
+  margin-top: 2px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cor-accent);
+}
+
+.cadastrar {
+  margin-top: var(--espaco-sm);
+}
+
+.exemplo {
+  margin-top: var(--espaco-sm);
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}
+
+.resultado {
+  margin-top: var(--espaco-md);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cor-dose-taken);
+  text-align: center;
+}
+
+.resultado[data-erro] {
+  color: var(--cor-text-error);
+}
+
+.botao {
+  margin-top: var(--espaco-lg);
+}
+
+/* Previa de uma mensagem de WhatsApp: icone e bolha. */
+.previa {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espaco-md);
+}
+
+.previaIcone {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--cor-accent-green);
+  color: var(--cor-surface);
+}
+
+.previaBolha {
+  flex: 1;
+  min-width: 0;
+  padding: var(--espaco-md) var(--espaco-lg);
+  border-radius: 4px 20px 20px 20px;
+  background: var(--cor-assistant-bubble);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--cor-text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.paraQuem {
+  margin-top: var(--espaco-xl);
+}
+
+.paraQuemTitulo {
+  margin-bottom: var(--espaco-sm);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.paraQuemErro {
+  margin-top: var(--espaco-sm);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cor-text-error);
+}
+
+.pacienteFixo {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-md);
+  padding: var(--espaco-sm) var(--espaco-lg) var(--espaco-sm) var(--espaco-sm);
+  border-radius: var(--raio-pill);
+  background: var(--cor-surface-card);
+  box-shadow: var(--sombra-cartao);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}

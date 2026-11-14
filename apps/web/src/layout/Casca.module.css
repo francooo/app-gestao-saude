@@ -1,0 +1,206 @@
+.casca {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.conteudo {
+  position: relative;
+  /* A barra flutuante (68) mais a folga: o conteudo nao termina embaixo dela. */
+  padding-bottom: calc(96px + env(safe-area-inset-bottom));
+}
+
+.casca[data-sem-barra] .conteudo {
+  padding-bottom: 0;
+}
+
+/* ---------------------------------------------------------------------------
+ * Celular: a barra de abas flutuante do aplicativo.
+ * ------------------------------------------------------------------------- */
+.menu {
+  position: fixed;
+  z-index: 20;
+  right: 12px;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  left: 12px;
+  height: 68px;
+  padding: 8px;
+  border-radius: var(--raio-card);
+  background: var(--cor-surface);
+  box-shadow: 0 4px 12px rgba(44, 53, 32, 0.16);
+}
+
+.casca[data-sem-barra] .menu {
+  display: none;
+}
+
+.marca,
+.avisos {
+  display: none;
+}
+
+.areas {
+  display: flex;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.areas li {
+  flex: 1;
+  min-width: 0;
+}
+
+.item,
+.avisos {
+  color: var(--cor-text-secondary);
+  text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  height: 100%;
+  border-radius: 20px;
+}
+
+.rotulo {
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.item:global(.active),
+.avisos:global(.active) {
+  background: var(--cor-tab-active);
+  color: var(--cor-accent-green);
+}
+
+.item:global(.active) .rotulo,
+.avisos:global(.active) .rotulo {
+  font-weight: 800;
+}
+
+@media (hover: hover) {
+  .item:hover:not(:global(.active)),
+  .avisos:hover:not(:global(.active)) {
+    background: var(--cor-chip-more);
+    color: var(--cor-text-primary);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Tablet: a barra vira coluna a esquerda, so com os icones.
+ * ------------------------------------------------------------------------- */
+@media (min-width: 768px) {
+  .menu,
+  .casca[data-sem-barra] .menu {
+    display: flex;
+    flex-direction: column;
+    top: 12px;
+    right: auto;
+    bottom: 12px;
+    width: calc(var(--largura-menu-recolhido) - 24px);
+    height: auto;
+    padding: var(--espaco-md) 8px;
+    overflow-y: auto;
+  }
+
+  .conteudo,
+  .casca[data-sem-barra] .conteudo {
+    margin-left: var(--largura-menu-recolhido);
+    padding-bottom: 0;
+  }
+
+  .marca {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--espaco-md);
+    padding: var(--espaco-sm) 0 var(--espaco-lg);
+  }
+
+  .nomeDaMarca {
+    display: none;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.2px;
+    color: var(--cor-section-title);
+  }
+
+  .areas {
+    flex-direction: column;
+    gap: var(--espaco-xs);
+    height: auto;
+  }
+
+  .item,
+  .avisos {
+    flex-direction: row;
+    justify-content: center;
+    gap: var(--espaco-md);
+    height: 48px;
+    border-radius: var(--raio-pill);
+  }
+
+  .avisos {
+    display: flex;
+    align-items: center;
+    margin-top: auto;
+  }
+
+  .rotulo {
+    display: none;
+    font-size: 15px;
+    font-weight: 700;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Tela larga: menu fixo, com rotulos.
+ * ------------------------------------------------------------------------- */
+@media (min-width: 1024px) {
+  .menu,
+  .casca[data-sem-barra] .menu {
+    width: calc(var(--largura-menu) - 24px);
+    padding: var(--espaco-lg) var(--espaco-md);
+  }
+
+  .conteudo,
+  .casca[data-sem-barra] .conteudo {
+    margin-left: var(--largura-menu);
+  }
+
+  .marca {
+    justify-content: flex-start;
+    padding: var(--espaco-sm) var(--espaco-md) var(--espaco-xl);
+  }
+
+  .nomeDaMarca,
+  .rotulo {
+    display: inline;
+  }
+
+  .item,
+  .avisos {
+    justify-content: flex-start;
+    padding: 0 var(--espaco-lg);
+  }
+}
+
+/* O sino do menu: a caixa do icone e a ancora do ponto de "ha novidades". */
+.sino {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin: 0 -11px;
+}

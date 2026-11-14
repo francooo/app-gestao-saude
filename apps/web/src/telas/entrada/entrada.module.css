@@ -1,0 +1,68 @@
+.titulo {
+  font-size: var(--texto-title-tamanho);
+  font-weight: var(--texto-title-peso);
+  letter-spacing: var(--texto-title-espacamento);
+  line-height: 1.2;
+  color: var(--cor-text-primary);
+  text-align: center;
+}
+
+/* No login o titulo vem sozinho, sem linha de apoio. */
+.tituloSozinho {
+  composes: titulo;
+  margin-bottom: var(--espaco-xl);
+}
+
+.apoio {
+  margin: var(--espaco-md) 0 var(--espaco-xl);
+  font-size: var(--texto-subtitle-tamanho);
+  font-weight: var(--texto-subtitle-peso);
+  color: var(--cor-text-secondary);
+  text-align: center;
+}
+
+.link {
+  font-size: var(--texto-link-tamanho);
+  font-weight: var(--texto-link-peso);
+  color: var(--cor-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.link:hover {
+  color: var(--cor-text-primary);
+}
+
+.esqueci {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: calc(-1 * var(--espaco-sm));
+}
+
+.erroGeral {
+  margin-top: var(--espaco-md);
+  font-size: var(--texto-error-tamanho);
+  font-weight: var(--texto-error-peso);
+  color: var(--cor-text-error);
+  text-align: center;
+}
+
+.botao {
+  margin-top: var(--espaco-xl);
+}
+
+.rodape {
+  margin-top: var(--espaco-lg);
+  font-size: var(--texto-link-tamanho);
+  color: var(--cor-text-secondary);
+  text-align: center;
+}
+
+/* O checkbox do consentimento ja tem respiro proprio acima. */
+.ultimoCampo {
+  margin-bottom: var(--espaco-sm);
+}
+
+.semMargem {
+  margin-bottom: 0;
+}

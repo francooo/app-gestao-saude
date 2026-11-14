@@ -1,0 +1,55 @@
+.pagina {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--espaco-md) var(--espaco-xl) var(--espaco-xl);
+}
+
+.pagina[data-largura='formulario'] {
+  max-width: 640px;
+}
+
+.pagina[data-largura='larga'] {
+  max-width: var(--largura-conteudo);
+}
+
+@media (min-width: 768px) {
+  .pagina {
+    padding: var(--espaco-xl) var(--espaco-xxl) var(--espaco-xxl);
+  }
+}
+
+.aviso {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--espaco-xl);
+  border-radius: var(--raio-card);
+  background: var(--cor-surface-card);
+  box-shadow: var(--sombra-cartao);
+  text-align: center;
+}
+
+.avisoTexto {
+  margin-top: var(--espaco-md);
+  font-size: 14px;
+  color: var(--cor-text-secondary);
+}
+
+.avisoAcao {
+  min-height: 44px;
+  margin-top: var(--espaco-sm);
+  padding: 0 var(--espaco-lg);
+  border: 0;
+  border-radius: var(--raio-pill);
+  background: transparent;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cor-accent-green);
+}
+
+.avisoAcao:hover {
+  background: var(--cor-chip-more);
+}

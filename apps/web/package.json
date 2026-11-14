@@ -1,0 +1,37 @@
+{
+  "name": "@gestao/web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Versao web do Gestao Saude para o usuario final. Consome a mesma API do aplicativo por um BFF proprio (api/rotas.ts).",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "tokens": "node scripts/gerar-tokens.mjs"
+  },
+  "dependencies": {
+    "@fontsource/nunito": "^5.2.7",
+    "@gestao/shared": "workspace:*",
+    "@tanstack/react-query": "^5.105.0",
+    "date-fns": "^4.4.0",
+    "lucide-react": "^1.66.0",
+    "maplibre-gl": "^6.18.0",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-router": "^8.5.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/react": "~19.2.4",
+    "@types/react-dom": "~19.2.3",
+    "@vitejs/plugin-react": "^6.1.2",
+    "typescript": "~5.9.2",
+    "vite": "^8.3.5"
+  }
+}

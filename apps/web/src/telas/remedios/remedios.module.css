@@ -1,0 +1,236 @@
+/* Classes divididas pelas telas da area de Remedios. */
+
+.bloco {
+  margin-top: var(--espaco-lg);
+}
+
+.secao {
+  margin-top: var(--espaco-xl);
+}
+
+.cartao {
+  padding: var(--espaco-lg);
+}
+
+.pilha {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-md);
+}
+
+.resumo {
+  display: flex;
+  gap: var(--espaco-md);
+  margin-top: var(--espaco-lg);
+}
+
+/* Linha de cartao com ladrilho, dois textos e (as vezes) a seta. */
+.atalho {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-lg);
+  padding: var(--espaco-lg);
+  border-radius: var(--raio-card);
+  background: var(--cor-surface-card);
+  box-shadow: var(--sombra-cartao);
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (hover: hover) {
+  a.atalho {
+    transition:
+      box-shadow 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  a.atalho:hover {
+    box-shadow: var(--sombra-flutuante);
+    transform: translateY(-1px);
+  }
+}
+
+.atalhoTextos {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.atalhoTitulo {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.atalhoDescricao {
+  margin-top: 1px;
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}
+
+/* --- Lista e detalhe lado a lado (tela larga) --- */
+
+.doisPaineis {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(380px, 460px) minmax(0, 1fr);
+  align-items: start;
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+/* A lista fica presa no topo e rola por conta propria. */
+.painelDaLista {
+  position: sticky;
+  top: 0;
+  max-height: 100dvh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.painelDoDetalhe {
+  min-width: 0;
+}
+
+.painelVazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 70dvh;
+  padding: var(--espaco-xxl);
+  text-align: center;
+}
+
+.painelVazioTexto {
+  max-width: 320px;
+  margin-top: var(--espaco-lg);
+  font-size: 15px;
+  color: var(--cor-text-secondary);
+}
+
+/* --- Detalhe: cartao do remedio --- */
+
+.heroiLinha {
+  display: flex;
+  align-items: center;
+}
+
+.heroiTextos {
+  flex: 1;
+  min-width: 0;
+  margin: 0 var(--espaco-lg);
+}
+
+.heroiNome {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--cor-section-title);
+  overflow-wrap: anywhere;
+}
+
+.vinculo {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-xs);
+  margin-top: var(--espaco-xs);
+  font-size: 15px;
+  color: var(--cor-text-secondary);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-xs);
+  max-width: 100%;
+  margin-top: var(--espaco-md);
+  padding: var(--espaco-sm) var(--espaco-md);
+  border-radius: var(--raio-pill);
+  background: var(--cor-chip-more);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cor-text-secondary);
+}
+
+.chip[data-ativo] {
+  background: var(--cor-pill-tablet);
+  color: var(--cor-accent-green);
+}
+
+.divisorLargo {
+  height: 1px;
+  margin: var(--espaco-md) 0 0;
+  border: 0;
+  background: var(--cor-divider);
+}
+
+/* --- Detalhe: linhas de informacao --- */
+
+.infos {
+  margin: 0;
+}
+
+.info {
+  display: flex;
+  align-items: center;
+  padding: var(--espaco-md) 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Filete entre as linhas, alinhado ao texto e nao ao ladrilho. */
+.info + .info {
+  background: linear-gradient(var(--cor-divider), var(--cor-divider)) no-repeat
+    calc(44px + var(--espaco-md)) 0 / 100% 1px;
+}
+
+.infoLink {
+  border-radius: 12px;
+}
+
+.infoLink:hover .infoRotulo {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.infoTextos {
+  flex: 1;
+  min-width: 0;
+  margin-left: var(--espaco-md);
+}
+
+.infoRotulo {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.infoValor {
+  margin: 1px 0 0;
+  font-size: 15px;
+  color: var(--cor-text-primary);
+}
+
+.instrucoes {
+  display: flex;
+  align-items: flex-start;
+}
+
+.instrucoesTexto {
+  flex: 1;
+  margin-left: var(--espaco-md);
+  font-size: 15px;
+  line-height: 22px;
+  color: var(--cor-text-primary);
+  white-space: pre-wrap;
+}
+
+.acoes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-md);
+  margin-top: var(--espaco-xxl);
+}

@@ -1,0 +1,244 @@
+/*
+ * Os tres cartoes de lista da area logada: remedio, medico e consulta.
+ * Mesmas medidas dos componentes do aplicativo (MedicationCard, DoctorCard,
+ * AppointmentCard).
+ */
+
+.cartao {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: var(--espaco-lg);
+  border-radius: var(--raio-card);
+  background: var(--cor-surface-card);
+  box-shadow: var(--sombra-cartao);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+/* So o cartao que leva a algum lugar reage ao ponteiro. */
+@media (hover: hover) {
+  a.cartao:hover,
+  .cartao:has(.cobertura:hover) {
+    box-shadow: var(--sombra-flutuante);
+    transform: translateY(-1px);
+  }
+}
+
+a.cartao:active,
+.cartao:has(.cobertura:active) {
+  opacity: 0.9;
+}
+
+/*
+ * Link que cobre o cartao inteiro. Usado quando ha um botao dentro do cartao
+ * (o "Agendar" do medico): botao dentro de link e HTML invalido, entao o link
+ * vira uma camada e o botao fica acima dela.
+ */
+.cobertura {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+}
+
+.acima {
+  position: relative;
+  z-index: 1;
+}
+
+.meio {
+  flex: 1;
+  min-width: 0;
+  margin: 0 var(--espaco-lg);
+}
+
+.meioDoMedico {
+  flex: 1;
+  min-width: 0;
+  margin-left: var(--espaco-md);
+}
+
+.nome {
+  overflow: hidden;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nomeGrande {
+  composes: nome;
+  flex: 1;
+  min-width: 0;
+  font-size: 17px;
+}
+
+.apoio {
+  overflow: hidden;
+  margin-top: 1px;
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.especialidade {
+  composes: apoio;
+  font-size: 14px;
+  color: var(--cor-accent-green-soft);
+}
+
+.linhaComIcone {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-xs);
+  margin-top: var(--espaco-xs);
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}
+
+.linhaComIcone span {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.status {
+  composes: linhaComIcone;
+  font-weight: 600;
+}
+
+.direita {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espaco-sm);
+}
+
+/* O cartao aberto no painel de detalhe, em tela larga. */
+.cartao[data-atual] {
+  background: var(--cor-surface);
+  box-shadow:
+    0 0 0 2px var(--cor-accent-green),
+    var(--sombra-cartao);
+}
+
+/* --- Medico --- */
+
+.topo {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+  color: var(--cor-text-secondary);
+}
+
+.corpo {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+}
+
+.dados {
+  flex: 1;
+  min-width: 0;
+}
+
+.acao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: var(--espaco-sm) var(--espaco-lg);
+  border-radius: var(--raio-pill);
+  background: var(--cor-action-green);
+  color: var(--cor-on-accent);
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.acao[data-tom='ambar'] {
+  background: var(--cor-accent);
+}
+
+.acao:hover {
+  filter: brightness(0.92);
+}
+
+/* --- Consulta --- */
+
+.selos {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--espaco-sm);
+  margin-top: var(--espaco-sm);
+  color: var(--cor-text-secondary);
+}
+
+.selo {
+  padding: 4px var(--espaco-md);
+  border-radius: var(--raio-pill);
+  background: var(--cor-pill-sage);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cor-text-secondary);
+}
+
+.local {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espaco-xs);
+  margin-top: var(--espaco-sm);
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}
+
+.local svg {
+  margin-top: 1px;
+  color: var(--cor-accent-green-soft);
+}
+
+.seta {
+  color: var(--cor-text-secondary);
+}
+
+/* --- Estrelas --- */
+
+.estrelas {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: var(--espaco-xs);
+}
+
+.notaTexto {
+  min-width: 0;
+  margin-left: var(--espaco-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}
+
+.estrelaBotao {
+  display: grid;
+  place-items: center;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.estrelaBotao:hover {
+  background: var(--cor-chip-more);
+}

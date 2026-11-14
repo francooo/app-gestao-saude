@@ -1,0 +1,34 @@
+.telaCheia,
+.bloco {
+  display: grid;
+  place-items: center;
+}
+
+.telaCheia {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.bloco {
+  padding: var(--espaco-xxl);
+}
+
+.girando {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--cor-divider);
+  border-top-color: var(--cor-accent-green);
+  border-radius: 50%;
+  animation: girar 0.8s linear infinite;
+}
+
+.telaCheia .girando {
+  border-color: rgba(255, 255, 255, 0.35);
+  border-top-color: var(--cor-surface);
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}

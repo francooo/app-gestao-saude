@@ -1,0 +1,125 @@
+.erro {
+  margin-top: var(--espaco-sm);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cor-text-error);
+}
+
+.respiro {
+  margin-top: var(--espaco-md);
+}
+
+/* Cola a ajuda nos chips de cima, em vez de solta-la no meio do cartao. */
+.sobeUmPouco {
+  margin: calc(-1 * var(--espaco-sm)) 0 var(--espaco-lg);
+}
+
+.foto {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 16px;
+  background: var(--cor-pill-tablet);
+}
+
+.foto img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.lupa {
+  position: absolute;
+  right: var(--espaco-sm);
+  bottom: var(--espaco-sm);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--cor-overlay);
+  color: var(--cor-on-accent);
+}
+
+.listaTitulo {
+  margin: var(--espaco-xl) 0 var(--espaco-md);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--cor-section-title);
+}
+
+.itens {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-md);
+}
+
+.item {
+  padding: var(--espaco-lg);
+}
+
+.itemNome {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+  overflow-wrap: anywhere;
+}
+
+.itemConc {
+  font-weight: 400;
+  color: var(--cor-text-secondary);
+}
+
+.itemDetalhe {
+  margin-top: 2px;
+  font-size: 14px;
+  color: var(--cor-text-secondary);
+}
+
+.itemAcoes {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+  margin-top: var(--espaco-md);
+}
+
+.primeiraDose {
+  margin-top: var(--espaco-lg);
+  padding-top: var(--espaco-lg);
+  border-top: 1px solid var(--cor-divider);
+}
+
+.linhaHora {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--espaco-md);
+}
+
+.hora {
+  flex: 1;
+  max-width: 220px;
+  margin-bottom: 0;
+}
+
+.previa {
+  margin-top: var(--espaco-md);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cor-accent-green);
+}
+
+.progresso {
+  margin-top: var(--espaco-lg);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cor-text-primary);
+  text-align: center;
+}
+
+.confirmar {
+  margin: var(--espaco-xl) 0 var(--espaco-sm);
+}

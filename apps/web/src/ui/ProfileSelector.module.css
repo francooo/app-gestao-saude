@@ -1,0 +1,116 @@
+.barra {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: var(--espaco-sm) var(--espaco-lg) var(--espaco-sm) var(--espaco-sm);
+  border: 0;
+  border-radius: var(--raio-pill);
+  background: var(--cor-surface-card);
+  box-shadow: var(--sombra-cartao);
+  color: var(--cor-section-title);
+  text-align: left;
+}
+
+.barra:hover {
+  background: var(--cor-surface);
+}
+
+/* O anel de selecionado ocupa 5,5 px por fora do avatar. */
+.avatarDaBarra {
+  margin: 3px;
+}
+
+.todosIcone {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--cor-surface-warm);
+  color: var(--cor-accent-green);
+}
+
+.nome {
+  flex: 1;
+  min-width: 0;
+  margin-left: var(--espaco-lg);
+  overflow: hidden;
+  font-size: 18px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.painel {
+  width: min(420px, calc(100vw - 2 * var(--espaco-xl)));
+  max-height: 70dvh;
+  padding: 0;
+  border: 0;
+  border-radius: var(--raio-card);
+  background: var(--cor-surface);
+  box-shadow: var(--sombra-flutuante);
+  color: var(--cor-text-primary);
+}
+
+.painel::backdrop {
+  background: rgba(30, 38, 22, 0.45);
+}
+
+.caixa {
+  padding: var(--espaco-lg);
+}
+
+.painelTitulo {
+  margin: 0 0 var(--espaco-md) var(--espaco-sm);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cor-text-secondary);
+}
+
+.opcoes {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.opcao {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: var(--espaco-md);
+  border: 0;
+  border-radius: 20px;
+  background: transparent;
+  text-align: left;
+}
+
+.opcao:hover {
+  background: var(--cor-chip-more);
+}
+
+.opcao[aria-pressed='true'] {
+  background: var(--cor-surface-warm);
+}
+
+.opcaoTextos {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  margin-left: var(--espaco-lg);
+}
+
+.opcaoNome {
+  overflow: hidden;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--cor-section-title);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.opcaoDetalhe {
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}

@@ -1,0 +1,380 @@
+.bloco {
+  margin-top: var(--espaco-lg);
+}
+
+.blocoPequeno {
+  margin-top: var(--espaco-md);
+}
+
+.secao {
+  margin-top: var(--espaco-xl);
+}
+
+.pilha {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-md);
+}
+
+.miniMapa {
+  margin-bottom: var(--espaco-lg);
+}
+
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-md);
+  margin-top: var(--espaco-xl);
+}
+
+.acoes > * {
+  flex: 1 1 200px;
+}
+
+/* --- Lista e mapa lado a lado (tela larga) --- */
+
+.doisPaineis {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(420px, 520px) minmax(0, 1fr);
+  align-items: start;
+}
+
+.painelDaLista {
+  min-width: 0;
+}
+
+/* O mapa fica preso a janela enquanto a lista rola. */
+.painelDoMapa {
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  padding: var(--espaco-xl) var(--espaco-xl) var(--espaco-xl) 0;
+}
+
+/* --- Mapa em tela cheia --- */
+
+.mapaCheio {
+  position: relative;
+  height: 100dvh;
+  background: var(--cor-pill-sage);
+}
+
+.mapaCheio > div:first-child {
+  border-radius: 0;
+}
+
+.voltarDoMapa {
+  position: absolute;
+  top: var(--espaco-lg);
+  left: var(--espaco-xl);
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 20px;
+  background: var(--cor-surface);
+  box-shadow: 0 2px 8px rgba(44, 53, 32, 0.2);
+  color: var(--cor-section-title);
+}
+
+/* --- Barra do ponto de referencia --- */
+
+.barra {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-md);
+  padding: var(--espaco-sm) var(--espaco-sm) var(--espaco-sm) var(--espaco-xl);
+  border-radius: var(--raio-pill);
+  background: var(--cor-surface-card);
+  box-shadow: var(--sombra-cartao);
+}
+
+.barraRotulo {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.barraRotulo[data-vazio] {
+  font-weight: 400;
+  color: var(--cor-text-secondary);
+}
+
+.alterar {
+  display: grid;
+  place-items: center;
+  min-width: 84px;
+  min-height: 44px;
+  padding: 0 var(--espaco-lg);
+  border: 0;
+  border-left: 1px solid var(--cor-divider);
+  border-radius: 0 var(--raio-pill) var(--raio-pill) 0;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cor-accent-green);
+}
+
+.alterar:hover {
+  background: var(--cor-chip-more);
+}
+
+.painel {
+  width: min(460px, calc(100vw - 2 * var(--espaco-xl)));
+  max-height: calc(100dvh - 2 * var(--espaco-xl));
+  padding: 0;
+  border: 0;
+  border-radius: var(--raio-card);
+  background: var(--cor-surface);
+  box-shadow: var(--sombra-flutuante);
+  color: var(--cor-text-primary);
+}
+
+.painel::backdrop {
+  background: rgba(30, 38, 22, 0.45);
+}
+
+.painelCaixa {
+  padding: var(--espaco-xl);
+}
+
+.painelTitulo {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.painelAjuda {
+  margin: var(--espaco-xs) 0 var(--espaco-xl);
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--cor-text-secondary);
+}
+
+.opcaoAtual {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-md);
+  width: 100%;
+  min-height: 52px;
+  padding: 0 var(--espaco-xl);
+  border: 0;
+  border-radius: var(--raio-pill);
+  background: var(--cor-surface-warm);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cor-section-title);
+}
+
+.opcaoAtual:hover:not(:disabled) {
+  filter: brightness(0.96);
+}
+
+.ou {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-md);
+  margin: var(--espaco-xl) 0;
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}
+
+.ou::before,
+.ou::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--cor-text-placeholder);
+  opacity: 0.5;
+}
+
+.painelBotoes {
+  display: flex;
+  gap: var(--espaco-md);
+  margin-top: var(--espaco-sm);
+}
+
+/* --- Formularios de medico e de consulta --- */
+
+.foto {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: var(--espaco-lg);
+}
+
+.fotoBotao {
+  position: relative;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.fotoSelo {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 2px solid var(--cor-surface);
+  border-radius: 50%;
+  background: var(--cor-accent-green);
+  color: var(--cor-on-accent);
+}
+
+.fotoDica {
+  margin-top: var(--espaco-sm);
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}
+
+.linha {
+  display: flex;
+  gap: var(--espaco-md);
+}
+
+.colunaPequena {
+  flex: 1;
+  min-width: 0;
+}
+
+.colunaGrande {
+  flex: 2;
+  min-width: 0;
+}
+
+.modalidades {
+  display: flex;
+  gap: var(--espaco-md);
+  margin-bottom: var(--espaco-xl);
+}
+
+.modalidade {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  justify-content: center;
+  gap: var(--espaco-sm);
+  min-height: 46px;
+  border: 1px solid rgba(57, 67, 44, 0.12);
+  border-radius: var(--raio-pill);
+  background: var(--cor-on-accent);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cor-section-title);
+}
+
+.modalidade:hover {
+  border-color: var(--cor-accent-green);
+}
+
+.modalidade[aria-pressed='true'] {
+  border-color: var(--cor-accent-green);
+  background: var(--cor-accent-green);
+  color: var(--cor-on-accent);
+}
+
+.nota {
+  margin: var(--espaco-sm) 0 var(--espaco-xl);
+}
+
+.pessoas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-lg);
+}
+
+.pessoa {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 68px;
+  padding: 6px 0 0;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}
+
+.pessoa span:last-child {
+  max-width: 100%;
+  margin-top: var(--espaco-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pessoa[aria-pressed='true'] {
+  font-weight: 700;
+  color: var(--cor-accent-green);
+}
+
+.listaDeMedicos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-sm);
+}
+
+.medico {
+  display: flex;
+  flex-direction: column;
+  padding: var(--espaco-md) var(--espaco-lg);
+  border: 1px solid rgba(57, 67, 44, 0.12);
+  border-radius: 18px;
+  background: var(--cor-on-accent);
+  text-align: left;
+}
+
+.medico:hover {
+  border-color: var(--cor-accent-green);
+}
+
+.medicoNome {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cor-section-title);
+}
+
+.medicoEsp {
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}
+
+.medico[aria-pressed='true'] {
+  border-color: var(--cor-accent-green);
+  background: var(--cor-accent-green);
+}
+
+.medico[aria-pressed='true'] .medicoNome {
+  color: var(--cor-on-accent);
+}
+
+.medico[aria-pressed='true'] .medicoEsp {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.quandoResumo {
+  margin: calc(-1 * var(--espaco-sm)) 0 var(--espaco-lg);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cor-accent-green);
+}
+
+.quandoResumo::first-letter {
+  text-transform: uppercase;
+}
+
+.remover {
+  margin-top: var(--espaco-md);
+}

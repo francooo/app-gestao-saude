@@ -1,0 +1,179 @@
+/* --- Foto da caixinha --- */
+
+.faixa {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--espaco-md);
+  margin-top: var(--espaco-md);
+}
+
+.alvo {
+  display: flex;
+  align-items: center;
+  flex: 1 1 220px;
+  gap: var(--espaco-md);
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 16px;
+  background: transparent;
+  text-align: left;
+}
+
+.alvo:hover:not(:disabled) .titulo {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.slot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 54px;
+  height: 54px;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--cor-pill-tablet);
+}
+
+.miniatura {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lupa,
+.lupaGrande {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--cor-overlay);
+  color: var(--cor-on-accent);
+}
+
+.lupa {
+  right: 2px;
+  bottom: 2px;
+  width: 22px;
+  height: 22px;
+}
+
+.lupaGrande {
+  right: var(--espaco-sm);
+  bottom: var(--espaco-sm);
+  width: 32px;
+  height: 32px;
+}
+
+.veu {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: inherit;
+  background: var(--cor-veil);
+  color: var(--cor-accent-green);
+}
+
+.textos {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.titulo {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.ajuda {
+  margin-top: 2px;
+  font-size: 13px;
+  line-height: 18px;
+  color: var(--cor-text-secondary);
+}
+
+.acoesDaFoto {
+  display: flex;
+  gap: var(--espaco-xs);
+}
+
+.adicionar {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--cor-accent-green);
+}
+
+.adicionar:hover {
+  background: var(--cor-chip-more);
+}
+
+/* --- Prescricao --- */
+
+.cartao {
+  padding: var(--espaco-lg);
+}
+
+.linha {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espaco-md);
+}
+
+.legenda {
+  margin-top: var(--espaco-md);
+}
+
+.tituloDaReceita {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.ajudaDaReceita {
+  margin-top: 2px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--cor-text-secondary);
+}
+
+.botaoDaReceita {
+  margin-top: var(--espaco-lg);
+}
+
+.receita {
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: 16px;
+  background: var(--cor-pill-tablet);
+}
+
+.receita img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.acoesDaReceita {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-md);
+  margin-top: var(--espaco-md);
+}

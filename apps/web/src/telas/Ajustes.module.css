@@ -1,0 +1,193 @@
+/* Celular e tablet: uma coluna, na ordem do aplicativo. */
+.colunas {
+  margin-top: var(--espaco-xl);
+}
+
+.secao,
+.secaoDoTopo {
+  margin-top: var(--espaco-xxl);
+}
+
+/* Tela larga: a conta de um lado, medicos e preferencias do outro. */
+@media (min-width: 1024px) {
+  .colunas {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--espaco-xxl);
+    align-items: start;
+  }
+
+  .secaoDoTopo {
+    margin-top: 0;
+  }
+}
+
+.titular {
+  display: flex;
+  align-items: center;
+  padding: var(--espaco-lg);
+}
+
+.titularTextos {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  margin-left: var(--espaco-lg);
+}
+
+.titularNome {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+  overflow-wrap: anywhere;
+}
+
+.titularPapel {
+  margin-top: 2px;
+  font-size: 14px;
+  color: var(--cor-text-secondary);
+}
+
+.editar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: var(--cor-tab-active);
+  color: var(--cor-accent-green);
+}
+
+.editar:hover {
+  filter: brightness(0.95);
+}
+
+.medicos {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--espaco-md);
+}
+
+.medico {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: var(--espaco-md);
+  border-radius: var(--raio-card);
+  background: var(--cor-surface-card);
+  box-shadow: var(--sombra-cartao);
+  color: inherit;
+  text-decoration: none;
+}
+
+@media (hover: hover) {
+  a.medico {
+    transition:
+      box-shadow 0.15s ease,
+      transform 0.15s ease;
+  }
+
+  a.medico:hover {
+    box-shadow: var(--sombra-flutuante);
+    transform: translateY(-1px);
+  }
+}
+
+.medicoTextos {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  margin-left: var(--espaco-sm);
+}
+
+.medicoNome {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+  overflow-wrap: anywhere;
+}
+
+.medicoEspecialidade {
+  margin-top: 2px;
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--cor-accent-green-soft);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gerenciar {
+  margin-top: var(--espaco-md);
+}
+
+.vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.vazioTitulo {
+  margin-top: var(--espaco-md);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.vazioAjuda {
+  margin-top: var(--espaco-sm);
+  font-size: 14px;
+  color: var(--cor-text-secondary);
+}
+
+.vazioBotao {
+  margin-top: var(--espaco-lg);
+}
+
+.nota {
+  display: flex;
+  gap: var(--espaco-sm);
+  margin-top: var(--espaco-lg);
+  padding: 0 var(--espaco-sm);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--cor-text-secondary);
+}
+
+.nota svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.nota a {
+  font-weight: 700;
+  color: var(--cor-accent-green);
+}
+
+.sair {
+  display: flex;
+  width: 100%;
+  max-width: 360px;
+  min-height: 56px;
+  margin: var(--espaco-xxl) auto 0;
+}
+
+.esqueletoAvatar {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--cor-star-empty);
+  opacity: 0.5;
+}
+
+.esqueletoBarra {
+  display: block;
+  height: 18px;
+  border-radius: 6px;
+  background: var(--cor-star-empty);
+  opacity: 0.5;
+}

@@ -1,0 +1,182 @@
+.tela {
+  position: relative;
+  z-index: 1;
+  max-width: var(--largura-conteudo);
+  margin: 0 auto;
+  padding: var(--espaco-md) var(--espaco-xl) var(--espaco-xl);
+}
+
+.topo {
+  position: relative;
+}
+
+/* O sino flutua sobre a faixa ilustrada, no canto do cartao. */
+.sino {
+  position: absolute;
+  top: var(--espaco-md);
+  right: var(--espaco-md);
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 20px;
+  background: var(--cor-surface);
+  box-shadow: var(--sombra-cartao);
+  color: var(--cor-section-title);
+}
+
+.sino:hover {
+  background: var(--cor-chip-more);
+}
+
+/*
+ * Celular: uma coluna, na ordem do aplicativo — leitura de receita,
+ * assistente, diario, remedios, medicos, consultas. Os dois grupos se
+ * desmancham (display: contents) e cada bloco ganha a sua posicao.
+ */
+.colunas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-xxl);
+  margin-top: var(--espaco-xxl);
+}
+
+.principal,
+.lateral {
+  display: contents;
+}
+
+.lerReceita {
+  order: 1;
+}
+
+.assistente {
+  order: 2;
+}
+
+.diario {
+  order: 3;
+}
+
+.remedios {
+  order: 4;
+}
+
+.medicos {
+  order: 5;
+}
+
+.consultas {
+  order: 6;
+}
+
+.pilha {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-md);
+}
+
+.vazio {
+  font-size: 14px;
+  color: var(--cor-text-secondary);
+  text-align: center;
+}
+
+.recado {
+  padding: var(--espaco-md) 0;
+  font-size: 14px;
+  color: var(--cor-text-secondary);
+}
+
+.esqueleto {
+  height: 86px;
+  border-radius: var(--raio-card);
+  background: var(--cor-surface-card);
+  opacity: 0.55;
+  animation: pulsar 1.4s ease-in-out infinite;
+}
+
+@keyframes pulsar {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+/* --- Diario de sintomas --- */
+
+.diario {
+  display: flex;
+  align-items: center;
+  padding: var(--espaco-lg);
+  border-radius: var(--raio-card);
+  background: var(--cor-surface-card);
+  box-shadow: var(--sombra-cartao);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+@media (hover: hover) {
+  .diario:hover {
+    box-shadow: var(--sombra-flutuante);
+    transform: translateY(-1px);
+  }
+}
+
+.diarioTextos {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  margin-left: var(--espaco-lg);
+}
+
+.diarioTitulo {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.diarioAjuda {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}
+
+/* --- Tablet: os dois cartoes de IA lado a lado --- */
+
+@media (min-width: 768px) {
+  .tela {
+    padding: var(--espaco-xl) var(--espaco-xxl) var(--espaco-xxl);
+  }
+
+  /* O menu lateral ja tem o item Avisos. */
+  .sino {
+    display: none;
+  }
+}
+
+/* --- Tela larga: coluna principal e lateral --- */
+
+@media (min-width: 1100px) {
+  .colunas {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    align-items: start;
+    gap: var(--espaco-xxl);
+  }
+
+  .principal,
+  .lateral {
+    display: flex;
+    flex-direction: column;
+    gap: var(--espaco-xxl);
+    min-width: 0;
+  }
+
+  .lateral {
+    gap: var(--espaco-xl);
+  }
+}

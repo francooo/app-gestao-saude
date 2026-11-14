@@ -1,0 +1,252 @@
+.pilha {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-md);
+  margin-top: var(--espaco-xl);
+}
+
+.linha {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-md);
+}
+
+.textos {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.titulo {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--cor-section-title);
+}
+
+.corpo {
+  margin-top: 2px;
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--cor-text-secondary);
+}
+
+.girando {
+  flex-shrink: 0;
+  margin: 0 var(--espaco-md);
+  color: var(--cor-accent-green);
+}
+
+.cancelar {
+  min-height: 46px;
+  margin-top: var(--espaco-lg);
+}
+
+/* --- As duas opcoes de foto --- */
+
+.opcao {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--espaco-md);
+  width: 100%;
+  padding: var(--espaco-lg);
+  border: 0;
+  border-radius: var(--raio-card);
+  background: var(--cor-surface-card);
+  box-shadow: var(--sombra-cartao);
+  color: inherit;
+  text-align: left;
+  text-decoration: none;
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.opcao:disabled {
+  opacity: 0.6;
+}
+
+@media (hover: hover) {
+  .opcao:hover:not(:disabled) {
+    box-shadow: var(--sombra-flutuante);
+    transform: translateY(-1px);
+  }
+}
+
+.opcaoTitulo {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.opcaoDescricao {
+  margin-top: 1px;
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}
+
+.opcaoBotao {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-xs);
+  min-height: 40px;
+  padding: 0 var(--espaco-lg);
+  border-radius: var(--raio-pill);
+  background: var(--cor-accent-green);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cor-on-accent);
+  white-space: nowrap;
+}
+
+.opcaoBotao[data-cadeado] {
+  border: 1.5px solid var(--cor-accent-green);
+  background: transparent;
+  color: var(--cor-accent-green);
+}
+
+/* --- Varios remedios na foto --- */
+
+.seletor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-sm);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.seletor .corpo {
+  margin-bottom: var(--espaco-sm);
+}
+
+.item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-md);
+  padding: var(--espaco-md);
+  border: 1px solid rgba(57, 67, 44, 0.12);
+  border-radius: 16px;
+  cursor: pointer;
+}
+
+.item[data-ativo] {
+  border-color: var(--cor-accent-green);
+  background: var(--cor-chip-more);
+}
+
+.radio {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.item:has(.radio:focus-visible) {
+  outline: 3px solid var(--cor-input-border-focused);
+  outline-offset: 2px;
+}
+
+.itemNome {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cor-text-primary);
+}
+
+/* --- O que foi lido --- */
+
+.campos {
+  margin: var(--espaco-md) 0 0;
+}
+
+.campos dt {
+  margin-top: var(--espaco-md);
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}
+
+.campos dd {
+  margin: 1px 0 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.campos .confira {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-xs);
+  margin-top: var(--espaco-xs);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cor-accent-pressed);
+}
+
+.pronto {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-xs);
+  margin-top: var(--espaco-lg);
+  padding: 4px var(--espaco-md);
+  border-radius: var(--raio-pill);
+  background: var(--cor-accent-green);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--cor-on-accent);
+}
+
+.pronto[data-incompleto] {
+  background: var(--cor-accent-pressed);
+}
+
+/* --- Caminho manual e rodape --- */
+
+.divisor {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-md);
+  min-height: 44px;
+  margin-top: var(--espaco-sm);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cor-accent-green);
+  text-decoration: none;
+}
+
+.divisor::before,
+.divisor::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--cor-text-secondary);
+  opacity: 0.35;
+}
+
+.divisor:hover span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.rodape {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espaco-sm);
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--cor-text-secondary);
+}
+
+.rodape svg {
+  margin-top: 2px;
+}
+
+.rodape a {
+  font-weight: 700;
+  color: var(--cor-accent-green);
+}

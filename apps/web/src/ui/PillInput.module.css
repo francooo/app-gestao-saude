@@ -1,0 +1,93 @@
+.grupo {
+  margin-bottom: var(--espaco-lg);
+}
+
+.rotulo {
+  display: block;
+  margin-bottom: var(--espaco-sm);
+  font-size: var(--texto-label-tamanho);
+  font-weight: var(--texto-label-peso);
+  color: var(--cor-text-primary);
+}
+
+.campo {
+  display: flex;
+  align-items: center;
+  height: var(--tamanho-input-height);
+  padding: 0 var(--espaco-lg);
+  border: 1px solid var(--cor-input-border);
+  border-radius: var(--raio-pill);
+  background: var(--cor-input-fill);
+  transition: border-color 0.15s ease;
+}
+
+.campo:hover {
+  border-color: var(--cor-text-placeholder);
+}
+
+.campo:focus-within {
+  border-color: var(--cor-input-border-focused);
+  box-shadow: 0 0 0 3px rgba(183, 136, 66, 0.22);
+}
+
+.campo[data-erro] {
+  border-color: var(--cor-input-border-error);
+}
+
+.icone {
+  margin-right: var(--espaco-md);
+  color: var(--cor-text-secondary);
+}
+
+.entrada {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: var(--texto-input-tamanho);
+  font-weight: var(--texto-input-peso);
+  color: var(--cor-text-primary);
+}
+
+/* O anel de foco fica na pilula inteira (.campo:focus-within), nao no input. */
+.entrada:focus {
+  outline: none;
+}
+
+.entrada::placeholder {
+  color: var(--cor-text-placeholder);
+  opacity: 1;
+}
+
+/* O preenchimento automatico do navegador pinta o campo de azul claro. */
+.entrada:-webkit-autofill {
+  -webkit-text-fill-color: var(--cor-text-primary);
+  transition: background-color 9999s ease-out;
+}
+
+.olho {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin-right: -8px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--cor-text-secondary);
+}
+
+.olho:hover {
+  background: var(--cor-divider);
+}
+
+.erro {
+  margin-top: var(--espaco-xs);
+  margin-left: var(--espaco-lg);
+  font-size: var(--texto-error-tamanho);
+  font-weight: var(--texto-error-peso);
+  color: var(--cor-text-error);
+}

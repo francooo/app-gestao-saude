@@ -1,0 +1,39 @@
+.fundo {
+  position: fixed;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ramo {
+  position: absolute;
+  /* No celular a fracao da tela manda; em tela larga a folha para de crescer. */
+  width: min(var(--largura), 340px);
+  max-width: none;
+  height: auto;
+}
+
+/* Um terco do ramo fica para fora da janela, como no arranjo do aplicativo. */
+.ramo[data-lado='esquerda'] {
+  left: 0;
+  transform: translateX(-36%) rotate(var(--rotacao));
+}
+
+.ramo[data-lado='direita'] {
+  right: 0;
+  transform: translateX(36%) rotate(var(--rotacao)) scaleX(-1);
+}
+
+/* Com o menu lateral, os ramos da esquerda nascem depois dele. */
+@media (min-width: 768px) {
+  .ramo[data-lado='esquerda'] {
+    left: var(--largura-menu-recolhido);
+  }
+}
+
+@media (min-width: 1024px) {
+  .ramo[data-lado='esquerda'] {
+    left: var(--largura-menu);
+  }
+}

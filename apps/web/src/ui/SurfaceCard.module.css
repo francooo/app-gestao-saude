@@ -1,0 +1,16 @@
+.cartao {
+  position: relative;
+  padding: var(--espaco-xl);
+  overflow: hidden;
+  border-radius: var(--raio-card);
+  background: var(--cor-surface-card);
+  box-shadow: var(--sombra-cartao);
+}
+
+.cartao[data-flush] {
+  padding: 0;
+}
+
+.cartao[data-solido] {
+  background: var(--cor-surface);
+}

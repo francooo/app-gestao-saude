@@ -1,0 +1,171 @@
+.boasVindas {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 150px;
+  padding: var(--espaco-xl) var(--espaco-xl) var(--espaco-lg);
+}
+
+/* A mae com o bebe sangra pela direita e se funde no creme do cartao. */
+.ilustracao {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 52%;
+  /* O desenho e em pe (3:4). Mais largo que isto, o recorte so pega o cabelo. */
+  max-width: 250px;
+  pointer-events: none;
+}
+
+.ilustracao img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 35%;
+  /* Some para a esquerda (sob o texto) e na base (sobre a lista de membros). */
+  mask-image:
+    linear-gradient(90deg, transparent, #000 55%), linear-gradient(#000 65%, transparent);
+  mask-composite: intersect;
+}
+
+.texto {
+  position: relative;
+  max-width: 62%;
+}
+
+.titulo {
+  font-size: 27px;
+  font-weight: 800;
+  line-height: 33px;
+  letter-spacing: -0.3px;
+  color: var(--cor-section-title);
+}
+
+.subtitulo {
+  margin-top: var(--espaco-sm);
+  font-size: 15px;
+  color: var(--cor-text-secondary);
+}
+
+.erro {
+  padding: 0 var(--espaco-xl) var(--espaco-xl);
+  font-size: 14px;
+  color: var(--cor-text-secondary);
+  text-align: center;
+}
+
+.familia {
+  position: relative;
+  padding-bottom: var(--espaco-xl);
+}
+
+.familiaTopo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaco-md);
+  margin-bottom: var(--espaco-sm);
+  padding: 0 var(--espaco-xl);
+}
+
+.familiaTitulo {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.editar {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-xs);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cor-accent-green);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.editar:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Rola na horizontal no celular; em tela larga a familia cabe e quebra linha. */
+.lista {
+  display: flex;
+  gap: var(--espaco-lg);
+  margin: 0;
+  padding: var(--espaco-sm) var(--espaco-xl);
+  overflow-x: auto;
+  list-style: none;
+  scrollbar-width: none;
+}
+
+.lista::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .lista {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
+}
+
+.item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 72px;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: inherit;
+  text-decoration: none;
+}
+
+.item:focus-visible {
+  outline-offset: 6px;
+}
+
+.nome {
+  max-width: 100%;
+  margin-top: var(--espaco-sm);
+  overflow: hidden;
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nome[data-ativo] {
+  font-weight: 700;
+  color: var(--cor-accent-green);
+}
+
+@media (hover: hover) {
+  .item:hover .nome {
+    color: var(--cor-accent-green);
+  }
+}
+
+.adicionar {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border: 1.5px dashed var(--cor-accent-green);
+  border-radius: 50%;
+  color: var(--cor-accent-green);
+}
+
+.esqueleto {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--cor-star-empty);
+  opacity: 0.5;
+}

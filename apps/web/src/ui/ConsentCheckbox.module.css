@@ -1,0 +1,63 @@
+.linha {
+  display: flex;
+  align-items: flex-start;
+  padding: var(--espaco-xs) 0;
+  cursor: pointer;
+}
+
+/* O checkbox de verdade continua na pagina (teclado, leitor de tela), invisivel. */
+.nativo {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  margin: 2px 0 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.caixa {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  /* Alinha o quadrado com a primeira linha do texto, e nao com o bloco todo. */
+  margin: 2px var(--espaco-md) 0 0;
+  border: 1.5px solid var(--cor-text-secondary);
+  border-radius: 7px;
+  background: var(--cor-input-fill);
+  color: var(--cor-on-accent);
+}
+
+.caixa[data-erro] {
+  border-color: var(--cor-input-border-error);
+}
+
+.nativo:checked + .caixa {
+  border-color: var(--cor-accent);
+  background: var(--cor-accent);
+}
+
+.nativo:focus-visible + .caixa {
+  outline: 3px solid var(--cor-input-border-focused);
+  outline-offset: 2px;
+}
+
+.nativo:disabled + .caixa {
+  opacity: 0.65;
+}
+
+.texto {
+  flex: 1;
+  font-size: 13px;
+  font-weight: var(--texto-error-peso);
+  line-height: 19px;
+  color: var(--cor-text-secondary);
+}
+
+.erro {
+  margin-top: var(--espaco-xs);
+  font-size: var(--texto-error-tamanho);
+  font-weight: var(--texto-error-peso);
+  color: var(--cor-text-error);
+}

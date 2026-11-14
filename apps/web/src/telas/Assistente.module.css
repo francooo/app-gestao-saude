@@ -1,0 +1,327 @@
+/*
+ * Celular: uma coluna, na ordem do aplicativo — pessoa, conversa, acoes
+ * rapidas, e o campo preso ao pe da janela.
+ */
+.grade {
+  display: grid;
+  grid-template-areas:
+    'seletor'
+    'painel'
+    'acoes'
+    'rodape';
+  gap: var(--espaco-lg);
+  margin-top: var(--espaco-lg);
+}
+
+.seletor {
+  grid-area: seletor;
+  max-width: 420px;
+}
+
+.painel {
+  grid-area: painel;
+  min-width: 0;
+}
+
+.acoes {
+  grid-area: acoes;
+  min-width: 0;
+}
+
+.rodape {
+  position: sticky;
+  /* No celular, logo acima da barra de abas flutuante. */
+  bottom: calc(88px + env(safe-area-inset-bottom));
+  z-index: 2;
+  grid-area: rodape;
+  min-width: 0;
+}
+
+@media (min-width: 768px) {
+  .rodape {
+    bottom: var(--espaco-lg);
+  }
+}
+
+/*
+ * Tela larga: a conversa numa coluna com largura de leitura; a pessoa e as
+ * acoes rapidas ao lado, sempre a vista.
+ */
+@media (min-width: 1024px) {
+  .grade {
+    grid-template-areas:
+      'painel seletor'
+      'painel acoes'
+      'rodape acoes';
+    grid-template-columns: minmax(0, 760px) minmax(260px, 320px);
+    grid-template-rows: auto 1fr auto;
+    gap: var(--espaco-lg) var(--espaco-xxl);
+    justify-content: center;
+    align-items: start;
+  }
+
+  .seletor {
+    max-width: none;
+  }
+
+  .acoes {
+    position: sticky;
+    top: var(--espaco-xl);
+  }
+
+  .painel {
+    min-height: 420px;
+  }
+}
+
+.saudacao {
+  padding: var(--espaco-xl);
+  background: linear-gradient(
+    135deg,
+    var(--cor-assistant-gradient-from),
+    var(--cor-assistant-gradient-to)
+  );
+  color: var(--cor-on-accent);
+}
+
+.ola {
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.subtitulo {
+  margin-top: 2px;
+  font-size: 15px;
+  opacity: 0.9;
+}
+
+.conversa {
+  padding: var(--espaco-lg);
+}
+
+.linha {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espaco-md);
+  margin-bottom: var(--espaco-md);
+}
+
+/* A pergunta encosta na direita: a convencao de chat que dispensa rotulo. */
+.linha[data-autor='user'] {
+  justify-content: flex-end;
+  padding-left: var(--espaco-xxl);
+}
+
+.faisca {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--cor-assistant-bubble);
+  color: var(--cor-accent-green);
+}
+
+.bolha {
+  min-width: 0;
+  max-width: 640px;
+  padding: var(--espaco-md) var(--espaco-lg);
+  border-radius: 24px;
+  background: var(--cor-assistant-bubble);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--cor-text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.linha[data-autor='user'] .bolha {
+  background: var(--cor-accent-green);
+  color: var(--cor-on-accent);
+}
+
+.pensando {
+  letter-spacing: 2px;
+  color: var(--cor-text-secondary);
+}
+
+.demorando {
+  margin: 0 0 var(--espaco-md) calc(44px + var(--espaco-md));
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}
+
+.acoesTitulo {
+  margin-bottom: var(--espaco-md);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.acoesGrade {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+  gap: var(--espaco-sm);
+}
+
+@media (min-width: 1024px) {
+  .acoesGrade {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--espaco-md);
+  }
+}
+
+.acao {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--espaco-sm);
+  min-width: 0;
+  padding: var(--espaco-lg) var(--espaco-xs);
+  border: 0;
+  border-radius: 18px;
+  background: var(--cor-surface-card);
+  box-shadow: var(--sombra-cartao);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+  text-align: center;
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+@media (hover: hover) {
+  .acao:hover:not(:disabled) {
+    box-shadow: var(--sombra-flutuante);
+    transform: translateY(-1px);
+  }
+}
+
+.acao:disabled {
+  opacity: 0.6;
+}
+
+@media (min-width: 1024px) {
+  .acao {
+    font-size: 13px;
+  }
+}
+
+.acaoCirculo {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  color: var(--cor-on-accent);
+}
+
+.campo {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--espaco-sm);
+  padding: var(--espaco-xs) var(--espaco-xs) var(--espaco-xs) var(--espaco-xl);
+  border: 1px solid rgba(57, 67, 44, 0.12);
+  border-radius: 28px;
+  background: var(--cor-surface);
+  box-shadow: var(--sombra-flutuante);
+}
+
+.campo:focus-within {
+  border-color: var(--cor-input-border-focused);
+}
+
+.entrada {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  max-height: 160px;
+  padding: 11px 0;
+  border: 0;
+  background: transparent;
+  font-size: 16px;
+  line-height: 1.4;
+  color: var(--cor-text-primary);
+  resize: none;
+  /* Cresce com o texto onde o navegador ja sabe fazer isso. */
+  field-sizing: content;
+}
+
+.entrada:focus-visible {
+  outline: none;
+}
+
+.entrada::placeholder {
+  color: var(--cor-text-placeholder);
+}
+
+.enviar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--cor-assistant-send);
+  color: var(--cor-on-accent);
+}
+
+.enviar:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+
+.enviar:disabled {
+  opacity: 0.5;
+}
+
+/* Com fundo proprio: o rodape flutua sobre a conversa, e sem ele a frase se
+   misturaria com o texto das bolhas que passam por baixo. */
+.cuidado {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-xs);
+  width: fit-content;
+  margin: var(--espaco-sm) auto 0;
+  padding: 2px var(--espaco-md);
+  border-radius: var(--raio-pill);
+  background: var(--cor-surface);
+  font-size: 12px;
+  color: var(--cor-text-secondary);
+}
+
+.trancado {
+  box-shadow: var(--sombra-flutuante);
+}
+
+.trancadoLinha {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-md);
+  margin-bottom: var(--espaco-lg);
+}
+
+.trancadoSelo {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--cor-accent-green);
+  color: var(--cor-on-accent);
+}
+
+.trancadoTitulo {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.trancadoTexto {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}

@@ -1,0 +1,45 @@
+.visualizador {
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: var(--espaco-xl);
+  border: 0;
+  background: var(--cor-overlay);
+}
+
+.visualizador[open] {
+  display: grid;
+  place-items: center;
+}
+
+.imagem {
+  max-width: 100%;
+  max-height: calc(100dvh - 2 * var(--espaco-xl));
+  border-radius: 16px;
+  object-fit: contain;
+}
+
+.fechar {
+  position: fixed;
+  top: var(--espaco-lg);
+  right: var(--espaco-lg);
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--cor-on-accent);
+}
+
+.fechar:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.fechar:focus-visible {
+  outline-color: var(--cor-surface);
+}

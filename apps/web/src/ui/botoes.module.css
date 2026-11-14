@@ -1,0 +1,100 @@
+/*
+ * Os tres degraus de botao da area logada, para <button> e para <a>:
+ * preenchido (.verde ou .ambar), contornado (.contorno) e so texto (.texto).
+ * Ambar e "tem coisa para fazer"; verde e "gerencie este registro".
+ */
+
+.verde,
+.ambar,
+.contorno,
+.texto,
+.perigo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espaco-sm);
+  min-height: 52px;
+  padding: 0 var(--espaco-xl);
+  border: 0;
+  border-radius: var(--raio-pill);
+  font-size: 16px;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    filter 0.15s ease;
+}
+
+.largo {
+  width: 100%;
+}
+
+.verde {
+  background: var(--cor-accent-green);
+  color: var(--cor-on-accent);
+}
+
+.ambar {
+  background: var(--cor-accent);
+  box-shadow: var(--sombra-botao);
+  color: var(--cor-on-accent);
+}
+
+.verde:hover:not(:disabled),
+.ambar:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+
+.contorno {
+  border: 1.5px solid var(--cor-accent-green);
+  background: transparent;
+  font-weight: 600;
+  color: var(--cor-accent-green);
+}
+
+.contorno:hover:not(:disabled) {
+  background: var(--cor-tab-active);
+}
+
+.texto,
+.perigo {
+  min-height: 44px;
+  padding: 0 var(--espaco-lg);
+  background: transparent;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cor-accent-green);
+}
+
+.perigo {
+  color: var(--cor-text-error);
+}
+
+.texto:hover:not(:disabled),
+.perigo:hover:not(:disabled) {
+  background: var(--cor-chip-more);
+}
+
+.verde:disabled,
+.ambar:disabled,
+.contorno:disabled,
+.texto:disabled,
+.perigo:disabled {
+  opacity: 0.6;
+}
+
+/* Rodinha de espera dentro de um botao. */
+.girando {
+  width: 18px;
+  height: 18px;
+  border: 2.5px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: girar 0.8s linear infinite;
+}
+
+@keyframes girar {
+  to {
+    transform: rotate(360deg);
+  }
+}
