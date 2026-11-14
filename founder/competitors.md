@@ -146,3 +146,63 @@ Ressalvas honestas:
 ---
 
 **Próximos passos:** /founder-consumer usa as reclamações da seção 4 como objeções dos compradores, e /founder-pricing usa a faixa de preço da seção 2 (entrada de R$ 4,90 a R$ 15,99, mediana R$ 6,99; mensalidade confirmada só do Medisafe, R$ 14,90 a R$ 29,90/mês).
+
+---
+
+## 7. Funcionalidades que os concorrentes têm e o Gestão Saúde ainda não tem
+
+Atualização de 2026-11-14. Nesta rodada as páginas não puderam ser abertas diretamente: as informações vêm dos resumos da busca, e a maior parte delas sai do próprio fornecedor ou de agregadores de apps. Por isso cada linha diz "segundo" quem. Nenhum recurso foi testado nos apps.
+
+**Concorrentes novos achados nesta rodada** (estão no [CSV](competitors.csv)):
+- **[Cuida: Remédio em dia](https://play.google.com/store/apps/details?id=com.cuida)**: brasileiro, na primeira versão. Faz lembretes, identifica o remédio pela foto da caixa, guarda consultas com receita e exames anexados e registra pressão, glicemia, peso e sintomas.
+- **[Gero360](https://institutodelongevidade.org/tecnologia/app-para-cuidadores-gratuito)**: brasileiro. Monta um círculo de cuidados com família, cuidador e profissional de saúde, cada um com um papel.
+- **[Omni Saúde](https://apps.apple.com/app/id6449550736)**: brasileiro, só no iOS. Lê a receita por foto e cria lembretes a partir dela.
+
+O que o Gestão Saúde já tem e serve de base para a comparação:
+- membros da família;
+- posologia flexível, lembretes e histórico de doses;
+- estoque com validade e previsão de término;
+- médicos com mapa e consultas;
+- diário de sintomas (febre, dor, náusea, tosse, humor, sono);
+- acompanhante avisado por WhatsApp;
+- IA que lê receita e caixa, preenche horários a partir de uma frase e responde num assistente;
+- central de avisos;
+- versão web.
+
+### Lacunas, da mais forte à mais fraca
+
+A força leva em conta quantos concorrentes têm o recurso e se ele aparece nas reclamações da seção 4.
+
+| # | Funcionalidade | Quem tem (segundo a fonte) | Evidência de demanda | O que o Gestão Saúde tem hoje |
+|---|---|---|---|---|
+| 1 | **Medições e sinais vitais com histórico e gráfico** (pressão, glicemia, peso, SpO2...) | Medisafe, "20+ medições" no Premium ([intuitionlabs](https://intuitionlabs.ai/software/patient-education-engagement/medication-adherence-apps/medisafe), [AlternativeTo](https://alternativeto.net/software/medisafe/about)). MyTherapy, "pressão, peso, glicemia e mais de 20" ([App Store](https://apps.apple.com/au/app/id662170995)). Pillo, 9 medidores grátis ([pillo.care](https://pillo.care/blog/pillo-vs-medisafe-comparison)). Cuida, pressão, glicemia e peso ([Play](https://play.google.com/store/apps/details?id=com.cuida)). CareClinic ([features](https://careclinic.io/features)) | Está em 5 dos concorrentes principais, inclusive em 2 brasileiros | Só um peso e uma altura por pessoa, sem histórico. O diário de sintomas deixou pressão e glicemia de fora de propósito |
+| 2 | **Relatório para levar ao médico (PDF ou código de compartilhamento)** | Medisafe, relatório de adesão em PDF ([intuitionlabs](https://intuitionlabs.ai/software/patient-education-engagement/medication-adherence-apps/medisafe)). MyTherapy, relatório imprimível com remédios, medições e sintomas, mais um código único para o médico ver ([parceiros](https://mytherapyapp.com/doctors-pharmacists-nurses)). CareClinic, "Labs & Reports" ([features](https://careclinic.io/features)). Idoso: Gestão Cuidador, "com relatório" ([Play](https://play.google.com/store/apps/details?id=br.com.dapps.gestao_cuidador&hl=pt_BR)) | Tema 6 das reclamações: "Não consegui sequer extrair um simples relatório" (Medisafe) e "não encontrei nenhuma opção de exportar esse histórico" (CUCO) | Não tem exportação. O histórico de doses e o diário só existem dentro do app |
+| 3 | **Vários cuidadores com acesso à mesma família, cada um com permissão** | CareClinic: equipe de cuidado com permissões por pessoa ([care team](https://careclinic.io/phr/care-team)). MyTherapy: função "Team" para familiares acompanharem ([Irish Tech News](https://irishtechnews.ie/mytherapy-3-0-connects-family-members-for-improving-medication-adherence/amp/)). Medisafe: Medfriend, ilimitado no Premium ([intuitionlabs](https://intuitionlabs.ai/software/patient-education-engagement/medication-adherence-apps/medisafe)). Gero360: papéis de familiar, cuidador e profissional ([Instituto de Longevidade](https://institutodelongevidade.org/tecnologia/app-para-cuidadores-gratuito)) | Tema 5 das reclamações: "não consigo acessar pelo meu app a lista de remédios que ela tem que tomar" (CUCO) e "can't add a second care taker" (Medisafe) | O acompanhante só **recebe** mensagens no WhatsApp. Não há segundo login na mesma família (pai e mãe, irmãos que dividem o cuidado de um pai idoso), nem registro de quem deu a dose |
+| 4 | **Exames e documentos guardados** (laudos, resultados, PDF) | Cuida, receita e exames anexados à consulta ([Play](https://play.google.com/store/apps/details?id=com.cuida)). CareClinic, "Labs & Reports" ([features](https://careclinic.io/features)). Meu SUS Digital, exames do SUS ([Canaltech](https://canaltech.com.br/apps/como-se-cadastrar-e-usar-o-app-meu-sus-digital/)) | 3 concorrentes, um deles o app oficial do governo | Guarda só a foto da receita e da caixa de cada remédio |
+| 5 | **Carteira de vacinação, com aviso de vacina atrasada** | Meu SUS Digital, com a caderneta da criança e previsão das próximas doses ([Estado de Minas](https://www.em.com.br/bem-viver/2026/08/7483255-caderneta-de-vacinacao-como-consultar-pelo-celular-em-2026.html), [Rádio Mirador](https://radiomirador.com.br/caderneta-de-saude-da-crianca-ganha-versao-digital-saiba-como-acessar)). Saúde Já (Curitiba), com alerta de vacina atrasada ([Prefeitura de Curitiba](https://www.curitiba.pr.gov.br/noticias/com-mais-de-2-milhoes-de-usuarios-app-saude-ja-tem-espaco-garantido-no-smartphone-do-curitibano/76909)). CareClinic, "Immunizations" ([features](https://careclinic.io/features)) | O público principal são mães e pais de crianças pequenas (ver [idea.md](idea.md)) | Não tem |
+| 6 | **Alerta de interação entre remédios** | Medisafe, nos EUA ([intuitionlabs](https://intuitionlabs.ai/software/patient-education-engagement/medication-adherence-apps/medisafe)). Pillo, com dados da FDA ([AlternativeTo](https://alternativeto.net/software/pillo/about)) | 2 concorrentes, ambos com base de dados americana; nenhum caso brasileiro achado | Não tem. É sensível: exige base confiável em português e cuidado jurídico |
+| 7 | **Relógio, widget e integração com Health Connect / Apple Health** | MedTick e OkiDose, com app para Wear OS ([MedTick](https://play.google.com/store/apps/details?id=com.medtick), [OkiDose](https://play.google.com/store/apps/details?id=app.pilly)). Apps de iPhone importam remédios do Apple Health ([exemplo](https://apps.apple.com/app/id6759994371)) | Só concorrentes estrangeiros e menores | Não tem |
+| 8 | **Alarme insistente, em tela cheia, até a pessoa responder** | Pillo, como marca registrada do app ([pillo.care](https://pillo.care/blog/an-introduction-to-pillo-the-angry-pill-box)) | Tema 3 das reclamações: o alarme não dispara (cerca de 22 avaliações) | Não confirmado: falta conferir no aparelho como o lembrete atual se comporta |
+| 9 | **Ficha de emergência** (alergias, doenças crônicas, tipo sanguíneo, contatos de emergência) | Meu SUS Digital, com contatos de emergência ([Canaltech](https://canaltech.com.br/apps/como-se-cadastrar-e-usar-o-app-meu-sus-digital/)). CareClinic, com registros de saúde ([CareClinic](https://careclinic.io/?p=8265)) | Indireto | Só um campo "Observações" livre por pessoa |
+| 10 | **Leitura em voz alta / modo para idosos** | Cuidado Certo ([Play](https://play.google.com/store/apps/details?id=com.cuidadocerto&hl=pt_BR), já na tabela) | Fraco: 1 app pequeno | Não tem |
+| 11 | **App para iPhone** | Medisafe, MyTherapy, CUCO, Omni Saúde e Cuida (só Android, segundo a listagem) | Plataforma, não recurso | Android e web; iOS planejado ([idea.md](idea.md)) |
+
+### O que o Gestão Saúde já tem e eles não (para não perder de vista)
+
+- **Aviso ao acompanhante pelo WhatsApp:** os concorrentes usam notificação no app ou SMS. Pillo usa SMS, segundo o [blog](https://pillo.care/blog/an-introduction-to-pillo-the-angry-pill-box).
+- **"Descreva como tomar" e assistente que conhece os dados da família:** nenhum concorrente verificado tem.
+- **Leitura de receita e caixa por IA:** só Omni Saúde (iOS) e Cuida (foto da caixa) chegam perto.
+- **Versão web com a mesma conta:** entre os concorrentes, só o Meu SUS Digital tem web.
+- **Básico grátis para sempre:** é a maior reclamação contra o líder (seção 4, tema 1).
+
+### Recomendação de prioridade
+
+Ordem de construção, com base em evidência e esforço, sem confirmação de compradores. O próximo passo para confirmar é o `/founder-consumer`.
+
+1. **Relatório em PDF para o médico.** Junta histórico de doses, remédios, sintomas e medições. É o caso com mais evidência de reclamação, tem pouco esforço (os dados já existem) e funciona como recurso "pago" natural.
+2. **Medições** (pressão, glicemia, peso, com gráfico). Está em 5 concorrentes e é o gráfico que o diário já sabe desenhar. Alimenta o relatório do item 1.
+3. **Segundo cuidador com login na mesma família.** É o tema 5 das reclamações e reforça o diferencial de "família". Exige mudança de modelo (conta e permissões), por isso é o maior esforço da lista.
+4. **Carteira de vacinação das crianças.** Atende o público principal, mas compete com o Meu SUS Digital, que já traz os dados oficiais.
+5. **Exames e documentos.** Reaproveita a leitura por foto que já existe.
+
+Interação medicamentosa (6) fica por último. Ela pede uma base de dados confiável em português e cuidado jurídico, e um alerta errado é pior do que nenhum.

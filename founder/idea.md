@@ -27,6 +27,9 @@ artificial:
 **Preço:** ainda não definido (a decidir com /founder-pricing e /founder-cfo).
 Cobrança pela Google Play (taxa de 15%) via RevenueCat.
 
+**Versão web (desde 11/2026):** site "Família Saúde" (gestao-saude-web.vercel.app) com as
+mesmas funções do aplicativo, mesma conta e mesmo banco; layout próprio para computador.
+
 **Estágio:** app funcional em teste interno; publicação na Play Store prevista
 para depois de 01/11/2026 (conta pessoal: exige teste fechado com 12 testadores
 por 14 dias antes da produção).
