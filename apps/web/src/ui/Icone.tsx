@@ -107,6 +107,8 @@ import {
   WifiOff,
   type LucideIcon,
   BadgeCheck,
+  Download,
+  Printer,
 } from 'lucide-react';
 import type { CSSProperties } from 'react';
 
@@ -150,6 +152,8 @@ const MAPA: Record<string, LucideIcon> = {
   'chevron-right': ChevronRight,
   clock: Clock,
   copy: Copy,
+  download: Download,
+  printer: Printer,
   'credit-card': CreditCard,
   crosshair: Crosshair,
   droplet: Droplet,

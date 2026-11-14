@@ -57,6 +57,9 @@ const Assistente = lazy(() =>
 );
 const Sintomas = lazy(() => import('./telas/Sintomas').then((m) => ({ default: m.Sintomas })));
 const Avisos = lazy(() => import('./telas/Avisos').then((m) => ({ default: m.Avisos })));
+const Relatorio = lazy(() =>
+  import('./telas/Relatorio').then((m) => ({ default: m.Relatorio })),
+);
 const Ajustes = lazy(() => import('./telas/Ajustes').then((m) => ({ default: m.Ajustes })));
 const Membro = lazy(() => import('./telas/conta/Membro').then((m) => ({ default: m.Membro })));
 const Acesso = lazy(() => import('./telas/conta/Acesso').then((m) => ({ default: m.Acesso })));
@@ -122,6 +125,7 @@ export function App() {
           <Route path="/mapa" element={<Mapa />} />
           <Route path="/assistente" element={<Assistente />} />
           <Route path="/ajustes" element={<Ajustes />} />
+          <Route path="/relatorio" element={<Relatorio />} />
           <Route path="/notificacoes" element={<Avisos />} />
           <Route path="/sintomas" element={<Sintomas />} />
           <Route path="/membro/:id" element={<Membro />} />

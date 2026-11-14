@@ -355,6 +355,13 @@ function Formulario({ id }: { id: string }) {
                 Cancelar
               </button>
 
+              {!novo ? (
+                <Link to={`/relatorio?pessoa=${id}`} className={botoes.texto}>
+                  <Icone nome="file-text" size={18} />
+                  Relatório para o médico
+                </Link>
+              ) : null}
+
               {/* O titular e a propria conta: sair da propria familia nao quer
                   dizer nada, e o servidor recusa de qualquer forma. */}
               {!novo && !titular ? (

@@ -8,6 +8,7 @@ import historico from '../../src/handlers/assistant/historico';
 import lerFoto from '../../src/handlers/assistant/ler-foto';
 import mensagem from '../../src/handlers/assistant/mensagem';
 import posologia from '../../src/handlers/assistant/posologia';
+import resumoRelatorio from '../../src/handlers/assistant/resumo-relatorio';
 
 /**
  * Roteador do assistente.
@@ -37,6 +38,8 @@ const ROTAS: Record<string, (req: VercelRequest, res: VercelResponse) => Promise
   // "Descreva como tomar" no cadastro do remedio. Tambem nao e o assistente:
   // mora aqui pela vaga, com os proprios codigos POSOLOGY_*.
   posologia,
+  // O resumo do relatorio para o medico (assinatura). Mesma vaga.
+  'resumo-relatorio': resumoRelatorio,
   // Lembretes por WhatsApp, chamado a cada minuto pelo cron-job.org. Sem
   // usuario logado: protegido por CRON_SECRET dentro do proprio handler.
   'cron-lembretes': cronLembretes,

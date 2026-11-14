@@ -361,6 +361,10 @@ function Conteudo({ m, agora }: { m: Medication; agora: Date }) {
           <Icone nome="edit-2" size={18} />
           Editar medicamento
         </Link>
+        <Link to={`/relatorio?pessoa=${m.profileId}`} className={botoes.contorno}>
+          <Icone nome="file-text" size={18} />
+          Relatório para o médico
+        </Link>
         <button type="button" className={botoes.contorno} onClick={() => void encerrar()}>
           {m.isActive ? 'Encerrar tratamento' : 'Retomar tratamento'}
         </button>

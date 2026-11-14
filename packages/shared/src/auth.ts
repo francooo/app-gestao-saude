@@ -153,6 +153,9 @@ export const API_ERROR = {
   /** "Descreva como tomar": a IA interpreta o texto da posologia. */
   POSOLOGY_BUSY: 'POSOLOGY_BUSY',
   POSOLOGY_FAILED: 'POSOLOGY_FAILED',
+  /** O resumo do relatorio para o medico, escrito pela IA. */
+  REPORT_SUMMARY_BUSY: 'REPORT_SUMMARY_BUSY',
+  REPORT_SUMMARY_FAILED: 'REPORT_SUMMARY_FAILED',
   /** Recurso de IA sem assinatura (nem teste gratis) vigente. */
   SUBSCRIPTION_REQUIRED: 'SUBSCRIPTION_REQUIRED',
   INTERNAL_ERROR: 'INTERNAL_ERROR',
@@ -205,6 +208,10 @@ export const ERROR_MESSAGES_PT: Record<string, string> = {
     'A interpretação está ocupada neste minuto. Aguarde uns 20 segundos e tente de novo.',
   [API_ERROR.POSOLOGY_FAILED]:
     'Não consegui entender essa descrição. Tente escrever de outro jeito — ou preencha à mão.',
+  [API_ERROR.REPORT_SUMMARY_BUSY]:
+    'O resumo está ocupado neste minuto. Aguarde uns 20 segundos e tente de novo.',
+  [API_ERROR.REPORT_SUMMARY_FAILED]:
+    'Não consegui escrever o resumo agora. O relatório continua completo sem ele.',
   [API_ERROR.SUBSCRIPTION_REQUIRED]:
     'Este recurso usa inteligência artificial e faz parte da assinatura. Veja em Ajustes › Assinatura.',
   [API_ERROR.INTERNAL_ERROR]: 'Algo deu errado do nosso lado. Tente novamente.',
@@ -230,7 +237,7 @@ export function messageForError(code: string | undefined): string {
  * versao: a LGPD exige saber a QUAL texto a pessoa consentiu, nao apenas que
  * consentiu. Sem isso, um consentimento antigo vira indefensavel.
  */
-export const POLICY_VERSION = '2026-10-17.2';
+export const POLICY_VERSION = '2026-11-14.1';
 
 export const fullNameSchema = z
   .string()

@@ -124,6 +124,9 @@ export const API_ERROR = {
   /** "Descreva como tomar": a IA interpreta o texto da posologia. */
   POSOLOGY_BUSY: 'POSOLOGY_BUSY',
   POSOLOGY_FAILED: 'POSOLOGY_FAILED',
+  /** Resumo do relatorio para o medico, escrito pela IA. Espelha packages/shared. */
+  REPORT_SUMMARY_BUSY: 'REPORT_SUMMARY_BUSY',
+  REPORT_SUMMARY_FAILED: 'REPORT_SUMMARY_FAILED',
   /**
    * Recurso de IA sem assinatura (nem teste) vigente. 403 e nao 402: o
    * cliente nao trata 402, e 401 dispararia o refresh automatico (ver
@@ -148,7 +151,7 @@ export type ApiErrorCode = (typeof API_ERROR)[keyof typeof API_ERROR];
  * quem seguisse ao pe da letra deixaria o packages/shared para tras, e todo
  * cadastro novo ja nasceria pedindo reaceite.
  */
-export const POLICY_VERSION = '2026-10-17.2';
+export const POLICY_VERSION = '2026-11-14.1';
 
 export const fullNameSchema = z
   .string()
@@ -690,6 +693,15 @@ export const compraDeEstoqueSchema = z.object({
  * So a frase e, opcionalmente, a forma (para "4 jatos" virar dose 4 de
  * inalador). Nada e gravado: a resposta e uma PROPOSTA que a pessoa confere.
  */
+/**
+ * O resumo do relatorio para o medico: o texto que o aplicativo ja montou com
+ * os numeros do periodo (lib/relatorio do shared, `dadosParaResumo`).
+ * Nada e gravado; a resposta e so o paragrafo.
+ */
+export const resumoDoRelatorioSchema = z.object({
+  dados: z.string().trim().min(10).max(8000),
+});
+
 export const posologiaTextoSchema = z.object({
   texto: z
     .string()

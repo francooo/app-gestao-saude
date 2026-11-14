@@ -1,0 +1,182 @@
+.grade {
+  display: grid;
+  gap: var(--espaco-xl);
+  margin-top: var(--espaco-xl);
+}
+
+.grade > * {
+  min-width: 0;
+}
+
+/* Tela larga: as opcoes numa coluna fixa, a folha ao lado. */
+@media (min-width: 1100px) {
+  .grade {
+    grid-template-columns: 380px minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .opcoes {
+    position: sticky;
+    top: var(--espaco-xl);
+  }
+}
+
+.cartao {
+  padding: var(--espaco-xl);
+}
+
+.bloco {
+  margin-top: var(--espaco-lg);
+}
+
+.titulo {
+  margin-bottom: var(--espaco-md);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.tituloSeguinte {
+  margin-top: var(--espaco-xl);
+}
+
+.tituloDoGrupo {
+  margin: 0;
+  padding: var(--espaco-lg) var(--espaco-lg) var(--espaco-xs);
+}
+
+.datas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--espaco-md);
+  margin-top: var(--espaco-lg);
+}
+
+.datas > * {
+  min-width: 0;
+  margin-bottom: 0;
+}
+
+/* --- Resumo por IA --- */
+
+.ia {
+  border: 1px solid rgba(201, 133, 75, 0.35);
+}
+
+.iaTopo {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espaco-md);
+}
+
+.iaTopo .titulo {
+  margin-bottom: var(--espaco-xs);
+}
+
+.iaSelo {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: var(--cor-surface-warm);
+  color: var(--cor-accent);
+}
+
+.iaTexto {
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--cor-text-secondary);
+}
+
+.iaAcoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-sm);
+  margin-top: var(--espaco-lg);
+}
+
+.iaConvite {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+  margin-top: var(--espaco-lg);
+  padding: var(--espaco-sm) var(--espaco-lg);
+  border-radius: var(--raio-pill);
+  background: var(--sage-100);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cor-accent-green);
+  text-decoration: none;
+}
+
+.iaConvite:hover {
+  filter: brightness(0.97);
+}
+
+/* --- A folha --- */
+
+.barraDaFolha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-md);
+  margin-bottom: var(--espaco-lg);
+}
+
+.baixar {
+  min-width: 200px;
+}
+
+.dica {
+  display: flex;
+  flex: 1 1 260px;
+  align-items: center;
+  gap: var(--espaco-xs);
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}
+
+.dica svg {
+  flex-shrink: 0;
+}
+
+/* Papel branco sobre o fundo salvia: e o que vai sair na impressora. */
+.moldura {
+  width: 100%;
+}
+
+.folha {
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #fff;
+  box-shadow:
+    0 1px 2px rgba(48, 70, 55, 0.12),
+    0 10px 30px rgba(48, 70, 55, 0.16);
+}
+
+/* O documento tem a propria margem de pagina na impressao; na tela, um
+   respiro igual ao do papel. */
+.quadro {
+  display: block;
+  border: 0;
+  background: #fff;
+  transform-origin: 0 0;
+}
+
+.esqueleto {
+  height: 70vh;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #f3f3ec 0%, #ffffff 50%, #f3f3ec 100%);
+  background-size: 200% 100%;
+  animation: brilho 1.4s ease-in-out infinite;
+}
+
+@keyframes brilho {
+  to {
+    background-position: -200% 0;
+  }
+}

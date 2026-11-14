@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { healthApi } from '@gestao/shared/api/health';
 import { buscarCep, formatarCep, montarEndereco, somenteDigitos } from '@gestao/shared/lib/cep';
 import { useEffect, useState, type FormEvent } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams } from 'react-router';
 
 import { CHAVES, useMedico } from '@/api/consultas';
 import { mensagemDoErro } from '@/api/doses';
@@ -404,6 +404,13 @@ function Formulario({ id }: { id: string }) {
             {salvando ? <span className={botoes.girando} /> : null}
             {novo ? 'Cadastrar' : 'Salvar'}
           </button>
+
+          {!novo ? (
+            <Link to="/relatorio" className={`${botoes.contorno} ${botoes.largo} ${estilos.remover}`}>
+              <Icone nome="file-text" size={18} />
+              Gerar relatório para a consulta
+            </Link>
+          ) : null}
 
           {!novo ? (
             <button

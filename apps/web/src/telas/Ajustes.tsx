@@ -114,6 +114,12 @@ export function Ajustes() {
             <SectionHeader title="Preferências" />
             <SettingsGroup>
               <SettingsRow
+                marcador={<IconTile icone="file-text" {...AMBAR} />}
+                rotulo="Relatório para o médico"
+                valor="Remédios, doses e sintomas em PDF"
+                para="/relatorio"
+              />
+              <SettingsRow
                 marcador={<IconTile icone="mci:whatsapp" {...VERDE} />}
                 rotulo="Lembretes por WhatsApp"
                 para="/conta/whatsapp"

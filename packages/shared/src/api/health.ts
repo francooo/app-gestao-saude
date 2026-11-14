@@ -702,6 +702,21 @@ export const healthApi = {
   },
 
   /**
+   * O resumo do relatorio para o medico, escrito pela IA (assinatura).
+   *
+   * Vai o texto ja montado por `dadosParaResumo` (lib/relatorio), que e o
+   * minimo necessario — primeiro nome, idade e os numeros do periodo. O
+   * servidor responde 403 SUBSCRIPTION_REQUIRED para quem nao assina.
+   */
+  resumoDoRelatorio(dados: string): Promise<string> {
+    return request(
+      '/api/assistant/resumo-relatorio',
+      { method: 'POST', body: { dados }, authenticated: true, timeoutMs: ASSISTANT_TIMEOUT_MS },
+      (data) => z.object({ resumo: z.string() }).parse(data).resumo,
+    );
+  },
+
+  /**
    * O diario de sintomas de um periodo.
    *
    * A janela e obrigatoria e tem teto de 31 dias no servidor, pelo mesmo
