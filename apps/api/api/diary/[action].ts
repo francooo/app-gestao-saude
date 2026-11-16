@@ -4,6 +4,7 @@ import { API_ERROR } from '../../src/contracts';
 import { type AuthContext, requireAuth } from '../../src/lib/auth';
 import { fail, withErrorHandling } from '../../src/lib/http';
 
+import medicoes from '../../src/handlers/diary/medicoes';
 import sintomas from '../../src/handlers/diary/sintomas';
 
 /**
@@ -31,6 +32,8 @@ type Acao = (req: VercelRequest, res: VercelResponse, auth: AuthContext) => Prom
 
 const ROTAS: Record<string, Acao> = {
   sintomas,
+  // Pressao, glicemia, peso e oxigenacao: a acao que o comentario acima anunciava.
+  medicoes,
 };
 
 export default withErrorHandling(async (req: VercelRequest, res: VercelResponse) => {

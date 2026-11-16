@@ -187,14 +187,15 @@ export default withErrorHandling(async (req: VercelRequest, res: VercelResponse)
 });
 
 /**
- * Fecha a linha de auditoria.
+ * Fecha a linha de auditoria. Exportada: a leitura do visor (ler-visor.ts)
+ * usa o mesmo rastro.
  *
  * Guarda o texto CRU do modelo junto da proposta que montamos. Sem o cru nao
  * ha como separar "o modelo errou" de "o nosso mapeador errou" — e e a mesma
  * regra do tool_trace, que tambem guarda o que foi pedido e nao o conteudo
  * lido. NUNCA guarda a imagem.
  */
-async function encerrar(
+export async function encerrar(
   id: string,
   outcome: 'lida' | 'vazia' | 'falha',
   bruto: string | null,
@@ -210,7 +211,8 @@ async function encerrar(
 }
 
 /**
- * Os dois tetos numa consulta so, em janela deslizante.
+ * Os dois tetos numa consulta so, em janela deslizante. Exportada: a leitura
+ * do visor (ler-visor.ts) divide os mesmos tetos.
  *
  * O teto DIARIO conta TODAS as linhas, inclusive as que falharam: e a protecao
  * dura contra laco travado (ver o comentario do insert acima).
@@ -224,7 +226,7 @@ async function encerrar(
  * ('lida'/'vazia') conta por minuto — entao, depois de um "congestionada", da
  * para tentar de novo assim que o balde do Groq encher (~20s).
  */
-async function usoRecente(userId: string): Promise<{ dia: number; minuto: number }> {
+export async function usoRecente(userId: string): Promise<{ dia: number; minuto: number }> {
   const agora = Date.now();
   const desdeOntem = new Date(agora - 24 * 60 * 60 * 1000);
   const desdeUmMinuto = new Date(agora - 60 * 1000);

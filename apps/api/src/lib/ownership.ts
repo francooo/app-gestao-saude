@@ -1,7 +1,14 @@
 import { and, eq } from 'drizzle-orm';
 
 import { db } from '../db/client';
-import { appointments, medicationDoses, medications, profiles, symptomEntries } from '../db/schema';
+import {
+  appointments,
+  healthMeasurements,
+  medicationDoses,
+  medications,
+  profiles,
+  symptomEntries,
+} from '../db/schema';
 
 /**
  * Verificacoes de dono para o dominio de saude.
@@ -36,6 +43,18 @@ export async function consultaDaConta(appointmentId: string, userId: string) {
     .limit(1);
 
   return linha?.consulta ?? null;
+}
+
+/** Confirma que a medicao pertence a um perfil da conta. Devolve kind e pessoa. */
+export async function medicaoDaConta(measurementId: string, userId: string) {
+  const [linha] = await db
+    .select({ id: healthMeasurements.id, kind: healthMeasurements.kind, profileId: healthMeasurements.profileId })
+    .from(healthMeasurements)
+    .innerJoin(profiles, eq(profiles.id, healthMeasurements.profileId))
+    .where(and(eq(healthMeasurements.id, measurementId), eq(profiles.userId, userId)))
+    .limit(1);
+
+  return linha ?? null;
 }
 
 /** Confirma que o registro de sintoma pertence a um perfil da conta. */

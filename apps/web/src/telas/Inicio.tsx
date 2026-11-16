@@ -291,6 +291,19 @@ export function Inicio() {
               </span>
               <Icone nome="chevron-right" size={22} color="var(--cor-accent-green)" />
             </Link>
+
+            <Link
+              to="/medicoes"
+              className={estilos.diario}
+              aria-label="Medições. Pressão, glicemia, peso e oxigenação, com gráfico."
+            >
+              <IconTile size={54} icone="heart" {...LADRILHO_NEUTRO} />
+              <span className={estilos.diarioTextos}>
+                <span className={estilos.diarioTitulo}>Medições</span>
+                <span className={estilos.diarioAjuda}>Pressão, glicemia, peso e oxigenação</span>
+              </span>
+              <Icone nome="chevron-right" size={22} color="var(--cor-accent-green)" />
+            </Link>
           </div>
         </div>
       </main>

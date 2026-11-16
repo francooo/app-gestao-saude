@@ -56,6 +56,7 @@ const Assistente = lazy(() =>
   import('./telas/Assistente').then((m) => ({ default: m.Assistente })),
 );
 const Sintomas = lazy(() => import('./telas/Sintomas').then((m) => ({ default: m.Sintomas })));
+const Medicoes = lazy(() => import('./telas/Medicoes').then((m) => ({ default: m.Medicoes })));
 const Avisos = lazy(() => import('./telas/Avisos').then((m) => ({ default: m.Avisos })));
 const Relatorio = lazy(() =>
   import('./telas/Relatorio').then((m) => ({ default: m.Relatorio })),
@@ -128,6 +129,7 @@ export function App() {
           <Route path="/relatorio" element={<Relatorio />} />
           <Route path="/notificacoes" element={<Avisos />} />
           <Route path="/sintomas" element={<Sintomas />} />
+          <Route path="/medicoes" element={<Medicoes />} />
           <Route path="/membro/:id" element={<Membro />} />
           <Route path="/medico/:id" element={<MedicoForm />} />
           <Route path="/consulta/nova" element={<NovaConsulta />} />

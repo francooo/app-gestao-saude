@@ -43,6 +43,9 @@ export const CHAVES = {
   contaComContagens: ['conta', 'contagens'] as const,
   acompanhantes: ['acompanhantes'] as const,
   sintomas: (perfilId: string | null) => ['sintomas', { perfilId }] as const,
+  /** Raiz de todas as medicoes: salvar o peso na ficha invalida todas. */
+  medicoes: ['medicoes'] as const,
+  medicoesDe: (perfilId: string | null, dias: number) => ['medicoes', { perfilId, dias }] as const,
 };
 
 export function usePerfis() {

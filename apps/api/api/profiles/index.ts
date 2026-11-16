@@ -8,7 +8,7 @@ import {
   profileQuerySchema,
 } from '../../src/contracts';
 import { db } from '../../src/db/client';
-import { profiles } from '../../src/db/schema';
+import { healthMeasurements, profiles } from '../../src/db/schema';
 import { requireAuth } from '../../src/lib/auth';
 import { fail, json, parseBody, parseQuery, withErrorHandling } from '../../src/lib/http';
 import { serializarPerfil } from '../../src/lib/serialize';
@@ -86,6 +86,17 @@ async function criar(req: VercelRequest, res: VercelResponse, userId: string) {
       // conta cria titular, e o indice unico parcial recusaria um segundo.
     })
     .returning();
+
+  // O peso do cadastro abre o historico de medicoes da pessoa (um historico so).
+  if (criado?.weightKg != null) {
+    await db.insert(healthMeasurements).values({
+      profileId: criado.id,
+      kind: 'peso',
+      weightKg: criado.weightKg,
+      measuredAt: criado.weightMeasuredAt ?? new Date(),
+      source: 'manual',
+    });
+  }
 
   json(res, 201, { profile: serializarPerfil(criado!) });
 }

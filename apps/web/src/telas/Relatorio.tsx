@@ -41,6 +41,7 @@ const PERIODOS: { valor: Periodo; rotulo: string }[] = [
 const SECOES: { chave: keyof SecoesDoRelatorio; rotulo: string; icone: string; apoio?: string }[] = [
   { chave: 'encerrados', rotulo: 'Tratamentos encerrados', icone: 'flag' },
   { chave: 'sintomas', rotulo: 'Sintomas', icone: 'activity' },
+  { chave: 'medicoes', rotulo: 'Medições', icone: 'heart', apoio: 'Pressão, glicemia, peso e oxigenação' },
   { chave: 'consultas', rotulo: 'Consultas', icone: 'calendar' },
   { chave: 'historicoDeDoses', rotulo: 'Histórico dose a dose', icone: 'list', apoio: 'Lista longa: deixe só se o médico pedir' },
 ];
@@ -108,7 +109,7 @@ export function Relatorio() {
     <Pagina area="settings" largura="larga">
       <ScreenHeader
         title="Relatório para o médico"
-        subtitle="Remédios, doses, sintomas e consultas do período, prontos para levar à consulta"
+        subtitle="Remédios, doses, sintomas, medições e consultas do período, prontos para levar à consulta"
         voltar="historico"
       />
 

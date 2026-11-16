@@ -6,6 +6,7 @@ import { fail, withErrorHandling } from '../../src/lib/http';
 import cronLembretes from '../../src/handlers/assistant/cron-lembretes';
 import historico from '../../src/handlers/assistant/historico';
 import lerFoto from '../../src/handlers/assistant/ler-foto';
+import lerVisor from '../../src/handlers/assistant/ler-visor';
 import mensagem from '../../src/handlers/assistant/mensagem';
 import posologia from '../../src/handlers/assistant/posologia';
 import resumoRelatorio from '../../src/handlers/assistant/resumo-relatorio';
@@ -35,6 +36,9 @@ const ROTAS: Record<string, (req: VercelRequest, res: VercelResponse) => Promise
   mensagem,
   historico,
   'ler-foto': lerFoto,
+  // Os numeros do visor de um aparelho (diario de medicoes). Mesmos tetos e
+  // mesmo rastro da leitura de receita.
+  'ler-visor': lerVisor,
   // "Descreva como tomar" no cadastro do remedio. Tambem nao e o assistente:
   // mora aqui pela vaga, com os proprios codigos POSOLOGY_*.
   posologia,

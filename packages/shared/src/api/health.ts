@@ -424,6 +424,71 @@ export type SymptomInput = {
   note?: string | null;
 };
 
+// ---------------------------------------------------------------------------
+// Medicoes (pressao, glicemia, peso, oxigenacao)
+// ---------------------------------------------------------------------------
+
+/** Espelha MEASUREMENT_KINDS de apps/api/src/contracts.ts. Chaves sem acento. */
+export const measurementKindValues = ['pressao', 'glicemia', 'peso', 'oxigenacao'] as const;
+export const measurementKindSchema = z.enum(measurementKindValues);
+export type MeasurementKind = z.infer<typeof measurementKindSchema>;
+
+/** Em que momento a glicemia foi medida: a referencia muda com ele. */
+export const glucoseContextValues = ['jejum', 'antes', 'depois', 'outro'] as const;
+export type GlucoseContext = (typeof glucoseContextValues)[number];
+
+/**
+ * Uma medicao. Colunas explicitas por tipo, e nao um "valor" generico: a
+ * pressao tem dois numeros, e o medico quer ver os dois.
+ */
+export const measurementSchema = z.object({
+  id: z.uuid(),
+  profileId: z.uuid(),
+  kind: measurementKindSchema,
+  systolic: z.number().nullish(),
+  diastolic: z.number().nullish(),
+  pulse: z.number().nullish(),
+  glucose: z.number().nullish(),
+  glucoseContext: z.enum(glucoseContextValues).nullish(),
+  weightKg: z.number().nullish(),
+  spo2: z.number().nullish(),
+  measuredAt: z.string(),
+  note: z.string().nullish(),
+  /** 'foto' quando os numeros vieram da leitura do visor pela IA. */
+  source: z.enum(['manual', 'foto']).default('manual'),
+  createdAt: z.string(),
+  /** Vem do join na listagem; ausente na resposta de criacao. */
+  profileName: z.string().nullish(),
+});
+export type Measurement = z.infer<typeof measurementSchema>;
+
+export type MeasurementInput = {
+  profileId: string;
+  kind: MeasurementKind;
+  measuredAt: string;
+  note?: string | null;
+  source?: 'manual' | 'foto';
+  systolic?: number | null;
+  diastolic?: number | null;
+  pulse?: number | null;
+  glucose?: number | null;
+  glucoseContext?: GlucoseContext | null;
+  weightKg?: number | null;
+  spo2?: number | null;
+};
+
+/** O que a IA leu no visor: uma PROPOSTA, que a pessoa confere antes de salvar. */
+export const leituraDoVisorSchema = z.object({
+  readId: z.uuid(),
+  systolic: z.number().nullish(),
+  diastolic: z.number().nullish(),
+  pulse: z.number().nullish(),
+  glucose: z.number().nullish(),
+  weightKg: z.number().nullish(),
+  spo2: z.number().nullish(),
+});
+export type LeituraDoVisor = z.infer<typeof leituraDoVisorSchema>;
+
 /** profileId ausente: o servidor ignora, e mover de perfil orfanaria o historico. */
 export type MedicationPatch = Partial<Omit<MedicationInput, 'profileId'>> & {
   isActive?: boolean;
@@ -754,6 +819,47 @@ export const healthApi = {
       `/api/diary/sintomas?id=${id}`,
       { method: 'DELETE', authenticated: true },
       () => undefined,
+    );
+  },
+
+  /** As medicoes de um periodo. Teto de 31 dias no servidor, como o diario. */
+  listMeasurements(input: { profileId?: string | null; from: Date; to: Date }): Promise<Measurement[]> {
+    const q = new URLSearchParams({ from: agoraLocalISO(input.from), to: agoraLocalISO(input.to) });
+    if (input.profileId) q.set('profileId', input.profileId);
+    return request(`/api/diary/medicoes?${q.toString()}`, { authenticated: true }, (data) =>
+      z.object({ measurements: z.array(measurementSchema) }).parse(data).measurements,
+    );
+  },
+
+  /** Registra uma medicao. Peso registrado aqui atualiza tambem a ficha da pessoa. */
+  createMeasurement(input: MeasurementInput): Promise<Measurement> {
+    return request(
+      '/api/diary/medicoes',
+      { method: 'POST', body: input, authenticated: true },
+      (data) => z.object({ measurement: measurementSchema }).parse(data).measurement,
+    );
+  },
+
+  deleteMeasurement(id: string): Promise<void> {
+    return request(
+      `/api/diary/medicoes?id=${id}`,
+      { method: 'DELETE', authenticated: true },
+      () => undefined,
+    );
+  },
+
+  /**
+   * Le os numeros do visor de um aparelho (assinatura). So PROPOE: a tela
+   * preenche os campos e a pessoa confere antes de salvar.
+   */
+  lerVisor(
+    input: { photo: string; kind: MeasurementKind; profileId?: string | null },
+    signal?: AbortSignal,
+  ): Promise<LeituraDoVisor> {
+    return request(
+      '/api/assistant/ler-visor',
+      { method: 'POST', body: input, authenticated: true, timeoutMs: LEITURA_TIMEOUT_MS, signal },
+      (data) => leituraDoVisorSchema.parse(data),
     );
   },
 

@@ -4,6 +4,7 @@ import { and, count, eq, gte } from 'drizzle-orm';
 import { API_ERROR, profilePatchSchema } from '../../src/contracts';
 import { db } from '../../src/db/client';
 import {
+  healthMeasurements,
   appointments,
   assistantConversations,
   medicationDoses,
@@ -151,6 +152,23 @@ async function atualizar(
      * ele e NOT NULL e e o que a interface inteira usa. Na mesma transacao,
      * para os dois nunca divergirem por uma falha no meio.
      */
+    /**
+     * O peso da ficha entra no HISTORICO de medicoes (handlers/diary/medicoes):
+     * um historico so. So quando o numero MUDA — o formulario manda o peso em
+     * todo salvamento, e salvar o nome nao pode repetir o peso no grafico.
+     */
+    const pesoNovo = body.weightKg;
+    const pesoAntes = atual.weightKg == null ? null : Number(atual.weightKg);
+    if (pesoNovo != null && pesoNovo !== pesoAntes) {
+      await tx.insert(healthMeasurements).values({
+        profileId: atual.id,
+        kind: 'peso',
+        weightKg: String(pesoNovo),
+        measuredAt: mudancas.weightMeasuredAt ?? new Date(),
+        source: 'manual',
+      });
+    }
+
     if (atual.isAccountHolder && body.fullName !== undefined) {
       await tx
         .update(users)

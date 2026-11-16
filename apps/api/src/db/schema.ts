@@ -548,6 +548,78 @@ export const symptomEntries = pgTable(
   ],
 );
 
+/**
+ * O diario de MEDICOES: pressao, glicemia, peso e oxigenacao.
+ *
+ * O dominio proprio que o comentario de symptomEntries anunciou: aqui ficam
+ * NUMEROS de aparelho, com unidade, e nao uma escala de 1 a 5.
+ *
+ * COLUNAS EXPLICITAS POR TIPO, e nao um "valor" generico: a pressao tem dois
+ * numeros e o medico quer os dois; um `value` + `value2` sem nome seria um
+ * convite a trocar sistolica por diastolica. Os checks garantem que cada
+ * tipo tem os seus campos e so os seus.
+ *
+ * PESO E UM SO HISTORICO: registrar um peso aqui atualiza profiles.weight_kg,
+ * e mudar o peso na ficha cria uma linha aqui (handlers/diary/medicoes.ts e
+ * api/profiles). O aviso de "peso desatualizado" continua lendo da ficha.
+ *
+ * LGPD: dado pessoal sensivel de saude. Cascata a partir de `profiles`, como
+ * no diario de sintomas. Sem updated_at e sem PATCH, tambem como la: corrigir
+ * e apagar e registrar de novo.
+ */
+export const healthMeasurements = pgTable(
+  'health_measurements',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    profileId: uuid('profile_id')
+      .notNull()
+      .references(() => profiles.id, { onDelete: 'cascade' }),
+    /** 'pressao' | 'glicemia' | 'peso' | 'oxigenacao' — ASCII, o acento vive na tela. */
+    kind: text('kind').notNull(),
+    systolic: smallint('systolic'),
+    diastolic: smallint('diastolic'),
+    /** Pulso, opcional na pressao e na oxigenacao (os aparelhos mostram). */
+    pulse: smallint('pulse'),
+    /** mg/dL. */
+    glucose: smallint('glucose'),
+    /** 'jejum' | 'antes' | 'depois' | 'outro': a referencia da glicemia muda com ele. */
+    glucoseContext: text('glucose_context'),
+    /** `numeric` volta como STRING do driver: passe por serializarMedicao. */
+    weightKg: numeric('weight_kg', { precision: 5, scale: 2 }),
+    /** Saturacao de oxigenio, em %. */
+    spo2: smallint('spo2'),
+    /** Sem defaultNow(): o aparelho manda o instante com o fuso, como no diario. */
+    measuredAt: timestamp('measured_at', { withTimezone: true }).notNull(),
+    note: text('note'),
+    /** 'manual' | 'foto' — 'foto' quando os numeros vieram da leitura do visor. */
+    source: text('source').notNull().default('manual'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('health_measurements_profile_measured_idx').on(t.profileId, t.measuredAt),
+    check('health_measurements_kind', sql`${t.kind} in ('pressao', 'glicemia', 'peso', 'oxigenacao')`),
+    check('health_measurements_source', sql`${t.source} in ('manual', 'foto')`),
+    /**
+     * Cada tipo com os seus campos, nas faixas que o contrato tambem aplica
+     * (lib/medicoes do shared). O IS NOT NULL e obrigatorio: no Postgres,
+     * `NULL BETWEEN a AND b` nao e falso, e o check deixaria passar a pressao
+     * sem a sistolica. E a ultima linha de defesa: se disparar, alguem
+     * escreveu no banco por fora da API.
+     */
+    check(
+      'health_measurements_pressao',
+      sql`${t.kind} <> 'pressao' OR (${t.systolic} IS NOT NULL AND ${t.diastolic} IS NOT NULL AND ${t.systolic} BETWEEN 60 AND 260 AND ${t.diastolic} BETWEEN 30 AND 160 AND ${t.systolic} > ${t.diastolic})`,
+    ),
+    check(
+      'health_measurements_glicemia',
+      sql`${t.kind} <> 'glicemia' OR (${t.glucose} IS NOT NULL AND ${t.glucose} BETWEEN 20 AND 600 AND (${t.glucoseContext} IS NULL OR ${t.glucoseContext} in ('jejum', 'antes', 'depois', 'outro')))`,
+    ),
+    check('health_measurements_peso', sql`${t.kind} <> 'peso' OR (${t.weightKg} IS NOT NULL AND ${t.weightKg} >= 0.5 AND ${t.weightKg} <= 300)`),
+    check('health_measurements_oxigenacao', sql`${t.kind} <> 'oxigenacao' OR (${t.spo2} IS NOT NULL AND ${t.spo2} BETWEEN 50 AND 100)`),
+    check('health_measurements_pulso', sql`${t.pulse} IS NULL OR ${t.pulse} BETWEEN 30 AND 220`),
+  ],
+);
+
 export const medications = pgTable(
   'medications',
   {
@@ -926,7 +998,11 @@ export const medicationPhotoReads = pgTable(
      * que uma foto saiu do pais.
      */
     profileId: uuid('profile_id').references(() => profiles.id, { onDelete: 'set null' }),
-    /** 'receita' | 'caixa' — sao prompts diferentes, e o rastro precisa saber qual. */
+    /**
+     * 'receita' | 'caixa' | 'visor' — sao prompts diferentes, e o rastro
+     * precisa saber qual. 'visor' e a foto do aparelho de pressao, glicemia,
+     * balanca ou oximetro (diario de medicoes); divide os mesmos tetos de uso.
+     */
     kind: text('kind').notNull(),
     model: text('model'),
     /** 'enviada' | 'lida' | 'vazia' | 'falha' */
@@ -947,7 +1023,7 @@ export const medicationPhotoReads = pgTable(
      * Nenhum literal aqui tem ponto e virgula, pelo motivo explicado no check
      * de formato de medication_attachments.
      */
-    check('medication_photo_reads_kind', sql`${t.kind} in ('receita', 'caixa')`),
+    check('medication_photo_reads_kind', sql`${t.kind} in ('receita', 'caixa', 'visor')`),
     check(
       'medication_photo_reads_outcome',
       sql`${t.outcome} in ('enviada', 'lida', 'vazia', 'falha')`,

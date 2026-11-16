@@ -124,6 +124,8 @@ export const API_ERROR = {
   /** "Descreva como tomar": a IA interpreta o texto da posologia. */
   POSOLOGY_BUSY: 'POSOLOGY_BUSY',
   POSOLOGY_FAILED: 'POSOLOGY_FAILED',
+  /** A IA nao leu numeros no visor do aparelho. Espelha packages/shared. */
+  MEASUREMENT_READ_FAILED: 'MEASUREMENT_READ_FAILED',
   /** Resumo do relatorio para o medico, escrito pela IA. Espelha packages/shared. */
   REPORT_SUMMARY_BUSY: 'REPORT_SUMMARY_BUSY',
   REPORT_SUMMARY_FAILED: 'REPORT_SUMMARY_FAILED',
@@ -151,7 +153,7 @@ export type ApiErrorCode = (typeof API_ERROR)[keyof typeof API_ERROR];
  * quem seguisse ao pe da letra deixaria o packages/shared para tras, e todo
  * cadastro novo ja nasceria pedindo reaceite.
  */
-export const POLICY_VERSION = '2026-11-14.1';
+export const POLICY_VERSION = '2026-11-16.1';
 
 export const fullNameSchema = z
   .string()
@@ -798,6 +800,85 @@ export const symptomQuerySchema = z.object({
  */
 export const symptomIdQuerySchema = z.object({ id: z.uuid() });
 
+// ---------------------------------------------------------------------------
+// Diario de medicoes (pressao, glicemia, peso, oxigenacao)
+// ---------------------------------------------------------------------------
+
+export const MEASUREMENT_KINDS = ['pressao', 'glicemia', 'peso', 'oxigenacao'] as const;
+export const GLUCOSE_CONTEXTS = ['jejum', 'antes', 'depois', 'outro'] as const;
+
+const inteiroEntre = (min: number, max: number, nome: string) =>
+  z
+    .number()
+    .int({ message: `${nome}: use um número inteiro` })
+    .min(min, { message: `Confira o número: o esperado fica entre ${min} e ${max}` })
+    .max(max, { message: `Confira o número: o esperado fica entre ${min} e ${max}` });
+
+/**
+ * Uma medicao. As faixas sao as mesmas de lib/medicoes do shared (que a tela
+ * usa para dar o erro antes de enviar) e dos checks do banco: pegam erro de
+ * digitacao, nao julgam a saude de ninguem.
+ *
+ * Cada tipo exige os SEUS campos e recusa os dos outros: um 120 de glicemia
+ * pendurado numa pressao seria uma medicao sem coisa medida.
+ */
+export const measurementInputSchema = z
+  .object({
+    profileId: z.uuid({ message: 'Escolha de quem é a medição' }),
+    kind: z.enum(MEASUREMENT_KINDS),
+    measuredAt: z.iso.datetime({ offset: true, message: 'Data ou hora inválida' }),
+    note: z.string().trim().max(500).optional().nullable(),
+    source: z.enum(['manual', 'foto']).optional(),
+    systolic: inteiroEntre(60, 260, 'Sistólica').optional().nullable(),
+    diastolic: inteiroEntre(30, 160, 'Diastólica').optional().nullable(),
+    pulse: inteiroEntre(30, 220, 'Pulso').optional().nullable(),
+    glucose: inteiroEntre(20, 600, 'Glicemia').optional().nullable(),
+    glucoseContext: z.enum(GLUCOSE_CONTEXTS).optional().nullable(),
+    weightKg: z
+      .number()
+      .min(0.5, { message: 'Confira o número: o esperado fica entre 0,5 e 300' })
+      .max(300, { message: 'Confira o número: o esperado fica entre 0,5 e 300' })
+      .optional()
+      .nullable(),
+    spo2: inteiroEntre(50, 100, 'Saturação').optional().nullable(),
+  })
+  .superRefine((v, ctx) => {
+    const exigidos: Record<(typeof MEASUREMENT_KINDS)[number], string[]> = {
+      pressao: ['systolic', 'diastolic'],
+      glicemia: ['glucose'],
+      peso: ['weightKg'],
+      oxigenacao: ['spo2'],
+    };
+    const permitidos: Record<(typeof MEASUREMENT_KINDS)[number], string[]> = {
+      pressao: ['systolic', 'diastolic', 'pulse'],
+      glicemia: ['glucose', 'glucoseContext'],
+      peso: ['weightKg'],
+      oxigenacao: ['spo2', 'pulse'],
+    };
+    const campos = ['systolic', 'diastolic', 'pulse', 'glucose', 'glucoseContext', 'weightKg', 'spo2'] as const;
+    for (const c of exigidos[v.kind]) {
+      if (v[c as (typeof campos)[number]] == null) {
+        ctx.addIssue({ code: 'custom', path: [c], message: 'Informe o valor' });
+      }
+    }
+    for (const c of campos) {
+      if (v[c] != null && !permitidos[v.kind].includes(c)) {
+        ctx.addIssue({ code: 'custom', path: [c], message: 'Este campo não pertence a este tipo de medição' });
+      }
+    }
+    if (v.kind === 'pressao' && v.systolic != null && v.diastolic != null && v.systolic <= v.diastolic) {
+      ctx.addIssue({ code: 'custom', path: ['diastolic'], message: 'A mínima precisa ser menor que a máxima' });
+    }
+  });
+
+export const measurementQuerySchema = z.object({
+  profileId: z.uuid().optional(),
+  from: z.iso.datetime({ offset: true }),
+  to: z.iso.datetime({ offset: true }),
+});
+
+export const measurementIdQuerySchema = z.object({ id: z.uuid() });
+
 export const assistantHistorySchema = z.object({
   profileId: z.uuid().optional(),
 });
@@ -868,5 +949,16 @@ export const leituraDeFotoSchema = z.object({
    * o unico momento em que obrigatorio sai de graca.
    */
   kind: z.enum(['receita', 'caixa']),
+  profileId: z.uuid().optional().nullable(),
+});
+
+/**
+ * A foto do VISOR de um aparelho (pressao, glicemia, balanca, oximetro).
+ * Mesma foto e mesmo teto de tamanho da leitura de receita; o `kind` diz que
+ * numeros procurar.
+ */
+export const leituraDoVisorSchema = z.object({
+  photo: fotoParaLeituraSchema,
+  kind: z.enum(MEASUREMENT_KINDS),
   profileId: z.uuid().optional().nullable(),
 });

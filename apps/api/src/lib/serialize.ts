@@ -1,4 +1,4 @@
-import type { medicationDoses, medications, profiles, symptomEntries } from '../db/schema';
+import type { healthMeasurements, medicationDoses, medications, profiles, symptomEntries } from '../db/schema';
 
 /**
  * Conversoes entre o que o driver do Postgres entrega e o que o aplicativo
@@ -34,6 +34,11 @@ export function serializarDose(d: typeof medicationDoses.$inferSelect) {
  */
 export function serializarSintoma(s: typeof symptomEntries.$inferSelect) {
   return { ...s, temperatureC: numero(s.temperatureC) };
+}
+
+/** `weight_kg` e numeric: volta como texto do driver nos dois caminhos (lista e POST). */
+export function serializarMedicao(m: typeof healthMeasurements.$inferSelect) {
+  return { ...m, weightKg: numero(m.weightKg) };
 }
 
 export function serializarMedicamento(m: typeof medications.$inferSelect) {

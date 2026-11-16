@@ -1,7 +1,8 @@
 import { addDays, differenceInCalendarDays, endOfDay, min as menor, startOfDay, subDays } from 'date-fns';
 
-import type { Appointment, Dose, Medication, Profile, SymptomEntry } from '../api/health';
+import type { Appointment, Dose, Measurement, Medication, Profile, SymptomEntry } from '../api/health';
 import { descricaoDoRegistro, TIPOS_DE_SINTOMA } from './diarioDeSintomas';
+import { descricaoDaMedicao, MOMENTOS_DA_GLICEMIA, resumoDoTipo, TIPOS_DE_MEDICAO, type ResumoDeMedicao } from './medicoes';
 import { cmParaAltura, idadeDescrita, pesoTexto } from './pessoa';
 import { doseNoSlot, hora, posologia, slotsDoDia, tituloDoMedicamento, vigenteHoje } from './posologia';
 
@@ -28,6 +29,8 @@ export const DIAS_POR_BLOCO = 31;
 export type SecoesDoRelatorio = {
   encerrados: boolean;
   sintomas: boolean;
+  /** Pressao, glicemia, peso e oxigenacao do periodo. */
+  medicoes: boolean;
   consultas: boolean;
   /** A lista dose a dose. Longa: desligada por padrao. */
   historicoDeDoses: boolean;
@@ -36,6 +39,7 @@ export type SecoesDoRelatorio = {
 export const SECOES_PADRAO: SecoesDoRelatorio = {
   encerrados: true,
   sintomas: true,
+  medicoes: true,
   consultas: true,
   historicoDeDoses: false,
 };
@@ -45,6 +49,8 @@ export type EntradaDoRelatorio = {
   /** Os remedios da pessoa, com as doses do periodo (de todos os blocos juntos). */
   remedios: Medication[];
   sintomas: SymptomEntry[];
+  /** Opcional: quem ainda nao busca medicoes passa sem elas. */
+  medicoes?: Measurement[];
   consultas: Appointment[];
   inicio: Date;
   fim: Date;
@@ -105,6 +111,11 @@ export type Relatorio = {
   emUso: RemedioDoRelatorio[];
   encerrados: RemedioDoRelatorio[] | null;
   sintomas: { resumo: ResumoDeSintoma[]; linhaDoTempo: { quando: string; texto: string; nota: string | null }[]; total: number } | null;
+  medicoes: {
+    resumo: ResumoDeMedicao[];
+    lista: { quando: string; texto: string; nota: string | null }[];
+    total: number;
+  } | null;
   consultas: { noPeriodo: LinhaDeConsulta[]; proximas: LinhaDeConsulta[] } | null;
   historicoDeDoses: { quando: string; remedio: string; status: string }[] | null;
   /** Nada de remedio, sintoma ou consulta no periodo. */
@@ -310,6 +321,10 @@ export function montarRelatorio(e: EntradaDoRelatorio): Relatorio {
 
   const consultasDaPessoa = e.consultas.filter((c) => c.profileId === perfil.id);
 
+  const medicoesDoPeriodo = (e.medicoes ?? [])
+    .filter((m) => m.profileId === perfil.id && dentro(new Date(m.measuredAt), inicio, fim))
+    .sort((a, b) => b.measuredAt.localeCompare(a.measuredAt));
+
   const dias = differenceInCalendarDays(fim, inicio) + 1;
   const historico = secoes.historicoDeDoses
     ? remedios
@@ -358,6 +373,7 @@ export function montarRelatorio(e: EntradaDoRelatorio): Relatorio {
     emUso,
     encerrados: secoes.encerrados ? encerrados : null,
     sintomas: secoes.sintomas ? resumirSintomas(sintomasDoPeriodo) : null,
+    medicoes: secoes.medicoes ? resumirMedicoes(medicoesDoPeriodo) : null,
     consultas: secoes.consultas
       ? { noPeriodo: consultasNoPeriodo.map(linhaDeConsulta), proximas: proximas.map(linhaDeConsulta) }
       : null,
@@ -366,6 +382,7 @@ export function montarRelatorio(e: EntradaDoRelatorio): Relatorio {
       emUso.length === 0 &&
       encerrados.length === 0 &&
       sintomasDoPeriodo.length === 0 &&
+      medicoesDoPeriodo.length === 0 &&
       consultasNoPeriodo.length === 0,
   };
 }
@@ -398,6 +415,40 @@ function resumirSintomas(registros: SymptomEntry[]): NonNullable<Relatorio['sint
       quando: dataEHora(new Date(r.occurredAt)),
       texto: descricaoDoRegistro(r),
       nota: r.note?.trim() || null,
+    })),
+  };
+}
+
+/**
+ * As medicoes do periodo: um resumo por tipo e a lista das mais recentes.
+ *
+ * A glicemia sai SEPARADA POR MOMENTO (jejum, antes, depois): a media de uma
+ * glicemia de jejum com uma de depois do almoco nao quer dizer nada.
+ */
+function resumirMedicoes(medicoes: Measurement[]): NonNullable<Relatorio['medicoes']> {
+  const resumo: ResumoDeMedicao[] = [];
+  for (const t of TIPOS_DE_MEDICAO) {
+    if (t.chave !== 'glicemia') {
+      const r = resumoDoTipo(medicoes, t);
+      if (r) resumo.push(r);
+      continue;
+    }
+    const daGlicemia = medicoes.filter((m) => m.kind === 'glicemia');
+    for (const momento of [...MOMENTOS_DA_GLICEMIA.map((x) => x.chave), null]) {
+      const doMomento = daGlicemia.filter((m) => (m.glucoseContext ?? null) === momento);
+      const r = resumoDoTipo(doMomento, t);
+      if (!r) continue;
+      const rotulo = MOMENTOS_DA_GLICEMIA.find((x) => x.chave === momento)?.rotulo;
+      resumo.push({ ...r, rotulo: rotulo ? `Glicemia — ${rotulo.toLowerCase()}` : 'Glicemia' });
+    }
+  }
+  return {
+    resumo,
+    total: medicoes.length,
+    lista: medicoes.slice(0, 30).map((m) => ({
+      quando: dataEHora(new Date(m.measuredAt)),
+      texto: `${TIPOS_DE_MEDICAO.find((t) => t.chave === m.kind)?.rotulo ?? ''}: ${descricaoDaMedicao(m)}`,
+      nota: m.note?.trim() || null,
     })),
   };
 }
@@ -460,6 +511,14 @@ export function dadosParaResumo(r: Relatorio): string {
     for (const s of r.sintomas.resumo) {
       linhas.push(
         `- ${s.rotulo}: ${s.registros} registro(s), média ${s.media}, extremo ${s.extremo}${s.temperaturaMaxima ? `, temperatura máxima ${s.temperaturaMaxima}` : ''}`,
+      );
+    }
+  }
+  if (r.medicoes?.resumo.length) {
+    linhas.push(`Medições registradas: ${r.medicoes.total}`);
+    for (const m of r.medicoes.resumo) {
+      linhas.push(
+        `- ${m.rotulo}: ${m.quantas} medição(ões), média ${m.media} ${m.unidade}, de ${m.minimo} a ${m.maximo}, última ${m.ultima} em ${m.ultimaQuando}`,
       );
     }
   }
@@ -580,7 +639,7 @@ export function relatorioEmHtml(r: Relatorio): string {
   }
 
   if (r.vazio) {
-    partes.push('<div class="nada">Nada registrado neste período: nenhum remédio, sintoma ou consulta.</div>');
+    partes.push('<div class="nada">Nada registrado neste período: nenhum remédio, sintoma, medição ou consulta.</div>');
   }
 
   partes.push(`<section><h2>Medicamentos em uso</h2>${tabelaDeRemedios(r.emUso, true)}</section>`);
@@ -608,6 +667,27 @@ export function relatorioEmHtml(r: Relatorio): string {
           .join('')}</tbody></table>${s.total > s.linhaDoTempo.length ? `<p class="vazio">Mostrando os ${s.linhaDoTempo.length} registros mais recentes de ${s.total}.</p>` : ''}`
       : '';
     partes.push(`<section><h2>Sintomas</h2>${resumo}${linha}</section>`);
+  }
+
+  if (r.medicoes) {
+    const m = r.medicoes;
+    const resumo = m.resumo.length
+      ? `<table><thead><tr><th>Medição</th><th class="num">Registros</th><th>Média</th><th>Menor / maior</th><th>Última</th></tr></thead><tbody>${m.resumo
+          .map(
+            (x) =>
+              `<tr><td><strong>${esc(x.rotulo)}</strong><span class="sub">${esc(x.unidade)}</span></td><td class="num">${x.quantas}</td><td>${esc(x.media)}</td><td>${esc(x.minimo)} / ${esc(x.maximo)}</td><td>${esc(x.ultima)}<span class="sub">${esc(x.ultimaQuando)}</span></td></tr>`,
+          )
+          .join('')}</tbody></table>`
+      : '<p class="vazio">Nenhuma medição registrada no período.</p>';
+    const lista = m.lista.length
+      ? `<table style="margin-top:8px"><thead><tr><th>Quando</th><th>Medição</th></tr></thead><tbody>${m.lista
+          .map(
+            (x) =>
+              `<tr><td style="white-space:nowrap">${esc(x.quando)}</td><td>${esc(x.texto)}${x.nota ? `<span class="sub">${esc(x.nota)}</span>` : ''}</td></tr>`,
+          )
+          .join('')}</tbody></table>${m.total > m.lista.length ? `<p class="vazio">Mostrando as ${m.lista.length} medições mais recentes de ${m.total}.</p>` : ''}`
+      : '';
+    partes.push(`<section><h2>Medições</h2>${resumo}${lista}</section>`);
   }
 
   if (r.consultas) {

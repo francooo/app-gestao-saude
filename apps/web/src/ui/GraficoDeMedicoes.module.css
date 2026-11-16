@@ -1,0 +1,99 @@
+.figura {
+  margin: 0;
+}
+
+.caixa {
+  width: 100%;
+  min-width: 0;
+}
+
+.svg {
+  display: block;
+  overflow: visible;
+}
+
+/* Faixa usual: salvia bem clara. E fundo, nao alerta. */
+.faixa {
+  fill: var(--cor-accent-green);
+  opacity: 0.12;
+}
+
+.grade {
+  stroke: var(--cor-divider);
+  stroke-width: 1;
+}
+
+.referencia {
+  stroke: var(--cor-text-secondary);
+  stroke-width: 1;
+  stroke-dasharray: 4 4;
+  opacity: 0.7;
+}
+
+.rotuloY,
+.rotuloX {
+  fill: var(--cor-text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.rotuloY {
+  text-anchor: end;
+  dominant-baseline: middle;
+}
+
+.linha {
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.ponto {
+  stroke: var(--cor-surface-card);
+  stroke-width: 2;
+}
+
+.legenda {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-xs);
+  margin-top: var(--espaco-md);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--cor-text-secondary);
+}
+
+.series {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-xs) var(--espaco-lg);
+}
+
+.serie {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.amostra {
+  flex-shrink: 0;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+
+.amostraFaixa {
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--cor-accent-green) 18%, transparent);
+}
+
+.amostraLinha {
+  width: 16px;
+  height: 0;
+  border-radius: 0;
+  border-top: 2px dashed var(--cor-text-secondary);
+}
+
+.fonte {
+  font-style: italic;
+}

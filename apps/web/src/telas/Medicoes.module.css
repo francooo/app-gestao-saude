@@ -1,0 +1,347 @@
+.bloco {
+  margin-top: var(--espaco-lg);
+}
+
+.seletor {
+  max-width: 420px;
+  margin-top: var(--espaco-lg);
+}
+
+/* --- Os quatro tipos --- */
+
+.tipos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espaco-md);
+  margin-top: var(--espaco-lg);
+}
+
+@media (min-width: 900px) {
+  .tipos {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.tipo {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espaco-md);
+  min-width: 0;
+  padding: var(--espaco-md) var(--espaco-lg);
+  border: 2px solid transparent;
+  border-radius: var(--raio-card);
+  background: var(--cor-surface-card);
+  box-shadow: var(--sombra-cartao);
+  color: inherit;
+  text-align: left;
+  transition:
+    border-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+/* Celular: o icone em cima, para o valor ter a largura toda. */
+@media (max-width: 559px) {
+  .tipo {
+    flex-direction: column;
+    gap: var(--espaco-sm);
+  }
+}
+
+.tipo:hover {
+  box-shadow: var(--sombra-flutuante);
+}
+
+.tipo[aria-checked='true'] {
+  border-color: var(--cor-accent-green);
+}
+
+.tipoIcone {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--cor-pill-tablet);
+  color: var(--cor-pill-tablet-icon);
+}
+
+.tipo[aria-checked='true'] .tipoIcone {
+  background: var(--cor-accent-green);
+  color: var(--cor-on-accent);
+}
+
+.tipoTextos {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.tipoRotulo {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.tipoValor {
+  margin-top: 2px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cor-text-primary, var(--cor-section-title));
+  overflow-wrap: anywhere;
+}
+
+.tipoQuando {
+  font-size: 12px;
+  color: var(--cor-text-secondary);
+}
+
+/* --- Colunas --- */
+
+.colunas {
+  margin-top: var(--espaco-lg);
+}
+
+.coluna {
+  min-width: 0;
+}
+
+.secaoDoTopo {
+  margin-top: var(--espaco-xl);
+}
+
+@media (min-width: 1024px) {
+  .colunas {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+    gap: var(--espaco-xxl);
+    align-items: start;
+  }
+}
+
+/* --- Formulario --- */
+
+.visor {
+  margin-bottom: var(--espaco-lg);
+}
+
+.trancado {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-md);
+  margin-bottom: var(--espaco-xl);
+  padding: var(--espaco-md) var(--espaco-lg);
+  border: 1.5px solid var(--cor-accent-green);
+  border-radius: 18px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.trancado:hover {
+  background: var(--cor-chip-more);
+}
+
+.trancadoTextos {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.trancadoTitulo {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.trancadoTexto {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}
+
+.lendo {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-md);
+  min-height: 52px;
+  padding: 0 var(--espaco-lg);
+  border-radius: var(--raio-pill);
+  background: var(--cor-chip-more);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--cor-section-title);
+}
+
+.cancelar {
+  margin-left: auto;
+}
+
+.apoio,
+.erro {
+  margin-top: var(--espaco-sm);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.apoio {
+  color: var(--cor-text-secondary);
+}
+
+.erro {
+  font-weight: 600;
+  color: var(--cor-text-error);
+}
+
+.campos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--espaco-lg);
+}
+
+.campo {
+  flex: 1 1 150px;
+  min-width: 0;
+}
+
+.grupo {
+  margin-bottom: var(--espaco-lg);
+}
+
+.rotulo {
+  margin-bottom: var(--espaco-sm);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.duas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--espaco-xl);
+}
+
+.duas > * {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+.salvo {
+  margin-top: var(--espaco-md);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cor-dose-taken);
+  text-align: center;
+}
+
+/* --- Historico --- */
+
+.grafico {
+  margin-top: var(--espaco-lg);
+}
+
+.divisor {
+  height: 1px;
+  margin: var(--espaco-lg) 0 var(--espaco-sm);
+  border: 0;
+  background: var(--cor-divider);
+}
+
+.vazio {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-md);
+  margin-top: var(--espaco-lg);
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--cor-text-secondary);
+}
+
+.lista {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espaco-md);
+  padding: var(--espaco-sm) 0;
+}
+
+.item + .item {
+  border-top: 1px solid var(--cor-divider);
+}
+
+.itemTextos {
+  flex: 1;
+  min-width: 0;
+}
+
+.itemQuando {
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}
+
+.itemValor {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.itemNota {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.apagar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--cor-text-secondary);
+}
+
+.apagar:hover {
+  background: var(--cor-chip-more);
+  color: var(--cor-text-error);
+}
+
+.verMais {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+  min-height: 44px;
+  margin-top: var(--espaco-sm);
+  border: 0;
+  border-radius: var(--raio-pill);
+  background: transparent;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cor-section-title);
+}
+
+.verMais:hover {
+  background: var(--cor-chip-more);
+}
+
+.nota {
+  margin-top: var(--espaco-md);
+  font-size: 13px;
+  color: var(--cor-text-secondary);
+}
+
+.nota a {
+  font-weight: 700;
+  color: var(--cor-accent-green);
+}

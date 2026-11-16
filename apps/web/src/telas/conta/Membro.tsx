@@ -127,6 +127,8 @@ function Formulario({ id }: { id: string }) {
   const depoisDeMudar = () => {
     // Raiz 'perfis': a lista, a ficha e a faixa da tela Inicio.
     void queryClient.invalidateQueries({ queryKey: CHAVES.perfis });
+    // Peso novo na ficha vira uma medicao (a API grava as duas juntas).
+    void queryClient.invalidateQueries({ queryKey: CHAVES.medicoes });
     navigate(-1);
   };
 
@@ -304,6 +306,14 @@ function Formulario({ id }: { id: string }) {
                 readOnly={salvando}
               />
             </div>
+
+            {/* O peso tem historico: cada peso salvo aqui entra nas medicoes. */}
+            {novo ? null : (
+              <Link to={`/medicoes?pessoa=${id}`} className={`${botoes.texto} ${estilos.atalhoMedicoes}`}>
+                <Icone nome="heart" size={17} />
+                Ver medições e gráfico
+              </Link>
+            )}
 
             {/* Parentesco nao existe para o titular: a lista nao tem "titular",
                 e campo que so pode ser preenchido errado e pior que nenhum. */}

@@ -19,8 +19,8 @@ export function useDadosDoRelatorio(perfilId: string | null, inicio: Date, fim: 
     queryFn: async () => {
       const id = perfilId!;
       const blocos = blocosDoPeriodo(inicio, fim);
-      // Remedios e sintomas tem o mesmo teto de 31 dias no servidor.
-      const [ficha, remedios, sintomas, consultas] = await Promise.all([
+      // Remedios, sintomas e medicoes tem o mesmo teto de 31 dias no servidor.
+      const [ficha, remedios, sintomas, medicoes, consultas] = await Promise.all([
         healthApi.getProfile(id),
         Promise.all(
           blocos.map((b) =>
@@ -28,13 +28,16 @@ export function useDadosDoRelatorio(perfilId: string | null, inicio: Date, fim: 
           ),
         ),
         Promise.all(blocos.map((b) => healthApi.listSymptoms({ profileId: id, from: b.de, to: b.ate }))),
+        Promise.all(blocos.map((b) => healthApi.listMeasurements({ profileId: id, from: b.de, to: b.ate }))),
         healthApi.listAppointments({ profileId: id }),
       ]);
       const vistos = new Set<string>();
+      const medidas = new Set<string>();
       return {
         perfil: ficha.profile,
         remedios: juntarBlocos(remedios),
         sintomas: sintomas.flat().filter((s) => !vistos.has(s.id) && vistos.add(s.id)),
+        medicoes: medicoes.flat().filter((m) => !medidas.has(m.id) && medidas.add(m.id)),
         consultas,
       };
     },

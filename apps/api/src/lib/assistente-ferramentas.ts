@@ -31,6 +31,7 @@ import { and, asc, desc, eq, gte, inArray, sql } from 'drizzle-orm';
 import { db } from '../db/client';
 import {
   appointments,
+  healthMeasurements,
   medicationDoses,
   medicationTimes,
   medications,
@@ -53,6 +54,9 @@ const MAXIMO_DOSES = 20;
 const MAXIMO_SINTOMAS = 30;
 /** Quanto tempo para tras `listar_sintomas` enxerga. */
 const DIAS_DE_SINTOMA = 30;
+const MAXIMO_MEDICOES = 40;
+/** Quanto tempo para tras `listar_medicoes` enxerga. */
+const DIAS_DE_MEDICAO = 60;
 
 /** Quanto tempo para tras `listar_consultas` enxerga. */
 const DIAS_DE_CONSULTA_PASSADA = 60;
@@ -215,6 +219,37 @@ export const FERRAMENTAS = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'listar_medicoes',
+      description:
+        'As medicoes que a familia registrou com aparelho: pressao (sistolica e ' +
+        'diastolica em mmHg, pulso), glicemia (mg/dL, com o momento: jejum, ' +
+        'antes, depois de comer ou outro), peso (kg) e oxigenacao (SpO2 em %). ' +
+        'Traz o instante em ISO com fuso e a observacao. Use para responder ' +
+        'sobre os NUMEROS registrados e a tendencia deles. Nao diagnostique e ' +
+        'nao classifique a pessoa como hipertensa ou diabetica: descreva os ' +
+        'valores e, se a pergunta pedir interpretacao, sugira levar ao medico. ' +
+        'Nao ter medicao registrada nao quer dizer que esta tudo bem. Compare ' +
+        'os instantes com a hora local que veio em AGORA.',
+      parameters: {
+        type: 'object',
+        properties: {
+          pessoa: {
+            type: 'string',
+            description: 'Nome da pessoa. Sem isto, traz a familia toda.',
+          },
+          tipo: {
+            type: 'string',
+            enum: ['pressao', 'glicemia', 'peso', 'oxigenacao'],
+            description: 'Restringe a um tipo. Sem isto, traz todos.',
+          },
+        },
+        additionalProperties: false,
+      },
+    },
+  },
 ] as const;
 
 const TIPOS_DE_SINTOMA = ['febre', 'dor', 'nausea', 'tosse', 'humor', 'sono'];
@@ -288,6 +323,61 @@ async function listarSintomas(userId: string, args: { pessoa?: string; tipo?: st
     })),
     janela_dias: DIAS_DE_SINTOMA,
     aviso: `Esta lista cobre os ultimos ${DIAS_DE_SINTOMA} dias. Um sintoma que nao aparece aqui pode simplesmente nao ter sido anotado.`,
+  };
+}
+
+const TIPOS_DE_MEDICAO = ['pressao', 'glicemia', 'peso', 'oxigenacao'];
+
+/**
+ * As medicoes da familia, ou de uma pessoa. Mesmo molde de listarSintomas:
+ * janela por instante, teto de linhas e o aviso de que ausencia de registro
+ * nao e informacao clinica.
+ */
+async function listarMedicoes(userId: string, args: { pessoa?: string; tipo?: string }) {
+  const alvo = await resolverPessoa(userId, args.pessoa);
+  if (!alvo.ok) return { erro: alvo.erro };
+
+  if (args.tipo && !TIPOS_DE_MEDICAO.includes(args.tipo)) {
+    return { erro: `Tipo desconhecido. Os tipos sao: ${TIPOS_DE_MEDICAO.join(', ')}.` };
+  }
+
+  const desde = new Date(Date.now() - DIAS_DE_MEDICAO * 24 * 60 * 60 * 1000);
+  const filtros = [
+    inArray(healthMeasurements.profileId, alvo.perfis.map((p) => p.id)),
+    gte(healthMeasurements.measuredAt, desde),
+  ];
+  if (args.tipo) filtros.push(eq(healthMeasurements.kind, args.tipo));
+
+  const linhas = await db
+    .select({ pessoa: profiles.fullName, m: healthMeasurements })
+    .from(healthMeasurements)
+    .innerJoin(profiles, eq(profiles.id, healthMeasurements.profileId))
+    .where(and(...filtros))
+    .orderBy(desc(healthMeasurements.measuredAt))
+    .limit(MAXIMO_MEDICOES);
+
+  const quem = args.pessoa ? alvo.perfis[0]?.nome ?? args.pessoa : 'a familia';
+  if (linhas.length === 0) {
+    return {
+      medicoes: [],
+      aviso: `Nenhuma medicao anotada para ${quem} nos ultimos ${DIAS_DE_MEDICAO} dias. Isso quer dizer que ninguem registrou, nao que os valores estejam bons.`,
+    };
+  }
+
+  return {
+    medicoes: linhas.map(({ pessoa, m }) => ({
+      pessoa,
+      tipo: m.kind,
+      quando: m.measuredAt.toISOString(),
+      ...(m.kind === 'pressao' ? { sistolica: m.systolic, diastolica: m.diastolic } : {}),
+      ...(m.kind === 'glicemia' ? { glicemia_mg_dl: m.glucose, momento: m.glucoseContext } : {}),
+      ...(m.kind === 'peso' ? { peso_kg: m.weightKg == null ? null : Number(m.weightKg) } : {}),
+      ...(m.kind === 'oxigenacao' ? { spo2: m.spo2 } : {}),
+      ...(m.pulse != null ? { pulso: m.pulse } : {}),
+      observacoes: m.note,
+    })),
+    janela_dias: DIAS_DE_MEDICAO,
+    aviso: `Esta lista cobre os ultimos ${DIAS_DE_MEDICAO} dias e ate ${MAXIMO_MEDICOES} medicoes.`,
   };
 }
 
@@ -824,6 +914,10 @@ export async function executarFerramenta(
       case 'listar_sintomas':
         return JSON.stringify(
           await listarSintomas(userId, { pessoa: texto('pessoa'), tipo: texto('tipo') }),
+        );
+      case 'listar_medicoes':
+        return JSON.stringify(
+          await listarMedicoes(userId, { pessoa: texto('pessoa'), tipo: texto('tipo') }),
         );
       default:
         return JSON.stringify({ erro: `Ferramenta "${nome}" nao existe.` });
