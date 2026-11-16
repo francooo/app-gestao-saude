@@ -319,6 +319,26 @@ export default function InicioScreen() {
               </View>
             </SurfaceCard>
           </Pressable>
+
+          {/* Medicoes: mesmo cartao e mesmo ladrilho neutro do diario. */}
+          <Pressable
+            onPress={() => router.push('/medicoes')}
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel="Medições. Pressão, glicemia, peso e oxigenação, com gráfico."
+            style={({ pressed }) => [styles.medicoes, pressed && styles.diarioPressionado]}
+          >
+            <SurfaceCard style={styles.diario}>
+              <View style={styles.diarioLinha}>
+                <IconTile size={54} icone="heart" {...LADRILHO_NEUTRO} />
+                <View style={styles.diarioTextos}>
+                  <Text style={styles.diarioTitulo}>Medições</Text>
+                  <Text style={styles.diarioAjuda}>Pressão, glicemia, peso e oxigenação</Text>
+                </View>
+                <Feather name="chevron-right" size={22} color={colors.accentGreen} />
+              </View>
+            </SurfaceCard>
+          </Pressable>
         </View>
 
         <View style={styles.secao}>
@@ -437,6 +457,7 @@ function dataCurta(d: Date): string {
 const styles = StyleSheet.create({
   diario: { padding: spacing.lg },
   diarioPressionado: { opacity: 0.85 },
+  medicoes: { marginTop: spacing.md },
   diarioLinha: { flexDirection: 'row', alignItems: 'center' },
   diarioTextos: { flex: 1, marginLeft: spacing.lg },
   diarioTitulo: { fontFamily: fonts.bold, fontSize: 17, color: colors.sectionTitle },

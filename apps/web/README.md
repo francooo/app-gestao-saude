@@ -56,6 +56,7 @@ Conferir no primeiro preview: fazer um login errado pela web e olhar o `ip` grav
 
 - **Assistente:** conversa com contexto da pessoa escolhida, ações rápidas, botão de emergência (192) e, sem assinatura, o histórico para reler.
 - **Diário de sintomas:** os seis tipos, escala de 1 a 5, registro de hoje ou de ontem, gráfico dos últimos 7 dias e linha do tempo.
+- **Medições:** pressão, glicemia, peso e oxigenação; digitar ou fotografar o visor (assinatura); gráfico de 7, 30 ou 90 dias com a faixa de referência e a fonte, sem rótulo de alto ou baixo; aviso neutro com o 192 só em valor extremo. O peso registrado atualiza a ficha.
 - **Avisos:** dose atrasada, consulta próxima, tratamento terminando, peso desatualizado, política e fim do teste — calculados no navegador (`src/lib/avisos.tsx`), com o ponto de "há novidades" no sino.
 - **Ajustes e conta:** dados pessoais, e-mail e senha, família (lista, cadastro e remoção de membro), assinatura, privacidade (consentimento, resumo da política e apagar a conta), lembretes por WhatsApp e acompanhantes.
 

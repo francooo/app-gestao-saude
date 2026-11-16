@@ -389,6 +389,19 @@ function FormularioDeMembro() {
                   />
                 </View>
 
+                {/* O peso tem historico: cada peso salvo aqui entra nas medicoes. */}
+                {id !== 'novo' ? (
+                  <Pressable
+                    onPress={() => router.push({ pathname: '/medicoes', params: { pessoa: id } })}
+                    accessibilityRole="link"
+                    hitSlop={8}
+                    style={styles.atalhoMedicoes}
+                  >
+                    <Feather name="heart" size={16} color={colors.accentGreen} />
+                    <Text style={styles.atalhoMedicoesTexto}>Ver medições e gráfico</Text>
+                  </Pressable>
+                ) : null}
+
                 {/*
                   Parentesco nao existe para o titular: a lista de opcoes
                   nao tem "titular", entao o campo so ofereceria rotulos
@@ -551,6 +564,15 @@ const styles = StyleSheet.create({
   // Duas colunas: o FormField ja traz o proprio marginBottom, entao a linha
   // nao precisa de espacamento vertical.
   linha: { flexDirection: 'row', gap: spacing.md },
+  atalhoMedicoes: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    alignSelf: 'flex-start',
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.md,
+  },
+  atalhoMedicoesTexto: { fontFamily: fonts.bold, fontSize: 15, color: colors.accentGreen },
   coluna: { flex: 1 },
   ultimoCampo: { marginBottom: spacing.sm },
   erroGeral: {

@@ -43,6 +43,7 @@ const PERIODOS = [
 const SECOES: { chave: keyof SecoesDoRelatorio; rotulo: string; icone: string }[] = [
   { chave: 'encerrados', rotulo: 'Tratamentos encerrados', icone: 'flag' },
   { chave: 'sintomas', rotulo: 'Sintomas', icone: 'activity' },
+  { chave: 'medicoes', rotulo: 'Medições', icone: 'heart' },
   { chave: 'consultas', rotulo: 'Consultas', icone: 'calendar' },
   { chave: 'historicoDeDoses', rotulo: 'Histórico dose a dose', icone: 'list' },
 ];
@@ -251,6 +252,7 @@ export default function RelatorioScreen() {
                   <Numero valor={String(contagem.emUso)} rotulo="remédios em uso" />
                   <Numero valor={contagem.adesao} rotulo="das doses previstas tomadas" />
                   {secoes.sintomas ? <Numero valor={String(contagem.sintomas)} rotulo="registros de sintomas" /> : null}
+                  {secoes.medicoes ? <Numero valor={String(contagem.medicoes)} rotulo="medições no período" /> : null}
                   {secoes.consultas ? <Numero valor={String(contagem.consultas)} rotulo="consultas no período" /> : null}
                 </View>
               )}
@@ -334,6 +336,7 @@ function numerosDaPrevia(r: Relatorio) {
     emUso: r.emUso.length,
     adesao: previstas > 0 ? `${Math.round((tomadas / previstas) * 100)}%` : '—',
     sintomas: r.sintomas?.total ?? 0,
+    medicoes: r.medicoes?.total ?? 0,
     consultas: r.consultas?.noPeriodo.length ?? 0,
   };
 }

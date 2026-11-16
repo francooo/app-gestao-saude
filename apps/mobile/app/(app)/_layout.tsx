@@ -154,6 +154,11 @@ export default function AppLayout() {
         name="sintomas"
         options={{ href: null, tabBarStyle: { display: 'none' } }}
       />
+      {/* Medicoes: formulario com grafico, mesma regra do diario (sem barra). */}
+      <Tabs.Screen
+        name="medicoes"
+        options={{ href: null, tabBarStyle: { display: 'none' } }}
+      />
       {/* Relatorio para o medico: formulario curto, mesma regra (sem barra). */}
       <Tabs.Screen
         name="relatorio"
