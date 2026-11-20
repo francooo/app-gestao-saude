@@ -1,0 +1,164 @@
+.modal {
+  width: min(640px, calc(100vw - 2 * var(--espaco-lg)));
+  max-height: calc(100dvh - 2 * var(--espaco-lg));
+  padding: 0;
+  border: 0;
+  border-radius: 32px;
+  background: var(--creme-superficie);
+  box-shadow: var(--sombra-flutuante);
+  color: var(--ink);
+}
+
+.modal::backdrop {
+  background: rgba(30, 45, 35, 0.45);
+}
+
+.caixa {
+  padding: var(--espaco-xl);
+}
+
+@media (min-width: 768px) {
+  .caixa {
+    padding: 36px;
+  }
+}
+
+.topo {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--espaco-md);
+  margin-bottom: var(--espaco-lg);
+}
+
+.titulo {
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--musgo);
+}
+
+.subtitulo {
+  margin-top: 4px;
+  font-size: 16px;
+  color: var(--salvia-texto);
+}
+
+.fechar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--areia);
+  color: var(--musgo);
+}
+
+.fechar:hover {
+  background: var(--pistache);
+}
+
+.foto {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-lg);
+  margin-bottom: var(--espaco-lg);
+  padding: var(--espaco-md);
+  border: 2px dashed rgba(36, 93, 73, 0.22);
+  border-radius: 24px;
+}
+
+.fotoBotao {
+  position: relative;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+}
+
+.fotoVazia {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: var(--pistache);
+  color: var(--musgo);
+}
+
+.fotoSelo {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--creme-superficie);
+  border-radius: 50%;
+  background: #8fa77f;
+  color: #ffffff;
+}
+
+.fotoTexto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 15px;
+  color: var(--musgo);
+}
+
+.fotoTexto span {
+  font-size: 13px;
+  color: var(--salvia-texto);
+}
+
+.duas {
+  display: grid;
+  gap: 0 var(--espaco-lg);
+}
+
+@media (min-width: 560px) {
+  .duas {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+}
+
+.erro {
+  margin-bottom: var(--espaco-md);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--cor-text-error);
+}
+
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--espaco-md);
+  margin-top: var(--espaco-md);
+}
+
+.acoes > * {
+  flex: 0 0 auto;
+}
+
+/* O PrimaryButton vem com largura total; aqui ele divide a linha com o Cancelar. */
+.acoes .salvar {
+  width: auto;
+  min-width: 200px;
+}
+
+@media (max-width: 479px) {
+  .acoes > * {
+    flex: 1 1 100%;
+  }
+
+  .acoes .salvar {
+    width: 100%;
+  }
+}

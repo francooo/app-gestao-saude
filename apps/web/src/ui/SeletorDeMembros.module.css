@@ -53,6 +53,30 @@
   position: relative;
 }
 
+/* O "+" de adicionar membro: circulo tracejado, sem rotulo visivel. */
+.adicionar {
+  padding: 4px;
+}
+
+.maisCirculo {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 1.5px dashed var(--salvia);
+  border-radius: 50%;
+  color: var(--musgo);
+}
+
+.adicionar:hover .maisCirculo {
+  border-style: solid;
+  background: var(--pistache);
+}
+
+.seletor[data-formato='fileira'] .adicionar {
+  padding: 4px;
+}
+
 .mais .item {
   padding-right: 5px;
 }
@@ -99,7 +123,7 @@
 }
 
 /* Tablet: so os avatares no cabecalho. */
-@media (min-width: 768px) and (max-width: 1439px) {
+@media (min-width: 768px) and (max-width: 1599px) {
   .seletor[data-formato='cabecalho'] .nome {
     position: absolute;
     width: 1px;

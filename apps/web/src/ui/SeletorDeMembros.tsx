@@ -4,17 +4,18 @@ import { rotuloCurto, usePessoaAtiva } from '@/lib/pessoaAtiva';
 
 import { Avatar } from './Avatar';
 import { Icone } from './Icone';
+import { ModalNovoMembro } from './ModalNovoMembro';
 import estilos from './SeletorDeMembros.module.css';
 
 /** Quantos membros cabem na fileira antes do "+N" (tela larga). */
-const NA_FILEIRA = 4;
+const NA_FILEIRA = 3;
 
 /**
  * O seletor de membros do cabecalho: "Todos" e cada pessoa da familia com
  * avatar pequeno e primeiro nome. O escolhido contextualiza o site inteiro
  * (lib/pessoaAtiva).
  *
- * - Tela larga: a fileira inteira ate 5 itens; com mais membros, os 4 primeiros
+ * - Tela larga: ate 4 membros na fileira; com mais, os 3 primeiros
  *   e um "+N" que abre a lista completa.
  * - Tablet: so os avatares (o nome fica no rotulo acessivel e no title).
  * - Celular: uma fileira rolavel com todos, sem "+N".
@@ -25,6 +26,8 @@ const NA_FILEIRA = 4;
 export function SeletorDeMembros({ formato }: { formato: 'cabecalho' | 'fileira' }) {
   const { membros, pessoaId, setPessoa, carregando } = usePessoaAtiva();
   const [aberto, setAberto] = useState(false);
+  /** O modal de cadastro do "+": adicionar alguem sem sair da tela. */
+  const [cadastrando, setCadastrando] = useState(false);
   const caixa = useRef<HTMLDivElement>(null);
 
   // Clique fora ou Esc fecha a lista do "+N".
@@ -126,6 +129,20 @@ export function SeletorDeMembros({ formato }: { formato: 'cabecalho' | 'fileira'
           ) : null}
         </div>
       ) : null}
+
+      <button
+        type="button"
+        className={`${estilos.item} ${estilos.adicionar}`}
+        onClick={() => setCadastrando(true)}
+        aria-label="Adicionar membro da família"
+        title="Adicionar membro da família"
+      >
+        <span className={estilos.maisCirculo} aria-hidden="true">
+          <Icone nome="plus" size={18} />
+        </span>
+      </button>
+
+      <ModalNovoMembro aberto={cadastrando} onFechar={() => setCadastrando(false)} />
     </div>
   );
 }

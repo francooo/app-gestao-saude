@@ -170,7 +170,8 @@
   }
 }
 
-@media (min-width: 1024px) {
+/* Os rotulos so cabem a partir daqui junto com o seletor de membros. */
+@media (min-width: 1180px) {
   .rotulo {
     display: inline;
   }
