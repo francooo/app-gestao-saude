@@ -224,15 +224,10 @@ export const FERRAMENTAS = [
     function: {
       name: 'listar_medicoes',
       description:
-        'As medicoes que a familia registrou com aparelho: pressao (sistolica e ' +
-        'diastolica em mmHg, pulso), glicemia (mg/dL, com o momento: jejum, ' +
-        'antes, depois de comer ou outro), peso (kg) e oxigenacao (SpO2 em %). ' +
-        'Traz o instante em ISO com fuso e a observacao. Use para responder ' +
-        'sobre os NUMEROS registrados e a tendencia deles. Nao diagnostique e ' +
-        'nao classifique a pessoa como hipertensa ou diabetica: descreva os ' +
-        'valores e, se a pergunta pedir interpretacao, sugira levar ao medico. ' +
-        'Nao ter medicao registrada nao quer dizer que esta tudo bem. Compare ' +
-        'os instantes com a hora local que veio em AGORA.',
+        'Medicoes registradas: pressao (mmHg), glicemia (mg/dL e momento), peso ' +
+        '(kg) e oxigenacao (SpO2 %), com instante ISO. Descreva os numeros sem ' +
+        'diagnosticar; para interpretar, sugira o medico. Sem registro nao ' +
+        'significa que esta tudo bem.',
       parameters: {
         type: 'object',
         properties: {

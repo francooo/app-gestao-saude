@@ -31,6 +31,16 @@ const URL_GROQ = 'https://api.groq.com/openai/v1/chat/completions';
 
 export const MODELO = 'openai/gpt-oss-120b';
 
+/**
+ * Reserva do assistente quando o MODELO estoura o limite por minuto (429).
+ *
+ * O limite da Groq e POR MODELO (ver o comentario do 429, abaixo): o 20b tem
+ * o seu proprio balde. E da mesma familia — texto puro, ferramentas e
+ * `browser_search` do mesmo jeito —, menor e mais rapido. Responde um pouco
+ * pior, e por isso so entra quando o principal recusou.
+ */
+export const MODELO_RESERVA = 'openai/gpt-oss-20b';
+
 /** Le imagem. Ver o cabecalho: nao ha alternativa nesta conta. */
 export const MODELO_DE_VISAO = 'qwen/qwen3.8-27b';
 

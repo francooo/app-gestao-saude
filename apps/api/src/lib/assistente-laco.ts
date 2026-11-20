@@ -22,6 +22,8 @@
 import { executarFerramenta, FERRAMENTAS } from './assistente-ferramentas';
 import {
   BUSCA_NA_INTERNET,
+  MODELO,
+  MODELO_RESERVA,
   perguntarAoGroq,
   type MensagemGroq,
   type RespostaGroq,
@@ -73,6 +75,13 @@ export async function rodarLaco(opcoes: {
   const rastro: Rastro = { rodadas: 0, ferramentas: [], buscou: false, truncado: false };
   let modelo = '';
   let ultimaFalha: RespostaGroq & { ok: false } = { ok: false, motivo: 'falha' };
+  /**
+   * O modelo desta conversa. Comeca no principal; se ele recusar por limite
+   * do minuto (429), a MESMA rodada e refeita no reserva, e o resto da
+   * conversa segue nele — voltar ao principal na rodada seguinte bateria no
+   * mesmo balde vazio.
+   */
+  let modeloAtual = MODELO;
 
   for (let rodada = 1; rodada <= MAXIMO_DE_RODADAS; rodada += 1) {
     const sobra = fim - Date.now();
@@ -88,10 +97,31 @@ export async function rodarLaco(opcoes: {
     const ultima = rodada === MAXIMO_DE_RODADAS;
     if (ultima) rastro.truncado = true;
 
-    const resposta = await perguntarAoGroq(mensagens, {
+    let resposta = await perguntarAoGroq(mensagens, {
       ferramentas: ultima ? [] : disponiveis,
       timeoutMs: sobra,
+      modelo: modeloAtual,
     });
+
+    // Limite do minuto no principal: tenta o reserva, que tem balde proprio.
+    // Se o reserva tambem falhar, vale o 'limite' original — e a mensagem
+    // certa para a pessoa ("tente de novo em instantes").
+    if (!resposta.ok && resposta.motivo === 'limite' && modeloAtual !== MODELO_RESERVA) {
+      const restante = fim - Date.now();
+      if (restante >= SOBRA_MINIMA_MS) {
+        const reserva = await perguntarAoGroq(mensagens, {
+          ferramentas: ultima ? [] : disponiveis,
+          timeoutMs: restante,
+          modelo: MODELO_RESERVA,
+        });
+        if (reserva.ok) {
+          resposta = reserva;
+          modeloAtual = MODELO_RESERVA;
+        } else {
+          console.error('[assistente] reserva tambem falhou:', reserva.motivo);
+        }
+      }
+    }
 
     rastro.rodadas = rodada;
 
