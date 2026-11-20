@@ -21,6 +21,7 @@
     "date-fns": "^4.4.0",
     "lucide-react": "^1.66.0",
     "maplibre-gl": "^6.18.0",
+    "pdfjs-dist": "4.10.38",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-router": "^8.5.1",

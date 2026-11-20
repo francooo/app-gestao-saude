@@ -34,11 +34,11 @@ export type ResultadoFoto =
  * PRECISA ser chamada direto do clique: o navegador so abre o seletor em
  * resposta a um gesto, e um `await` antes desta chamada ja perde o gesto.
  */
-function abrirSeletor(camera: boolean): Promise<File | null> {
+function abrirSeletor(camera: boolean, aceitar = 'image/*'): Promise<File | null> {
   return new Promise((resolve) => {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'image/*';
+    input.accept = aceitar;
     // No celular, sugere a camera traseira; no computador o atributo e ignorado.
     if (camera) input.capture = 'environment';
     input.addEventListener('change', () => resolve(input.files?.[0] ?? null), { once: true });
@@ -67,9 +67,12 @@ async function carregar(arquivo: File): Promise<ImageBitmap | HTMLImageElement> 
   }
 }
 
+/** O que da para desenhar num canvas: foto decodificada ou a pagina de um PDF. */
+type Fonte = ImageBitmap | HTMLImageElement | HTMLCanvasElement;
+
 type Recorte = { sx: number; sy: number; sw: number; sh: number; w: number; h: number };
 
-function desenhar(imagem: ImageBitmap | HTMLImageElement, r: Recorte): HTMLCanvasElement | null {
+function desenhar(imagem: Fonte, r: Recorte): HTMLCanvasElement | null {
   const canvas = document.createElement('canvas');
   canvas.width = r.w;
   canvas.height = r.h;
@@ -103,7 +106,7 @@ function prepararQuadrado(imagem: ImageBitmap | HTMLImageElement): string | null
   return null;
 }
 
-function prepararDocumento(imagem: ImageBitmap | HTMLImageElement): string | null {
+function prepararDocumento(imagem: Fonte): string | null {
   const maior = Math.max(imagem.width, imagem.height);
   if (maior <= 0) return null;
   for (const alvo of [LADO_DOCUMENTO, LADO_DOCUMENTO_REDUZIDO]) {
@@ -144,4 +147,56 @@ export function escolherFoto(opcoes?: { camera?: boolean }): Promise<ResultadoFo
 /** Receita ou caixa: ate 1280 px no lado maior. Chame direto do clique. */
 export function escolherFotoDeDocumento(opcoes?: { camera?: boolean }): Promise<ResultadoFoto> {
   return escolher(opcoes?.camera ?? false, prepararDocumento);
+}
+
+/**
+ * A primeira pagina de um PDF como imagem, no proprio navegador.
+ *
+ * A API so le IMAGEM; o PDF vira um <canvas> aqui e segue o mesmo caminho da
+ * foto (prepararDocumento). O pdfjs e carregado so quando alguem escolhe um
+ * PDF — e pesado, e a maioria das leituras e foto.
+ */
+async function primeiraPaginaDoPdf(arquivo: File): Promise<HTMLCanvasElement | null> {
+  const pdfjs = await import('pdfjs-dist');
+  const worker = await import('pdfjs-dist/build/pdf.worker.min.mjs?url');
+  pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
+  const doc = await pdfjs.getDocument({ data: await arquivo.arrayBuffer() }).promise;
+  try {
+    const pagina = await doc.getPage(1);
+    const base = pagina.getViewport({ scale: 1 });
+    // O lado maior perto do teto do documento: legivel sem pesar.
+    const escala = Math.min(3, LADO_DOCUMENTO / Math.max(base.width, base.height));
+    const viewport = pagina.getViewport({ scale: escala });
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.round(viewport.width);
+    canvas.height = Math.round(viewport.height);
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    await pagina.render({ canvasContext: ctx, viewport }).promise;
+    return canvas;
+  } finally {
+    void doc.destroy();
+  }
+}
+
+/**
+ * Receita por ARQUIVO: imagem ou PDF (so a primeira pagina). Chame direto do
+ * clique. O resultado e o mesmo JPEG de escolherFotoDeDocumento.
+ */
+export async function escolherArquivoDeDocumento(): Promise<ResultadoFoto> {
+  const arquivo = await abrirSeletor(false, 'image/*,application/pdf');
+  if (!arquivo) return { ok: false, motivo: 'cancelado' };
+  try {
+    if (arquivo.type === 'application/pdf' || arquivo.name.toLowerCase().endsWith('.pdf')) {
+      const canvas = await primeiraPaginaDoPdf(arquivo);
+      const dataUri = canvas ? prepararDocumento(canvas) : null;
+      return dataUri ? { ok: true, dataUri } : { ok: false, motivo: 'falha' };
+    }
+    const dataUri = prepararDocumento(await carregar(arquivo));
+    return dataUri ? { ok: true, dataUri } : { ok: false, motivo: 'falha' };
+  } catch {
+    return { ok: false, motivo: 'falha' };
+  }
 }

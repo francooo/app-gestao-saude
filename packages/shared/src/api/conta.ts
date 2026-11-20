@@ -15,6 +15,8 @@ export const contaSchema = z.object({
   id: z.uuid(),
   email: z.string(),
   fullName: z.string().nullable(),
+  /** So digitos, com DDI. nullish: servidor antigo nao manda o campo. */
+  phone: z.string().nullish(),
   createdAt: z.string(),
 });
 export type Conta = z.infer<typeof contaSchema>;
@@ -78,6 +80,15 @@ export const contaApi = {
       `/api/me/perfil${comContagens ? '?counts=true' : ''}`,
       { authenticated: true },
       (data) => perfilDaContaSchema.parse(data),
+    );
+  },
+
+  /** Ajustes > Perfil: nome e telefone da conta. Telefone vazio apaga. */
+  atualizarPerfil(input: { fullName?: string; phone?: string | null }): Promise<Conta> {
+    return request(
+      '/api/me/perfil',
+      { method: 'PATCH', body: input, authenticated: true },
+      (data) => z.object({ user: contaSchema }).parse(data).user,
     );
   },
 

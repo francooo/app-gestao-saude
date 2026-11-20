@@ -35,6 +35,11 @@ export const users = pgTable('users', {
   email: citext('email').notNull().unique(),
   passwordHash: text('password_hash').notNull(),
   fullName: text('full_name'),
+  /**
+   * Telefone de contato do titular (Ajustes > Perfil). So digitos, com DDI,
+   * como o do acompanhante. Opcional; nao e usado para login.
+   */
+  phone: text('phone'),
   isActive: boolean('is_active').notNull().default(true),
   passwordChangedAt: timestamp('password_changed_at', { withTimezone: true })
     .notNull()
@@ -386,6 +391,8 @@ export const professionals = pgTable(
      * O app reduz para 200x200 antes de enviar, o que da ~10 KB.
      */
     photo: text('photo'),
+    /** O coracao da tela de Medicos: favoritos aparecem primeiro. */
+    isFavorite: boolean('is_favorite').notNull().default(false),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
   },
@@ -741,12 +748,23 @@ export const caregivers = pgTable(
     notifyLate: boolean('notify_late').notNull().default(true),
     notifyLowStock: boolean('notify_low_stock').notNull().default(true),
     notifyTaken: boolean('notify_taken').notNull().default(true),
+    /** Lembrete das consultas da pessoa, na antecedencia escolhida na consulta. */
+    notifyAppointment: boolean('notify_appointment').notNull().default(false),
+    /**
+     * Quantos minutos ANTES da dose o lembrete sai (0, 15, 30 ou 60). Zero e o
+     * comportamento de sempre: a mensagem no horario da dose.
+     */
+    doseLeadMinutes: integer('dose_lead_minutes').notNull().default(0),
     /** O interruptor "Ativar mensagens". Desligado, nada sai. */
     active: boolean('active').notNull().default(true),
     invitedAt: timestamp('invited_at', { withTimezone: true }),
     createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index('caregivers_profile_idx').on(t.profileId), index('caregivers_user_idx').on(t.userId)],
+  (t) => [
+    index('caregivers_profile_idx').on(t.profileId),
+    index('caregivers_user_idx').on(t.userId),
+    check('caregivers_dose_lead', sql`${t.doseLeadMinutes} in (0, 15, 30, 60)`),
+  ],
 );
 
 /**
@@ -765,7 +783,9 @@ export const whatsappSends = pgTable(
       .notNull()
       .references(() => caregivers.id, { onDelete: 'cascade' }),
     medicationId: uuid('medication_id').references(() => medications.id, { onDelete: 'cascade' }),
-    /** convite | dose | atraso | tomado | estoque */
+    /** So no lembrete de consulta: a consulta a que a mensagem se refere. */
+    appointmentId: uuid('appointment_id').references(() => appointments.id, { onDelete: 'cascade' }),
+    /** convite | dose | atraso | tomado | estoque | consulta */
     kind: text('kind').notNull(),
     /** O horario da dose a que a mensagem se refere (ou o dia, no estoque). */
     slot: timestamp('slot', { withTimezone: true }),
@@ -776,6 +796,11 @@ export const whatsappSends = pgTable(
   },
   (t) => [
     uniqueIndex('whatsapp_sends_unique_idx').on(t.caregiverId, t.medicationId, t.kind, t.slot),
+    // Sem remedio, o indice acima nao segura duplicata (NULL e sempre distinto):
+    // a consulta tem o seu, por acompanhante e consulta.
+    uniqueIndex('whatsapp_sends_consulta_idx')
+      .on(t.caregiverId, t.appointmentId, t.kind)
+      .where(sql`${t.appointmentId} IS NOT NULL`),
   ],
 );
 

@@ -6,14 +6,21 @@ import { and, eq, gte, inArray, isNotNull, lte, or } from 'drizzle-orm';
 import { API_ERROR } from '../../contracts';
 import { db } from '../../db/client';
 import {
+  appointments,
   caregivers,
   medicationDoses,
   medicationTimes,
   medications,
+  professionals,
   profiles,
   users,
 } from '../../db/schema';
-import { enviarRegistrado, fusoOuPadrao, horaLocal, nomeDoRemedio } from '../../lib/avisos-whatsapp';
+import {
+  enviarRegistrado,
+  fusoOuPadrao,
+  horaLocal,
+  nomeDoRemedio,
+} from '../../lib/avisos-whatsapp';
 import { estoquesDe, type Estoque } from '../../lib/estoque';
 import {
   diaLocal,
@@ -24,7 +31,12 @@ import {
   slotsEntre,
 } from '../../lib/grade-de-doses';
 import { fail, json } from '../../lib/http';
-import { textoDaDose, textoDeAtraso, textoDeEstoque } from '../../lib/mensagens-whatsapp';
+import {
+  textoDaConsulta,
+  textoDaDose,
+  textoDeAtraso,
+  textoDeEstoque,
+} from '../../lib/mensagens-whatsapp';
 import { whatsappConfigurado } from '../../lib/whatsapp';
 
 const MINUTO = 60_000;
@@ -40,6 +52,10 @@ const ATRASO = 30 * MINUTO;
 const HORA_DO_ESTOQUE = 9;
 /** Estoque baixo: acaba em ate 7 dias (mesma regra da tela de estoque). */
 const DIAS_DE_ESTOQUE_BAIXO = 7;
+/** Consulta sem antecedencia escolhida: o lembrete sai uma hora antes. */
+const ANTECEDENCIA_PADRAO_DA_CONSULTA = 60;
+/** A maior antecedencia que a tela de consulta oferece (um dia). */
+const ANTECEDENCIA_MAXIMA_DA_CONSULTA = 24 * 60;
 
 /**
  * Lembretes por WhatsApp: doses do horario, doses atrasadas e estoque baixo.
@@ -57,18 +73,26 @@ export default async function cronLembretes(req: VercelRequest, res: VercelRespo
     res.setHeader('Allow', 'GET, POST');
     return fail(res, 405, API_ERROR.METHOD_NOT_ALLOWED);
   }
-  if (!whatsappConfigurado()) return json(res, 200, { ok: true, motivo: 'whatsapp-nao-configurado' });
+  if (!whatsappConfigurado())
+    return json(res, 200, { ok: true, motivo: 'whatsapp-nao-configurado' });
 
   const agora = Date.now();
-  const contagem = { dose: 0, atraso: 0, estoque: 0, falha: 0 };
-  const somar = (tipo: 'dose' | 'atraso' | 'estoque', r: 'enviada' | 'duplicada' | 'falha') => {
+  const contagem = { dose: 0, atraso: 0, estoque: 0, consulta: 0, falha: 0 };
+  const somar = (
+    tipo: 'dose' | 'atraso' | 'estoque' | 'consulta',
+    r: 'enviada' | 'duplicada' | 'falha',
+  ) => {
     if (r === 'enviada') contagem[tipo] += 1;
     if (r === 'falha') contagem.falha += 1;
   };
 
   // Quem recebe alguma coisa: acompanhantes ativos de pessoas ativas.
   const acompanhantes = await db
-    .select({ c: caregivers, paciente: profiles.fullName, fuso: users.timezone })
+    .select({
+      c: caregivers,
+      paciente: profiles.fullName,
+      fuso: users.timezone,
+    })
     .from(caregivers)
     .innerJoin(profiles, eq(profiles.id, caregivers.profileId))
     .innerJoin(users, eq(users.id, caregivers.userId))
@@ -82,16 +106,77 @@ export default async function cronLembretes(req: VercelRequest, res: VercelRespo
     porPerfil.set(a.c.profileId, lista);
   }
 
+  const envios: Promise<void>[] = [];
+
+  // 0. Consultas: para quem pediu, na antecedencia da propria consulta.
+  const querConsulta = acompanhantes.filter((a) => a.c.notifyAppointment);
+  if (querConsulta.length > 0) {
+    const proximas = await db
+      .select({ a: appointments, profissional: professionals.name })
+      .from(appointments)
+      .leftJoin(professionals, eq(professionals.id, appointments.professionalId))
+      .where(
+        and(
+          inArray(appointments.profileId, [...new Set(querConsulta.map((a) => a.c.profileId))]),
+          eq(appointments.status, 'agendada'),
+          gte(appointments.scheduledAt, new Date(agora)),
+          lte(
+            appointments.scheduledAt,
+            new Date(agora + (ANTECEDENCIA_MAXIMA_DA_CONSULTA + 5) * MINUTO),
+          ),
+        ),
+      );
+    for (const { a: consulta, profissional } of proximas) {
+      const antecedencia = consulta.reminderMinutesBefore ?? ANTECEDENCIA_PADRAO_DA_CONSULTA;
+      const disparo = consulta.scheduledAt.getTime() - antecedencia * MINUTO;
+      if (disparo > agora || disparo < agora - JANELA) continue;
+      for (const q of querConsulta.filter((x) => x.c.profileId === consulta.profileId)) {
+        const fuso = fusoOuPadrao(q.fuso);
+        // diaLocal devolve {ano, mes, dia}: comparar campo a campo, nao o objeto.
+        const dDaConsulta = diaLocal(consulta.scheduledAt.getTime(), fuso);
+        const hoje = diaLocal(agora, fuso);
+        const mesmoDia =
+          dDaConsulta.ano === hoje.ano && dDaConsulta.mes === hoje.mes && dDaConsulta.dia === hoje.dia;
+        const quando = `${mesmoDia ? 'hoje' : 'amanhã'} às ${horaLocal(consulta.scheduledAt.getTime(), fuso)}`;
+        envios.push(
+          enviarRegistrado({
+            caregiverId: q.c.id,
+            medicationId: null,
+            appointmentId: consulta.id,
+            kind: 'consulta',
+            slot: consulta.scheduledAt,
+            telefone: q.c.phone,
+            texto: textoDaConsulta({
+              paciente: q.paciente,
+              quando,
+              profissional,
+            }),
+          }).then((r) => somar('consulta', r)),
+        );
+      }
+    }
+  }
+
   const remedios = await db
     .select()
     .from(medications)
-    .where(and(inArray(medications.profileId, [...porPerfil.keys()]), eq(medications.isActive, true)));
-  if (remedios.length === 0) return json(res, 200, { ok: true, ...contagem });
+    .where(
+      and(inArray(medications.profileId, [...porPerfil.keys()]), eq(medications.isActive, true)),
+    );
+  if (remedios.length === 0) {
+    await Promise.allSettled(envios);
+    return json(res, 200, { ok: true, ...contagem });
+  }
 
   const horarios = await db
     .select()
     .from(medicationTimes)
-    .where(inArray(medicationTimes.medicationId, remedios.map((m) => m.id)));
+    .where(
+      inArray(
+        medicationTimes.medicationId,
+        remedios.map((m) => m.id),
+      ),
+    );
   const horasDe = new Map<string, string[]>();
   for (const h of horarios) {
     const lista = horasDe.get(h.medicationId) ?? [];
@@ -107,8 +192,6 @@ export default async function cronLembretes(req: VercelRequest, res: VercelRespo
     return p.hora === HORA_DO_ESTOQUE && p.minuto < 10;
   });
   const estoques = await estoquesDe(naHoraDoEstoque);
-
-  const envios: Promise<void>[] = [];
 
   for (const m of remedios) {
     const quem = porPerfil.get(m.profileId)!;
@@ -127,22 +210,37 @@ export default async function cronLembretes(req: VercelRequest, res: VercelRespo
       createdAt: m.createdAt,
     };
 
-    // 1. Hora da dose — a menos que alguem ja tenha marcado (tomou adiantado).
+    // 1. Hora da dose, menos a antecedencia de cada acompanhante — a menos que
+    //    alguem ja tenha marcado (tomou adiantado). Cada antecedencia olha a
+    //    sua janela: com 30 min, a dose das 08:00 sai as 07:30.
     const interessadosNaDose = quem.filter((x) => x.c.notifyDose);
-    for (const slot of interessadosNaDose.length ? slotsEntre(grade, agora - JANELA, agora, fuso) : []) {
-      if (await doseRegistrada(m.id, slot, agora)) continue;
-      const texto = textoDaDose({ paciente, remedio, hora: horaLocal(slot, fuso) });
-      for (const a of interessadosNaDose) {
-        envios.push(
-          enviarRegistrado({
-            caregiverId: a.c.id,
-            medicationId: m.id,
-            kind: 'dose',
-            slot: new Date(slot),
-            telefone: a.c.phone,
-            texto,
-          }).then((r) => somar('dose', r)),
-        );
+    const antecedencias = [...new Set(interessadosNaDose.map((x) => x.c.doseLeadMinutes))];
+    for (const lead of antecedencias) {
+      const destes = interessadosNaDose.filter((x) => x.c.doseLeadMinutes === lead);
+      for (const slot of slotsEntre(
+        grade,
+        agora + lead * MINUTO - JANELA,
+        agora + lead * MINUTO,
+        fuso,
+      )) {
+        if (await doseRegistrada(m.id, slot, agora)) continue;
+        const texto = textoDaDose({
+          paciente,
+          remedio,
+          hora: horaLocal(slot, fuso),
+        });
+        for (const a of destes) {
+          envios.push(
+            enviarRegistrado({
+              caregiverId: a.c.id,
+              medicationId: m.id,
+              kind: 'dose',
+              slot: new Date(slot),
+              telefone: a.c.phone,
+              texto,
+            }).then((r) => somar('dose', r)),
+          );
+        }
       }
     }
 
@@ -151,7 +249,11 @@ export default async function cronLembretes(req: VercelRequest, res: VercelRespo
     if (interessadosNoAtraso.length > 0) {
       for (const slot of slotsEntre(grade, agora - ATRASO - JANELA, agora - ATRASO, fuso)) {
         if (await doseRegistrada(m.id, slot, agora)) continue;
-        const texto = textoDeAtraso({ paciente, remedio, hora: horaLocal(slot, fuso) });
+        const texto = textoDeAtraso({
+          paciente,
+          remedio,
+          hora: horaLocal(slot, fuso),
+        });
         for (const a of interessadosNoAtraso) {
           envios.push(
             enviarRegistrado({
@@ -171,7 +273,11 @@ export default async function cronLembretes(req: VercelRequest, res: VercelRespo
     const estoque = estoques.get(m.id);
     if (estoque && estoqueBaixo(estoque, grade, m.doseAmount)) {
       const meiaNoite = instanteLocal(diaLocal(agora, fuso), 0, 0, fuso);
-      const texto = textoDeEstoque({ paciente, remedio, restante: restanteEmTexto(estoque, m.form) });
+      const texto = textoDeEstoque({
+        paciente,
+        remedio,
+        restante: restanteEmTexto(estoque, m.form),
+      });
       for (const a of quem.filter((x) => x.c.notifyLowStock)) {
         envios.push(
           enviarRegistrado({

@@ -41,6 +41,8 @@ const TODAS_LIGADAS: Permissoes = {
   notifyLate: true,
   notifyLowStock: true,
   notifyTaken: true,
+  // Consulta e novidade: comeca desligada, como no servidor.
+  notifyAppointment: false,
 };
 
 /**
@@ -91,6 +93,7 @@ function Formulario({ id, perfilInicial }: { id: string | null; perfilInicial: s
       notifyLate: existente.notifyLate,
       notifyLowStock: existente.notifyLowStock,
       notifyTaken: existente.notifyTaken,
+      notifyAppointment: existente.notifyAppointment,
     });
   }, [existente, preenchido]);
 

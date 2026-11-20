@@ -10,7 +10,7 @@ import {
 } from '@gestao/shared/lib/relatorio';
 import { endOfDay, format, startOfDay } from 'date-fns';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useSearchParams } from 'react-router';
+import { Link } from 'react-router';
 
 import { useAssinaturaExigida, usePerfis, usePlano } from '@/api/consultas';
 import { mensagemDoErro } from '@/api/doses';
@@ -23,6 +23,7 @@ import { FormField } from '@/ui/FormField';
 import { Icone } from '@/ui/Icone';
 import { IconTile, LADRILHO_NEUTRO } from '@/ui/IconTile';
 import { Aviso, Pagina } from '@/ui/Pagina';
+import { usePessoaAtiva } from '@/lib/pessoaAtiva';
 import { ProfileSelector } from '@/ui/ProfileSelector';
 import { ScreenHeader } from '@/ui/ScreenHeader';
 import { SurfaceCard } from '@/ui/SurfaceCard';
@@ -61,15 +62,11 @@ const DIA = 'yyyy-MM-dd';
  * e quem barra de verdade e o servidor (403).
  */
 export function Relatorio() {
-  const [parametros] = useSearchParams();
   const perfis = usePerfis();
   const lista = perfis.data ?? [];
-  const [escolhido, setEscolhido] = useState<string | null>(parametros.get('pessoa'));
-  const perfilId =
-    (escolhido && lista.some((p) => p.id === escolhido) ? escolhido : null) ??
-    lista.find((p) => p.isAccountHolder)?.id ??
-    lista[0]?.id ??
-    null;
+  // O "De quem" e a pessoa ativa do site inteiro (lib/pessoaAtiva).
+  const { pessoaOuTitular, setPessoa } = usePessoaAtiva();
+  const perfilId = pessoaOuTitular?.id ?? null;
 
   const [agora] = useState(() => new Date());
   const [periodo, setPeriodo] = useState<Periodo>(30);
@@ -108,6 +105,7 @@ export function Relatorio() {
   return (
     <Pagina area="settings" largura="larga">
       <ScreenHeader
+        contexto={pessoaOuTitular ? `Cuidado de ${pessoaOuTitular.fullName.split(' ')[0]}` : undefined}
         title="Relatório para o médico"
         subtitle="Remédios, doses, sintomas, medições e consultas do período, prontos para levar à consulta"
         voltar="historico"
@@ -120,7 +118,7 @@ export function Relatorio() {
             <ProfileSelector
               profiles={lista}
               selectedId={perfilId}
-              onSelect={setEscolhido}
+              onSelect={setPessoa}
               tituloDoPainel="Relatório de"
               permitirTodos={false}
             />

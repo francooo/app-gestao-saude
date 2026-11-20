@@ -5,17 +5,20 @@
 .grade {
   display: grid;
   grid-template-areas:
-    'seletor'
     'painel'
+    'rodape'
     'acoes'
-    'rodape';
+    'lateral';
   gap: var(--espaco-lg);
   margin-top: var(--espaco-lg);
 }
 
-.seletor {
-  grid-area: seletor;
-  max-width: 420px;
+.lateral {
+  grid-area: lateral;
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-lg);
+  min-width: 0;
 }
 
 .painel {
@@ -50,23 +53,19 @@
 @media (min-width: 1024px) {
   .grade {
     grid-template-areas:
-      'painel seletor'
-      'painel acoes'
-      'rodape acoes';
-    grid-template-columns: minmax(0, 760px) minmax(260px, 320px);
-    grid-template-rows: auto 1fr auto;
+      'painel lateral'
+      'rodape lateral'
+      'acoes lateral';
+    grid-template-columns: minmax(0, 1fr) minmax(320px, 420px);
+    grid-template-rows: auto auto 1fr;
     gap: var(--espaco-lg) var(--espaco-xxl);
     justify-content: center;
     align-items: start;
   }
 
-  .seletor {
-    max-width: none;
-  }
-
-  .acoes {
+  .lateral {
     position: sticky;
-    top: var(--espaco-xl);
+    top: calc(var(--altura-cabecalho) + var(--espaco-lg));
   }
 
   .painel {
@@ -324,4 +323,179 @@
   margin-top: 2px;
   font-size: 13px;
   color: var(--cor-text-secondary);
+}
+
+/* --- Repaginacao (mock 05) --- */
+
+.sobreQuem {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+  margin-top: var(--espaco-md);
+  font-size: 14px;
+  color: var(--salvia-texto);
+}
+
+.alerta {
+  padding: var(--espaco-xl);
+  border-radius: 30px;
+  background: linear-gradient(160deg, #fbf3ec 0%, #fdf8f2 100%);
+}
+
+.alertaTitulo {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-md);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--terracota-botao);
+}
+
+.alertaIcone {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: var(--terracota);
+  color: #ffffff;
+}
+
+.alertaLista {
+  margin: var(--espaco-lg) 0 0;
+  padding-left: 1.2em;
+  font-size: 16px;
+  line-height: 1.9;
+  color: var(--ink);
+}
+
+.alertaAcao {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espaco-sm);
+  margin-top: var(--espaco-lg);
+  padding-top: var(--espaco-lg);
+  border-top: 1px solid rgba(217, 130, 95, 0.25);
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--musgo);
+}
+
+.alertaAcao svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.recentes {
+  padding: var(--espaco-xl);
+  border-radius: 30px;
+}
+
+.recentesTitulo {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--musgo);
+}
+
+.recentesVazio {
+  margin-top: var(--espaco-md);
+  font-size: 15px;
+  color: var(--salvia-texto);
+}
+
+.recentesVazio a {
+  font-weight: 700;
+  color: var(--musgo);
+}
+
+.recentesLista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-sm);
+  margin: var(--espaco-md) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recente {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-md);
+  padding: var(--espaco-md);
+  border-radius: 22px;
+  background: var(--creme-superficie);
+  box-shadow: inset 0 0 0 1px var(--cor-divider);
+  color: var(--musgo);
+  text-decoration: none;
+}
+
+.recente:hover {
+  background: var(--pistache);
+}
+
+.recenteIcone {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #e8a587;
+  color: #ffffff;
+}
+
+.recenteTextos {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.recenteTitulo {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.recenteApoio {
+  font-size: 14px;
+  color: var(--salvia-texto);
+}
+
+.nota {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-lg);
+  max-width: 760px;
+  margin-top: var(--espaco-xxl);
+  padding: var(--espaco-md) var(--espaco-xl) var(--espaco-md) var(--espaco-md);
+  border-radius: 999px;
+  background: rgba(231, 238, 219, 0.6);
+}
+
+.notaAvatar {
+  flex-shrink: 0;
+  border-radius: 50%;
+}
+
+.notaTitulo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--musgo);
+}
+
+.notaTitulo svg {
+  color: var(--terracota);
+}
+
+.notaTexto {
+  margin-top: 2px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--salvia-texto);
 }

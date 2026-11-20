@@ -1,0 +1,248 @@
+.bloco {
+  margin-top: var(--espaco-xl);
+}
+
+.alertas {
+  display: grid;
+  gap: var(--espaco-lg);
+  margin-top: var(--espaco-xl);
+}
+
+@media (min-width: 900px) {
+  .alertas {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--espaco-xl);
+    margin-top: var(--espaco-xxl);
+  }
+}
+
+.alertas > * {
+  min-width: 0;
+}
+
+/* --- Barra de filtros e acoes --- */
+
+.ferramentas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-md);
+  margin-top: var(--espaco-xl);
+  padding: var(--espaco-md);
+  border-radius: 28px;
+  background: var(--cor-surface-card);
+  box-shadow: var(--sombra-cartao);
+}
+
+.filtro {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+  min-height: 52px;
+  padding: 0 var(--espaco-lg);
+  border-radius: var(--raio-pill);
+  background: var(--creme-base);
+  color: var(--musgo);
+}
+
+.filtro select {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--musgo);
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  padding-right: var(--espaco-sm);
+  cursor: pointer;
+}
+
+.filtro select:focus-visible {
+  outline: none;
+}
+
+.filtro:focus-within {
+  box-shadow: 0 0 0 3px var(--pistache-forte);
+}
+
+.busca {
+  flex: 1 1 220px;
+  min-width: 0;
+}
+
+.acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-md);
+}
+
+.botao {
+  min-height: 52px;
+  white-space: nowrap;
+}
+
+@media (min-width: 1024px) {
+  .acoes {
+    margin-left: auto;
+  }
+}
+
+.oculto {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* --- Tabela --- */
+
+.tabela {
+  margin-top: var(--espaco-xl);
+  overflow: hidden;
+  border-radius: 28px;
+  background: var(--cor-surface-card);
+  box-shadow: var(--sombra-cartao);
+}
+
+.cabecalhoDaTabela {
+  display: none;
+}
+
+.linhas {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Celular e tablet: cada remedio e um cartao em grade de duas colunas. */
+.linha {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--espaco-md) var(--espaco-lg);
+  padding: var(--espaco-lg);
+}
+
+.linha + .linha {
+  border-top: 1px solid var(--cor-divider);
+}
+
+.linha:hover {
+  background: rgba(231, 238, 219, 0.45);
+}
+
+.cobertura {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.cobertura:focus-visible {
+  outline: 3px solid var(--musgo);
+  outline-offset: -3px;
+}
+
+.medicamento {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-md);
+  grid-row: 1;
+  grid-column: 1;
+  min-width: 0;
+}
+
+.nome {
+  min-width: 0;
+}
+
+.titulo {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--musgo);
+  overflow-wrap: anywhere;
+}
+
+.apoio {
+  font-size: 14px;
+  color: var(--salvia-texto);
+}
+
+.membro,
+.dado {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+  min-width: 0;
+  font-size: 15px;
+  color: var(--ink);
+}
+
+.dado svg {
+  flex-shrink: 0;
+  color: var(--musgo);
+}
+
+.nivel {
+  display: flex;
+  align-items: center;
+}
+
+/* O botao de dose fica acima da cobertura do link. No celular ele divide a
+   primeira linha com o nome. */
+.hoje {
+  grid-row: 1;
+  grid-column: 2;
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--espaco-sm);
+}
+
+.seta {
+  color: var(--musgo);
+}
+
+/* Computador: tabela de verdade, com cabecalho e colunas alinhadas. */
+@media (min-width: 1024px) {
+  .cabecalhoDaTabela,
+  .linha {
+    display: grid;
+    grid-template-columns: minmax(0, 2.4fr) minmax(0, 1.3fr) minmax(0, 1.5fr) minmax(0, 1.2fr) minmax(0, 1.1fr) 104px;
+    align-items: center;
+    gap: var(--espaco-lg);
+    padding: var(--espaco-md) var(--espaco-xl);
+  }
+
+  .cabecalhoDaTabela {
+    padding-top: var(--espaco-lg);
+    padding-bottom: var(--espaco-lg);
+    background: rgba(246, 244, 234, 0.7);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--musgo);
+  }
+
+  .medicamento,
+  .hoje {
+    grid-row: auto;
+    grid-column: auto;
+  }
+
+  .linha {
+    min-height: 92px;
+  }
+}
+
+.nota {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+  margin-top: var(--espaco-lg);
+  font-size: 14px;
+  color: var(--salvia-texto);
+}

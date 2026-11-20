@@ -1,225 +1,189 @@
-/* --- "Ler receita com IA": cartao em degrade caramelo -> verde --- */
+/* --- Ler receita com IA: faixa terracota --- */
 
 .receita {
   position: relative;
   display: flex;
-  min-height: 260px;
+  align-items: stretch;
+  min-height: 128px;
   overflow: hidden;
-  border-radius: var(--raio-card);
-  background: linear-gradient(100deg, #c5872b 0%, #a98433 34%, #6f7c3c 62%, #567a45 100%);
+  border-radius: 32px;
+  background:
+    linear-gradient(100deg, #c9785a 0%, #d58d6f 46%, rgba(240, 214, 196, 0.6) 64%, rgba(248, 240, 230, 0) 78%),
+    #f8f1e8;
   box-shadow: var(--sombra-cartao);
-  color: var(--cor-on-accent);
 }
 
-/* A ilustracao ocupa a direita do cartao e some para a esquerda. */
-.ilustracao {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: auto;
-  max-width: none;
-  height: 100%;
-  object-fit: cover;
-  mask-image: linear-gradient(90deg, transparent 0%, #000 34%);
-}
-
-/* Em cartao estreito o desenho passaria por baixo do texto: sai. */
-@media (max-width: 599px) {
-  .ilustracao {
-    opacity: 0.28;
-  }
-}
-
-.receitaConteudo {
+.acao {
   position: relative;
+  z-index: 1;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: var(--espaco-xl);
-  width: 100%;
-  max-width: 560px;
-  padding: var(--espaco-xl);
+  flex: 1;
+  align-items: center;
+  gap: var(--espaco-lg);
+  min-width: 0;
+  padding: var(--espaco-lg) var(--espaco-xl);
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  text-align: left;
+  text-decoration: none;
 }
 
-@media (min-width: 768px) {
-  .receitaConteudo {
-    padding: var(--espaco-xxl);
-  }
-}
-
-.cabecalho {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--espaco-xl);
-}
-
-.seloDocumento {
+.documento {
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  width: 76px;
-  height: 76px;
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.24);
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--creme-superficie);
+  color: var(--terracota-botao);
+  box-shadow: 0 4px 14px rgba(120, 60, 30, 0.18);
 }
 
 .textos {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   min-width: 0;
 }
 
 .titulo {
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 800;
-  line-height: 1.2;
+  line-height: 1.15;
 }
 
 .subtitulo {
-  max-width: 320px;
-  margin-top: var(--espaco-xs);
-  font-size: 17px;
+  font-size: 16px;
   line-height: 1.4;
-  color: rgba(255, 255, 255, 0.92);
+  opacity: 0.95;
 }
 
-.acoes {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--espaco-sm) var(--espaco-lg);
+.seta {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: var(--creme-superficie);
+  color: var(--terracota-botao);
+  transition: transform 0.15s ease;
 }
 
-.botao {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--espaco-md);
-  min-height: 58px;
-  padding: 0 var(--espaco-xxl);
-  border: 0;
-  border-radius: var(--raio-pill);
-  background: var(--cream-50);
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--cor-accent-green);
-  text-decoration: none;
-  transition: filter 0.15s ease;
+.acao:hover .seta {
+  transform: translateX(3px);
 }
 
-.botao:hover {
-  filter: brightness(0.96);
+.acao:focus-visible {
+  outline: 3px solid var(--creme-superficie);
+  outline-offset: -6px;
+  border-radius: 32px;
 }
 
-.arquivo {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--espaco-xs);
-  min-height: 44px;
-  padding: 0 var(--espaco-md);
-  border: 0;
-  border-radius: var(--raio-pill);
-  background: transparent;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--cor-on-accent);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-
-.arquivo:hover {
-  background: rgba(255, 255, 255, 0.16);
+.ilustracao {
+  display: none;
 }
 
 .seloAssinatura {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  margin-top: var(--espaco-sm);
-  padding: 3px var(--espaco-sm);
+  width: fit-content;
+  margin-top: 4px;
+  padding: 3px 10px;
   border-radius: var(--raio-pill);
-  background: var(--cream-50);
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--cor-accent-green);
+  background: rgba(255, 253, 246, 0.9);
+  color: var(--terracota-botao);
+  font-size: 12px;
+  font-weight: 800;
 }
 
-/* --- Cartao do assistente --- */
+@media (min-width: 900px) {
+  .acao {
+    flex: 0 1 62%;
+    padding: var(--espaco-xl) 40px;
+  }
 
-.assistente {
+  .titulo {
+    font-size: 32px;
+  }
+
+  .subtitulo {
+    font-size: 19px;
+  }
+
+  .documento {
+    width: 88px;
+    height: 88px;
+  }
+
+  .ilustracao {
+    display: block;
+    flex: 1;
+    min-width: 0;
+    height: 168px;
+    object-fit: contain;
+    object-position: center right;
+    margin: -8px var(--espaco-lg) -8px 0;
+  }
+}
+
+/* --- Bolha "Como posso ajudar hoje?" --- */
+
+.bolha {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
   gap: var(--espaco-md);
-  min-height: 260px;
-  padding: var(--espaco-xl);
-  border-radius: var(--raio-card);
-  background: var(--cor-surface-card);
-  box-shadow: var(--sombra-cartao);
-  color: inherit;
-  text-align: center;
+  padding: 8px var(--espaco-md) 8px 8px;
+  border-radius: var(--raio-pill);
+  background: var(--creme-superficie);
+  box-shadow: var(--sombra-flutuante);
+  color: var(--musgo);
   text-decoration: none;
 }
 
-@media (hover: hover) {
-  .assistente {
-    transition:
-      box-shadow 0.15s ease,
-      transform 0.15s ease;
-  }
-
-  .assistente:hover {
-    box-shadow: var(--sombra-flutuante);
-    transform: translateY(-1px);
-  }
-}
-
-.medica {
-  width: 116px;
-  height: 116px;
+.avatar {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
 }
 
 .pergunta {
-  font-size: 22px;
-  font-weight: 800;
-  line-height: 1.2;
-  color: var(--cor-accent-green);
-}
-
-.assistente .seloAssinatura {
-  margin-top: 0;
-  background: var(--sage-100);
-}
-
-.campo {
-  display: flex;
-  align-items: center;
-  gap: var(--espaco-md);
-  width: 100%;
-  max-width: 420px;
-}
-
-.falso {
   flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  padding: 12px var(--espaco-lg);
-  border-radius: var(--raio-pill);
-  background: #e7ead8;
-  font-size: 14px;
-  color: var(--cor-text-placeholder);
-  text-align: left;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 17px;
+  font-weight: 800;
 }
 
-.enviar {
+.ir {
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  width: 46px;
-  height: 46px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: #3d9a6c;
-  color: var(--cor-on-accent);
+  background: var(--pistache);
+}
+
+.bolha:hover .ir {
+  background: var(--pistache-forte);
+}
+
+/* Computador: a bolha flutua no canto de baixo, por cima do fundo. */
+@media (min-width: 1024px) {
+  .bolha {
+    position: fixed;
+    z-index: 25;
+    right: 32px;
+    bottom: 28px;
+    padding-right: var(--espaco-lg);
+  }
+
+  .avatar {
+    width: 72px;
+    height: 72px;
+  }
 }

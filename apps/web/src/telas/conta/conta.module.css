@@ -651,3 +651,66 @@
   margin: calc(-1 * var(--espaco-sm)) 0 var(--espaco-lg);
   text-decoration: none;
 }
+
+/* --- Cadastro de membro (mock 07) --- */
+
+.membroGrade {
+  display: grid;
+  gap: var(--espaco-xl);
+}
+
+@media (min-width: 1100px) {
+  .membroGrade {
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.membroForm {
+  min-width: 0;
+}
+
+.membroIlustracao {
+  display: none;
+}
+
+@media (min-width: 1100px) {
+  .membroIlustracao {
+    position: sticky;
+    top: calc(var(--altura-cabecalho) + var(--espaco-lg));
+    display: block;
+    margin-top: var(--espaco-lg);
+    padding: var(--espaco-lg);
+    border-radius: 32px;
+    background: linear-gradient(170deg, #f8efe6 0%, #fbf7f0 100%);
+    box-shadow: var(--sombra-cartao);
+  }
+
+  .membroIlustracao img {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+}
+
+.souEu {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-sm);
+  margin: var(--espaco-sm) 0 var(--espaco-lg);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--musgo);
+}
+
+.souEuSelo {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding: 4px 12px;
+  border-radius: var(--raio-pill);
+  background: var(--pistache);
+  font-size: 13px;
+}

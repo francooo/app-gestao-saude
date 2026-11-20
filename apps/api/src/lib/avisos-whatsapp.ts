@@ -6,7 +6,7 @@ import { FUSO_PADRAO, fusoValido, partesLocais } from './grade-de-doses';
 import { textoDeTomado } from './mensagens-whatsapp';
 import { enviarTexto } from './whatsapp';
 
-export type TipoDeAviso = 'convite' | 'dose' | 'atraso' | 'tomado' | 'estoque';
+export type TipoDeAviso = 'convite' | 'dose' | 'atraso' | 'tomado' | 'estoque' | 'consulta';
 
 /**
  * Registra e manda UMA mensagem — nessa ordem.
@@ -20,6 +20,8 @@ export type TipoDeAviso = 'convite' | 'dose' | 'atraso' | 'tomado' | 'estoque';
 export async function enviarRegistrado(p: {
   caregiverId: string;
   medicationId: string | null;
+  /** So no lembrete de consulta; a trava de duplicata dela e por consulta. */
+  appointmentId?: string | null;
   kind: TipoDeAviso;
   slot: Date | null;
   telefone: string;
@@ -30,6 +32,7 @@ export async function enviarRegistrado(p: {
     .values({
       caregiverId: p.caregiverId,
       medicationId: p.medicationId,
+      appointmentId: p.appointmentId ?? null,
       kind: p.kind,
       slot: p.slot,
     })

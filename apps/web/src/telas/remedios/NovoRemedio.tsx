@@ -16,7 +16,11 @@ import { Link, useNavigate, useSearchParams } from 'react-router';
 
 import { ApiRequestError } from '@/api/cliente';
 import { useAssinaturaExigida, usePlano } from '@/api/consultas';
-import { escolherFotoDeDocumento } from '@/lib/foto';
+import folhaReceita from '@/imagens/repag/folha-receita.webp';
+import maoReceita from '@/imagens/repag/mao-receita.webp';
+import { escolherArquivoDeDocumento, escolherFotoDeDocumento } from '@/lib/foto';
+import { usePessoaAtiva } from '@/lib/pessoaAtiva';
+import { Avatar } from '@/ui/Avatar';
 import { BlocoDeAviso } from '@/ui/BlocoDeAviso';
 import botoes from '@/ui/botoes.module.css';
 import { useDialogos } from '@/ui/Dialogo';
@@ -63,6 +67,7 @@ const DICAS: Record<Kind, string[]> = {
 export function NovoRemedio() {
   const navigate = useNavigate();
   const { doisPaineis } = useAreaDeRemedios();
+  const { pessoaOuTitular } = usePessoaAtiva();
   const [params, setParams] = useSearchParams();
   const { avisar } = useDialogos();
   const { premium, politicaVelha } = usePlano();
@@ -105,8 +110,9 @@ export function NovoRemedio() {
   }, [estado.fase]);
 
   /** Abre o seletor de arquivo e manda ler. Chamado direto do clique. */
-  async function pegarFoto(kind: Kind) {
-    const escolha = await escolherFotoDeDocumento({ camera: true });
+  /** `arquivo`: o seletor aceita tambem PDF (a primeira pagina vira imagem). */
+  async function pegarFoto(kind: Kind, arquivo = false) {
+    const escolha = arquivo ? await escolherArquivoDeDocumento() : await escolherFotoDeDocumento({ camera: true });
     if (!escolha.ok) {
       if (escolha.motivo === 'falha') {
         void avisar('Não consegui usar a foto', 'Tente de novo, ou escolha outra imagem.');
@@ -201,31 +207,16 @@ export function NovoRemedio() {
       : null;
 
   return (
-    <Pagina area="medications">
+    <Pagina area="medications" largura="larga">
       <ScreenHeader
-        title="Adicionar medicamento"
+        title="Leitura de receita com IA"
+        subtitle="Tire uma foto ou envie a receita e deixe a IA ler as informações para você."
         voltar={doisPaineis ? undefined : '/remedios'}
-        mostrarSino
+        ilustracao={maoReceita}
+        contexto={false}
       />
 
       <div className={estilos.pilha}>
-        <SurfaceCard className={`${comuns.cartao} ${estilos.linha}`}>
-          <IconTile
-            size={54}
-            icone="mci:star-four-points"
-            {...(politicaVelha
-              ? LADRILHO_NEUTRO
-              : { fundo: 'var(--cor-accent)', traco: 'var(--cor-on-accent)' })}
-          />
-          <div className={estilos.textos}>
-            <h2 className={estilos.titulo}>Cadastre seu medicamento com ajuda da IA</h2>
-            <p className={estilos.corpo}>
-              Envie uma foto da receita ou da caixinha e eu preencho o cadastro. Você confere tudo
-              antes de salvar.
-            </p>
-          </div>
-        </SurfaceCard>
-
         {/* Sem plano, a politica nao e o que impede a leitura: o aviso dela so
             confundiria quem ve o cadeado logo abaixo. */}
         {politicaVelha && premium ? (
@@ -242,49 +233,133 @@ export function NovoRemedio() {
           />
         ) : null}
 
-        {estado.fase === 'erro' ? (
-          <Erro codigo={estado.codigo} aoTentar={() => void enviar(estado.kind)} />
-        ) : null}
-
-        {lendo ? (
-          <SurfaceCard className={comuns.cartao}>
-            <div className={estilos.linha} role="status">
-              <span className={`${botoes.girando} ${estilos.girando}`} />
+        {/* Mock 09: enviar | analisando | o que a IA confere. */}
+        <div className={estilos.tres}>
+          <SurfaceCard className={estilos.coluna}>
+            <div className={estilos.paraQuem}>
+              <span className={estilos.paraQuemIcone} aria-hidden="true">
+                <Icone nome="user" size={26} />
+              </span>
               <div className={estilos.textos}>
-                <p className={estilos.titulo}>Lendo a foto</p>
-                <p className={estilos.corpo}>{espera(segundos)}</p>
+                <p className={estilos.rotuloPequeno}>Para quem</p>
+                <p className={estilos.paraQuemNome}>
+                  {pessoaOuTitular ? (
+                    <Avatar
+                      nome={pessoaOuTitular.fullName}
+                      color={pessoaOuTitular.avatarColor ?? undefined}
+                      photo={pessoaOuTitular.photo ?? undefined}
+                      size={28}
+                    />
+                  ) : null}
+                  {pessoaOuTitular?.fullName.split(' ')[0] ?? '—'}
+                </p>
+                <p className={estilos.corpo}>Você confirma ou troca a pessoa na revisão.</p>
               </div>
             </div>
-            <button
-              type="button"
-              className={`${botoes.contorno} ${botoes.largo} ${estilos.cancelar}`}
-              onClick={() => cancelamento.current?.abort()}
-            >
-              Cancelar
-            </button>
+
+            <div className={estilos.envio}>
+              <span className={estilos.envioIcone} aria-hidden="true">
+                <Icone nome="camera" size={34} />
+              </span>
+              <h2 className={estilos.envioTitulo}>Enviar foto da receita</h2>
+              <p className={estilos.corpo}>Tire uma foto nítida ou envie um arquivo (jpg, png ou pdf).</p>
+              {premium ? (
+                <>
+                  <button
+                    type="button"
+                    className={`${botoes.ambar} ${botoes.largo}`}
+                    disabled={bloqueado || lendo}
+                    onClick={() => void pegarFoto('receita')}
+                  >
+                    <Icone nome="camera" size={20} />
+                    Tirar uma foto
+                  </button>
+                  <span className={estilos.ou}>ou</span>
+                  <button
+                    type="button"
+                    className={`${botoes.contorno} ${botoes.largo}`}
+                    disabled={bloqueado || lendo}
+                    onClick={() => void pegarFoto('receita', true)}
+                  >
+                    <Icone nome="upload-cloud" size={20} />
+                    Enviar arquivo
+                  </button>
+                  <button
+                    type="button"
+                    className={`${botoes.texto} ${estilos.caixinha}`}
+                    disabled={bloqueado || lendo}
+                    onClick={() => void pegarFoto('caixa')}
+                  >
+                    <Icone nome="package" size={18} />
+                    É uma caixinha? Fotografar a embalagem
+                  </button>
+                </>
+              ) : (
+                <Link to="/conta/assinatura" className={`${botoes.ambar} ${botoes.largo}`}>
+                  <Icone nome="lock" size={18} />
+                  Faz parte da assinatura
+                </Link>
+              )}
+            </div>
           </SurfaceCard>
-        ) : (
-          <>
-            <OpcaoDeFoto
-              icone="camera"
-              ladrilho={LADRILHO_NEUTRO}
-              titulo="Fotografar receita"
-              descricao="A IA lê nome, dose e posologia"
-              desabilitado={premium && bloqueado}
-              cadeado={!premium}
-              onClick={() => void pegarFoto('receita')}
-            />
-            <OpcaoDeFoto
-              icone="package"
-              ladrilho={LADRILHO_ATENCAO}
-              titulo="Fotografar caixinha"
-              descricao="Identifique o medicamento automaticamente"
-              desabilitado={premium && bloqueado}
-              cadeado={!premium}
-              onClick={() => void pegarFoto('caixa')}
-            />
-          </>
-        )}
+
+          <SurfaceCard className={`${estilos.coluna} ${estilos.centro}`}>
+            <img src={folhaReceita} alt="" className={estilos.folha} />
+            {lendo ? (
+              <div role="status" className={estilos.analisando}>
+                <span className={`${botoes.girando} ${estilos.girando}`} />
+                <p className={estilos.envioTitulo}>Analisando sua receita…</p>
+                <p className={estilos.corpo}>{espera(segundos)}</p>
+                <button type="button" className={botoes.contorno} onClick={() => cancelamento.current?.abort()}>
+                  Cancelar
+                </button>
+              </div>
+            ) : estado.fase === 'erro' ? (
+              <Erro codigo={estado.codigo} aoTentar={() => void enviar(estado.kind)} />
+            ) : (
+              <div className={estilos.analisando}>
+                <p className={estilos.envioTitulo}>Aguardando a receita</p>
+                <p className={estilos.corpo}>A leitura leva alguns segundos. Nada é salvo antes de você conferir.</p>
+              </div>
+            )}
+          </SurfaceCard>
+
+          <SurfaceCard className={estilos.coluna}>
+            <h2 className={estilos.confiraTitulo}>
+              <span className={estilos.confiraIcone} aria-hidden="true">
+                <Icone nome="check" size={18} />
+              </span>
+              Confira os dados lidos
+            </h2>
+            <ul className={estilos.confira}>
+              {[
+                { icone: 'user', rotulo: 'Nome do médico' },
+                { icone: 'mci:medical-bag', rotulo: 'Especialidade' },
+                { icone: 'calendar', rotulo: 'Data da consulta' },
+                { icone: 'mci:pill', rotulo: 'Medicamentos e posologia' },
+              ].map((c) => (
+                <li key={c.rotulo}>
+                  <span className={estilos.confiraLadrilho} aria-hidden="true">
+                    <Icone nome={c.icone} size={22} />
+                  </span>
+                  <span className={estilos.textos}>
+                    <span className={estilos.confiraRotulo}>{c.rotulo}</span>
+                    <span className={estilos.corpo}>Preenchido pela IA</span>
+                  </span>
+                  <Icone nome="check" size={20} />
+                </li>
+              ))}
+            </ul>
+            <p className={estilos.corpo}>
+              Depois da leitura, você revisa cada campo, corrige o que precisar e só então salva.
+            </p>
+          </SurfaceCard>
+        </div>
+
+        <p className={estilos.faixa}>
+          <Icone nome="sprout" size={20} />A leitura da receita é feita por IA para facilitar sua vida, mas pode ter
+          erros. Sempre confira os dados antes de salvar.
+        </p>
 
         {estado.fase === 'vazio' ? (
           <BlocoDeAviso
@@ -345,56 +420,6 @@ export function NovoRemedio() {
         </div>
       </div>
     </Pagina>
-  );
-}
-
-function OpcaoDeFoto({
-  icone,
-  ladrilho,
-  titulo,
-  descricao,
-  desabilitado,
-  cadeado,
-  onClick,
-}: {
-  icone: string;
-  ladrilho: { fundo: string; traco: string };
-  titulo: string;
-  descricao: string;
-  desabilitado: boolean;
-  cadeado: boolean;
-  onClick: () => void;
-}) {
-  const conteudo = (
-    <>
-      <IconTile size={44} icone={icone} {...ladrilho} />
-      <span className={estilos.textos}>
-        <span className={estilos.opcaoTitulo}>{titulo}</span>
-        <span className={estilos.opcaoDescricao}>
-          {desabilitado
-            ? 'Disponível depois que você aceitar a política atual'
-            : cadeado
-              ? 'Faz parte da assinatura'
-              : descricao}
-        </span>
-      </span>
-      <span className={estilos.opcaoBotao} data-cadeado={cadeado ? '' : undefined}>
-        <Icone nome={cadeado ? 'lock' : 'camera'} size={16} />
-        {cadeado ? 'Assinatura' : 'Escolher foto'}
-      </span>
-    </>
-  );
-
-  // Sem plano, o cartao leva a explicacao da assinatura — o seletor nem abre,
-  // para ninguem enviar uma foto que o servidor vai recusar.
-  return cadeado ? (
-    <Link to="/conta/assinatura" className={estilos.opcao}>
-      {conteudo}
-    </Link>
-  ) : (
-    <button type="button" className={estilos.opcao} disabled={desabilitado} onClick={onClick}>
-      {conteudo}
-    </button>
   );
 }
 

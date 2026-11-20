@@ -1,0 +1,187 @@
+.cartao {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  padding: var(--espaco-xl) var(--espaco-lg) var(--espaco-lg);
+  border-radius: 32px;
+  background: var(--cor-surface-card);
+  box-shadow: var(--sombra-cartao);
+  text-align: center;
+}
+
+.favorito {
+  position: absolute;
+  top: 28px;
+  right: 24px;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--terracota);
+}
+
+.favorito:hover {
+  background: var(--terracota-claro);
+}
+
+.favorito[aria-pressed='true'] svg {
+  fill: var(--terracota);
+}
+
+.retrato {
+  padding: 6px;
+  border-radius: 50%;
+  background: var(--pistache);
+}
+
+.nome {
+  margin-top: var(--espaco-lg);
+  font-size: 21px;
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--musgo);
+  overflow-wrap: anywhere;
+}
+
+.especialidade {
+  margin-top: 4px;
+  font-size: 17px;
+  color: var(--salvia-texto);
+}
+
+.onde {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 4px;
+  font-size: 13px;
+  color: var(--salvia-texto);
+}
+
+.consulta {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-md);
+  width: 100%;
+  margin: var(--espaco-lg) 0;
+  text-align: left;
+}
+
+.consultaIcone {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--pistache);
+  color: var(--musgo);
+}
+
+.consultaTextos {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.consultaRotulo {
+  font-size: 14px;
+  color: var(--salvia-texto);
+}
+
+.consultaValor {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.agendar {
+  width: fit-content;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--musgo);
+}
+
+.verPerfil {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+  min-height: 52px;
+  /* Alinha os botoes de todos os cartoes da linha, mesmo com nomes longos. */
+  margin-top: auto;
+  border: 1.5px solid var(--salvia);
+  border-radius: var(--raio-pill);
+  color: var(--musgo);
+  font-size: 17px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.verPerfil:hover {
+  background: var(--pistache);
+}
+
+/* --- Adicionar medico --- */
+
+.adicionar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espaco-sm);
+  min-height: 320px;
+  padding: var(--espaco-xl);
+  border-radius: 32px;
+  background: linear-gradient(160deg, #d58f72 0%, #c97a5c 100%);
+  box-shadow: var(--sombra-cartao);
+  color: #ffffff;
+  text-align: center;
+  text-decoration: none;
+}
+
+.adicionarIcone {
+  display: grid;
+  place-items: center;
+  width: 88px;
+  height: 88px;
+  margin-bottom: var(--espaco-sm);
+  border-radius: 50%;
+  background: var(--creme-superficie);
+  color: var(--terracota-botao);
+}
+
+.adicionarTitulo {
+  font-size: 23px;
+  font-weight: 800;
+}
+
+.adicionarTexto {
+  max-width: 24ch;
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.adicionarBotao {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: var(--espaco-md);
+  padding: 12px 32px;
+  border-radius: var(--raio-pill);
+  background: var(--creme-superficie);
+  color: var(--terracota-botao);
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.adicionar:hover .adicionarBotao {
+  background: #ffffff;
+}

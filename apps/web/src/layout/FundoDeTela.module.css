@@ -8,32 +8,55 @@
 
 .ramo {
   position: absolute;
-  /* No celular a fracao da tela manda; em tela larga a folha para de crescer. */
-  width: min(var(--largura), 340px);
-  max-width: none;
   height: auto;
+  opacity: 0.75;
 }
 
-/* Um terco do ramo fica para fora da janela, como no arranjo do aplicativo. */
-.ramo[data-lado='esquerda'] {
-  left: 0;
-  transform: translateX(-36%) rotate(var(--rotacao));
+/* Celular: so os dois de baixo, pequenos, saindo pelas bordas. */
+.ramo[data-canto='sup-esq'],
+.ramo[data-canto='sup-dir'] {
+  display: none;
 }
 
-.ramo[data-lado='direita'] {
-  right: 0;
-  transform: translateX(36%) rotate(var(--rotacao)) scaleX(-1);
+.ramo[data-canto='inf-esq'] {
+  bottom: -40px;
+  left: -60px;
+  width: 150px;
 }
 
-/* Com o menu lateral, os ramos da esquerda nascem depois dele. */
-@media (min-width: 768px) {
-  .ramo[data-lado='esquerda'] {
-    left: var(--largura-menu-recolhido);
-  }
+.ramo[data-canto='inf-dir'] {
+  right: -50px;
+  bottom: 40px;
+  width: 140px;
 }
 
 @media (min-width: 1024px) {
-  .ramo[data-lado='esquerda'] {
-    left: var(--largura-menu);
+  .ramo[data-canto='sup-esq'],
+  .ramo[data-canto='sup-dir'] {
+    display: block;
+  }
+
+  .ramo[data-canto='sup-esq'] {
+    top: calc(var(--altura-cabecalho) + 8px);
+    left: -20px;
+    width: clamp(150px, 11vw, 240px);
+  }
+
+  .ramo[data-canto='sup-dir'] {
+    top: var(--altura-cabecalho);
+    right: -10px;
+    width: clamp(110px, 8vw, 180px);
+  }
+
+  .ramo[data-canto='inf-esq'] {
+    bottom: 0;
+    left: 0;
+    width: clamp(170px, 13vw, 300px);
+  }
+
+  .ramo[data-canto='inf-dir'] {
+    right: 0;
+    bottom: 0;
+    width: clamp(160px, 12vw, 280px);
   }
 }

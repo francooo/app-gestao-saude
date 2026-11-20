@@ -82,6 +82,8 @@
 
 .interruptor {
   position: relative;
+  /* inline-block: fora de um flex (ex.: dentro de um botao) o span mantem a largura. */
+  display: inline-block;
   flex-shrink: 0;
   width: 48px;
   height: 28px;

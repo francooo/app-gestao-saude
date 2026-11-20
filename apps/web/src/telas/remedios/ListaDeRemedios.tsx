@@ -1,36 +1,52 @@
-import { estoqueBaixo } from '@gestao/shared/lib/estoque';
-import { hora, resumoDoDia, tituloDoMedicamento, vigenteHoje } from '@gestao/shared/lib/posologia';
-import { isSameDay } from 'date-fns';
+import type { Medication } from '@gestao/shared/api/health';
+import {
+  estoqueBaixo,
+  quantidadeDoEstoque,
+  validadeCurta,
+  validadeProxima,
+} from '@gestao/shared/lib/estoque';
+import {
+  estadoHoje,
+  formaVisual,
+  posologia,
+  slotsDoDia,
+  tituloDoMedicamento,
+  vigenteHoje,
+} from '@gestao/shared/lib/posologia';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 
-import { useListaDeRemedios, usePerfis, usePlano } from '@/api/consultas';
+import { useListaDeRemedios } from '@/api/consultas';
 import { mensagemDoErro, useMarcarDose } from '@/api/doses';
-import ramo from '@/imagens/folhas/ramo-canto.png';
+import maeBebe from '@/imagens/repag/mae-bebe-oval.webp';
+import { usePessoaAtiva } from '@/lib/pessoaAtiva';
+import { Avatar } from '@/ui/Avatar';
 import botoes from '@/ui/botoes.module.css';
 import { Carregando } from '@/ui/Carregando';
 import { CartaoDeResumo } from '@/ui/CartaoDeResumo';
-import { FilterChips } from '@/ui/FilterChips';
+import { DoseButton } from '@/ui/DoseButton';
 import { Icone } from '@/ui/Icone';
-import { MedicationRow } from '@/ui/MedicationCard';
+import { IconTile, LADRILHO_POR_FORMA } from '@/ui/IconTile';
 import { Aviso, Pagina } from '@/ui/Pagina';
-import { ProfileSelector } from '@/ui/ProfileSelector';
 import { ScreenHeader } from '@/ui/ScreenHeader';
-import { CampoDeBusca } from '@/ui/Selo';
+import { CampoDeBusca, SeloDeStatus } from '@/ui/Selo';
 
-import estilos from './remedios.module.css';
+import estilos from './ListaDeRemedios.module.css';
 
 type Props = {
   perfilId: string | null;
-  setPerfilId: (id: string | null) => void;
+  /** Mantido por compatibilidade: a pessoa agora vem do cabecalho. */
+  setPerfilId?: (id: string | null) => void;
 };
 
-type Recorte = 'ativos' | 'hoje' | 'todos';
+type Status = 'ativos' | 'hoje' | 'baixo' | 'validade' | 'todos';
 
-const RECORTES = [
-  { value: 'ativos', label: 'Em uso' },
-  { value: 'hoje', label: 'Hoje' },
-  { value: 'todos', label: 'Todos, com encerrados' },
+const STATUS: { valor: Status; rotulo: string }[] = [
+  { valor: 'ativos', rotulo: 'Em uso' },
+  { valor: 'hoje', rotulo: 'Doses de hoje' },
+  { valor: 'baixo', rotulo: 'Estoque baixo' },
+  { valor: 'validade', rotulo: 'Validade próxima' },
+  { valor: 'todos', rotulo: 'Todos, com encerrados' },
 ];
 
 /** Busca sem acento e sem caixa: "losartana" acha "Losartana". */
@@ -39,193 +55,251 @@ function normalizar(texto: string): string {
 }
 
 /**
- * Meus medicamentos: a lista da familia em linhas largas, com o filtro de
- * pessoa, a busca, o cadastro por foto e os tres indicadores — a tela de
- * referencia da web. O botao de marcar dose continua em cada linha.
+ * Remédios e estoque (mock 02 da repaginacao): tres alertas no topo, a barra
+ * de filtros com as duas acoes, e a tabela Medicamento / Membro / Quantidade
+ * restante / Validade / Nivel. A pessoa vem do seletor do cabecalho.
+ *
+ * O botao de marcar a dose de hoje continua em cada linha: o mock nao o
+ * desenha, mas marcar dose e a funcao central do sistema.
  */
-export function ListaDeRemedios({ perfilId, setPerfilId }: Props) {
-  const perfis = usePerfis();
+export function ListaDeRemedios({ perfilId }: Props) {
   const lista = useListaDeRemedios(perfilId);
-  const { premium } = usePlano();
+  const { membros } = usePessoaAtiva();
   const { marcar, emVoo } = useMarcarDose();
 
   const [busca, setBusca] = useState('');
-  const [recorte, setRecorte] = useState<Recorte>('ativos');
+  const [status, setStatus] = useState<Status>('ativos');
 
   const medicamentos = useMemo(() => lista.data?.remedios ?? [], [lista.data]);
   const agora = lista.data?.agora;
 
+  const baixo = (m: Medication) => Boolean(m.isActive && m.stock && estoqueBaixo(m, m.stock));
+  const vence = (m: Medication) => Boolean(m.isActive && m.stock && agora && validadeProxima(m.stock, agora));
+
   const visiveis = useMemo(() => {
     const termo = normalizar(busca.trim());
     return medicamentos
-      .filter((m) =>
-        recorte === 'todos'
-          ? true
-          : recorte === 'hoje'
-            ? agora != null && vigenteHoje(m, agora)
-            : m.isActive,
-      )
+      .filter((m) => {
+        switch (status) {
+          case 'todos':
+            return true;
+          case 'hoje':
+            return agora != null && vigenteHoje(m, agora);
+          case 'baixo':
+            return baixo(m);
+          case 'validade':
+            return vence(m);
+          default:
+            return m.isActive;
+        }
+      })
       .filter((m) => (termo ? normalizar(tituloDoMedicamento(m)).includes(termo) : true));
-  }, [medicamentos, recorte, busca, agora]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [medicamentos, status, busca, agora]);
 
-  const ativos = medicamentos.filter((m) => m.isActive).length;
-  const acabando = medicamentos.filter(
-    (m) => m.isActive && m.stock && estoqueBaixo(m, m.stock),
-  ).length;
-  const proxima = useMemo(
-    () => (agora ? resumoDoDia(medicamentos, agora).proxima : null),
-    [medicamentos, agora],
-  );
+  const acabando = medicamentos.filter(baixo).length;
+  const vencendo = medicamentos.filter(vence).length;
+  const deHoje = agora ? medicamentos.filter((m) => vigenteHoje(m, agora) && m.scheduleType !== 'as_needed') : [];
+  const dosesHoje = agora ? deHoje.reduce((t, m) => t + slotsDoDia(m, agora).length, 0) : 0;
 
   return (
     <Pagina area="medications" largura="larga">
       <ScreenHeader
-        title="Meus medicamentos"
-        subtitle="Acompanhe os medicamentos de toda a família"
+        title="Remédios e estoque"
+        subtitle="Mantenha os medicamentos da sua família sempre em dia."
+        ilustracao={maeBebe}
       />
-
-      <div className={estilos.ferramentas}>
-        <div className={estilos.ferramentaPessoa}>
-          <ProfileSelector
-            profiles={perfis.data ?? []}
-            selectedId={perfilId}
-            onSelect={setPerfilId}
-            tituloDoPainel="Ver remédios de"
-          />
-        </div>
-        <CampoDeBusca
-          valor={busca}
-          onChange={setBusca}
-          placeholder="Buscar medicamento"
-          rotulo="Buscar medicamento pelo nome"
-        />
-        <Link to="/remedios/novo" className={`${botoes.ambar} ${estilos.adicionar}`}>
-          <Icone nome="plus" size={22} />
-          Adicionar medicamento
-        </Link>
-      </div>
-
-      {/* Cadastro por foto. Sem o plano continua aqui (e a vitrine do recurso),
-          com o selo, e leva a assinatura. */}
-      <Link
-        to={premium ? '/remedios/novo' : '/conta/assinatura'}
-        className={estilos.porFoto}
-        aria-label={
-          premium
-            ? 'Cadastrar por foto. Fotografe a receita ou a caixinha.'
-            : 'Cadastrar por foto. Faz parte da assinatura.'
-        }
-      >
-        <span className={estilos.porFotoIcone} aria-hidden="true">
-          <Icone nome="camera" size={34} />
-        </span>
-        <span className={estilos.porFotoTextos}>
-          <span className={estilos.porFotoTitulo}>
-            Cadastrar por foto
-            {premium ? null : (
-              <span className={estilos.seloAssinatura}>
-                <Icone nome="lock" size={12} />
-                Assinatura
-              </span>
-            )}
-          </span>
-          <span className={estilos.porFotoTexto}>
-            Fotografe a receita ou a caixinha e deixe a IA preencher as informações.
-          </span>
-        </span>
-        <img src={ramo} alt="" className={estilos.porFotoRamo} />
-        <Icone nome="chevron-right" size={24} className={estilos.porFotoSeta} />
-      </Link>
 
       {lista.isPending ? (
         <Carregando />
       ) : lista.isError && !lista.data ? (
         <div className={estilos.bloco}>
-          <Aviso
-            icone="alert-circle"
-            erro
-            acao={{ rotulo: 'Tentar de novo', onClick: () => void lista.refetch() }}
-          >
+          <Aviso icone="alert-circle" erro acao={{ rotulo: 'Tentar de novo', onClick: () => void lista.refetch() }}>
             {mensagemDoErro(lista.error)}
           </Aviso>
         </div>
       ) : agora ? (
         <>
-          <div className={estilos.indicadores}>
+          <div className={estilos.alertas}>
             <CartaoDeResumo
-              formato="indicador"
-              icone="mci:pill"
-              rotulo="Medicamentos ativos"
-              valor={String(ativos)}
-            />
-            <CartaoDeResumo
-              formato="indicador"
-              icone={acabando > 0 ? 'alert-circle' : 'sun'}
-              tom="atencao"
+              icone={acabando > 0 ? 'alert-triangle' : 'check-circle'}
+              tom={acabando > 0 ? 'atencao' : 'verde'}
               rotulo="Estoque baixo"
               valor={
-                acabando === 0 ? 'Nenhum' : acabando === 1 ? '1 alerta' : `${acabando} alertas`
+                acabando === 0
+                  ? 'Nenhum remédio acabando'
+                  : acabando === 1
+                    ? '1 medicamento precisa de reposição'
+                    : `${acabando} medicamentos precisam de reposição`
               }
               para="/remedios/estoque"
             />
             <CartaoDeResumo
-              formato="indicador"
               icone="clock"
-              tom="escuro"
-              rotulo="Próxima dose"
-              valor={proxima ? hora(proxima.quando) : '—'}
-              apoio={
-                proxima
-                  ? `${tituloDoMedicamento(proxima.medicamento)}${isSameDay(proxima.quando, agora) ? '' : ' · amanhã'}`
-                  : 'Nada agendado'
+              rotulo="Próximas doses"
+              valor={
+                dosesHoje === 0
+                  ? 'Nenhuma dose prevista hoje'
+                  : `${dosesHoje} ${dosesHoje === 1 ? 'dose' : 'doses'} hoje (${deHoje.length} ${deHoje.length === 1 ? 'medicamento' : 'medicamentos'})`
               }
+              para="/remedios/historico"
+            />
+            <CartaoDeResumo
+              icone="calendar"
+              tom={vencendo > 0 ? 'atencao' : 'verde'}
+              rotulo="Validade próxima"
+              valor={
+                vencendo === 0
+                  ? 'Nenhum vence nos próximos 30 dias'
+                  : vencendo === 1
+                    ? '1 medicamento vence em 30 dias'
+                    : `${vencendo} medicamentos vencem em 30 dias`
+              }
+              para="/remedios/estoque"
             />
           </div>
 
-          <section className={estilos.secao} aria-labelledby="lista-titulo">
-            <div className={estilos.listaTopo}>
-              <h2 id="lista-titulo" className={estilos.listaTitulo}>
-                Meus medicamentos
-              </h2>
-              <FilterChips
-                chips={RECORTES}
-                selected={recorte}
-                onSelect={(v) => setRecorte((v ?? 'ativos') as Recorte)}
-                rotulo="Quais medicamentos mostrar"
+          <div className={estilos.ferramentas}>
+            <label className={estilos.filtro}>
+              <Icone nome="filter" size={20} />
+              <span className={estilos.oculto}>Filtrar por status</span>
+              <select value={status} onChange={(e) => setStatus(e.target.value as Status)}>
+                {STATUS.map((s) => (
+                  <option key={s.valor} value={s.valor}>
+                    {s.rotulo}
+                  </option>
+                ))}
+              </select>
+              <Icone nome="chevron-down" size={18} />
+            </label>
+            <div className={estilos.busca}>
+              <CampoDeBusca
+                valor={busca}
+                onChange={setBusca}
+                placeholder="Buscar medicamento"
+                rotulo="Buscar medicamento pelo nome"
               />
             </div>
+            <div className={estilos.acoes}>
+              <Link to="/remedios/novo" className={`${botoes.contorno} ${estilos.botao}`}>
+                <Icone nome="plus-circle" size={20} />
+                Adicionar medicamento
+              </Link>
+              <Link to="/remedios/compra" className={`${botoes.ambar} ${estilos.botao}`}>
+                <Icone nome="refresh-cw" size={20} />
+                Registrar reposição
+              </Link>
+            </div>
+          </div>
 
-            {visiveis.length === 0 ? (
+          {visiveis.length === 0 ? (
+            <div className={estilos.bloco}>
               <Aviso icone="plus-circle">
                 {medicamentos.length === 0
                   ? 'Você ainda não cadastrou nenhum remédio.'
                   : busca.trim()
                     ? `Nenhum medicamento com "${busca.trim()}".`
-                    : recorte === 'hoje'
-                      ? 'Nenhum remédio previsto para hoje.'
-                      : 'Nenhum medicamento em uso.'}
+                    : `Nenhum medicamento em "${STATUS.find((s) => s.valor === status)?.rotulo}".`}
               </Aviso>
-            ) : (
-              <div className={estilos.pilha}>
-                {visiveis.map((m) => (
-                  <MedicationRow
-                    key={m.id}
-                    medicamento={m}
-                    agora={agora}
-                    mostrarPerfil
-                    enviando={emVoo.has(m.id)}
-                    onMarcar={() => void marcar(m, agora)}
-                  />
-                ))}
+            </div>
+          ) : (
+            <div className={estilos.tabela}>
+              <div className={estilos.cabecalhoDaTabela} aria-hidden="true">
+                <span>Medicamento</span>
+                <span>Membro</span>
+                <span>Quantidade restante</span>
+                <span>Validade</span>
+                <span>Nível</span>
+                <span>Hoje</span>
               </div>
-            )}
-          </section>
+              <ul className={estilos.linhas}>
+                {visiveis.map((m) => {
+                  const titulo = tituloDoMedicamento(m);
+                  const membro = membros.find((p) => p.id === m.profileId);
+                  const estado = estadoHoje(m, agora);
+                  const repetivel = m.scheduleType === 'as_needed';
+                  const marcado = estado.tipo === 'tomado' && !repetivel;
+                  const semAcao =
+                    estado.tipo === 'inativo' || estado.tipo === 'encerrado' || estado.tipo === 'nao_comecou';
+                  const e = m.stock ?? null;
+                  return (
+                    <li key={m.id} className={estilos.linha}>
+                      <Link
+                        to={`/remedios/${m.id}`}
+                        className={estilos.cobertura}
+                        aria-label={`${titulo}${m.profileName ? `, de ${m.profileName}` : ''}. Ver detalhes.`}
+                      />
+                      <div className={estilos.medicamento}>
+                        <IconTile {...LADRILHO_POR_FORMA[formaVisual(m.form)]} size={52} />
+                        <div className={estilos.nome}>
+                          <p className={estilos.titulo}>{titulo}</p>
+                          <p className={estilos.apoio}>{m.isActive ? posologia(m) : 'Encerrado'}</p>
+                        </div>
+                      </div>
+                      <div className={estilos.membro}>
+                        {membro ? (
+                          <Avatar
+                            nome={membro.fullName}
+                            color={membro.avatarColor ?? undefined}
+                            photo={membro.photo ?? undefined}
+                            size={40}
+                          />
+                        ) : null}
+                        <span>{(m.profileName ?? membro?.fullName ?? '').split(' ')[0]}</span>
+                      </div>
+                      <div className={estilos.dado}>
+                        <Icone nome="mci:pill" size={20} />
+                        {e ? (
+                          <span>
+                            {quantidadeDoEstoque(e.remaining, m.form)}
+                            {e.lastPurchaseUnits > 0 ? (
+                              <span className={estilos.apoio}> (de {e.lastPurchaseUnits})</span>
+                            ) : null}
+                          </span>
+                        ) : (
+                          <span className={estilos.apoio}>Sem controle</span>
+                        )}
+                      </div>
+                      <div className={estilos.dado}>
+                        <Icone nome="calendar" size={20} />
+                        <span>{e?.expiresOn ? validadeCurta(e.expiresOn) : <span className={estilos.apoio}>—</span>}</span>
+                      </div>
+                      <div className={estilos.nivel}>
+                        {!e ? null : baixo(m) ? (
+                          <SeloDeStatus tom="atencao">Baixo</SeloDeStatus>
+                        ) : vence(m) ? (
+                          <SeloDeStatus tom="atencao" icone="calendar">
+                            Vence logo
+                          </SeloDeStatus>
+                        ) : (
+                          <SeloDeStatus tom="sucesso">Adequado</SeloDeStatus>
+                        )}
+                      </div>
+                      <div className={estilos.hoje}>
+                        {vigenteHoje(m, agora) ? (
+                          <DoseButton
+                            checked={marcado}
+                            repetivel={repetivel}
+                            disabled={semAcao}
+                            enviando={emVoo.has(m.id)}
+                            label={marcado ? `Dose de ${titulo} já marcada` : `Marcar dose de ${titulo}`}
+                            onClick={() => void marcar(m, agora)}
+                          />
+                        ) : null}
+                        <Icone nome="chevron-right" size={22} className={estilos.seta} />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
 
           {/* No aplicativo, aqui fica o interruptor dos lembretes do aparelho.
               O navegador nao agenda alarme: a web diz onde eles tocam. */}
-          <p className={estilos.notaLembretes}>
+          <p className={estilos.nota}>
             <Icone nome="bell" size={16} />
-            Os lembretes das doses tocam no aplicativo do celular.
+            Os lembretes das doses tocam no aplicativo do celular e, se você quiser, no WhatsApp do acompanhante.
           </p>
         </>
       ) : null}

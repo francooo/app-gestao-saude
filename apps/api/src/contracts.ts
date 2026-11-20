@@ -199,6 +199,8 @@ export const professionalInputSchema = z.object({
   myRating: z.number().int().min(1).max(5).optional().nullable(),
   ratingNote: z.string().trim().max(500).optional().nullable(),
   notes: z.string().trim().max(1000).optional().nullable(),
+  /** O coracao da tela de Medicos. */
+  isFavorite: z.boolean().optional(),
   /**
    * Foto como data URI JPEG. So JPEG porque o unico produtor e o
    * ImageManipulator do app, que sempre salva JPEG — aceitar PNG abriria um
@@ -225,6 +227,16 @@ export const professionalInputSchema = z.object({
 
 /** No PATCH todos os campos sao opcionais, inclusive o nome. */
 export const professionalPatchSchema = professionalInputSchema.partial();
+
+/**
+ * Ajustes > Perfil: nome e telefone da CONTA. O telefone e opcional; vazio ou
+ * null apaga. O formato e conferido no handler (normalizarTelefone), o mesmo
+ * do acompanhante.
+ */
+export const perfilDaContaPatchSchema = z.object({
+  fullName: z.string().trim().min(2, { message: 'Informe o nome' }).max(120).optional(),
+  phone: z.string().trim().max(25).optional().nullable(),
+});
 
 // ---------------------------------------------------------------------------
 // Consultas
@@ -664,6 +676,14 @@ export const acompanhanteSchema = z.object({
   notifyLate: z.boolean().optional(),
   notifyLowStock: z.boolean().optional(),
   notifyTaken: z.boolean().optional(),
+  /** Lembrete das consultas da pessoa, na antecedencia de cada consulta. */
+  notifyAppointment: z.boolean().optional(),
+  /** Minutos antes da dose (0 = no horario). Mesmo check do banco. */
+  doseLeadMinutes: z
+    .union([z.literal(0), z.literal(15), z.literal(30), z.literal(60)], {
+      message: 'Escolha 0, 15, 30 ou 60 minutos',
+    })
+    .optional(),
   active: z.boolean().optional(),
   fuso: z.string().trim().max(64).optional().nullable(),
 });

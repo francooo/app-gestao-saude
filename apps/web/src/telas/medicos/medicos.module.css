@@ -378,3 +378,65 @@
 .remover {
   margin-top: var(--espaco-md);
 }
+
+/* --- Repaginacao (mock 04) --- */
+
+.especialidades {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-md);
+  margin-top: var(--espaco-xl);
+  padding: var(--espaco-md);
+  border-radius: 999px;
+  background: rgba(231, 238, 219, 0.45);
+}
+
+.especialidade {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+  min-height: 52px;
+  padding: 0 var(--espaco-xl);
+  border: 0;
+  border-radius: var(--raio-pill);
+  background: var(--creme-superficie);
+  box-shadow: var(--sombra-cartao);
+  color: var(--musgo);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.especialidade:hover {
+  background: var(--pistache);
+}
+
+.especialidade[aria-pressed='true'] {
+  background: #8fa77f;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--espaco-xl);
+  margin-top: var(--espaco-xl);
+}
+
+.acoesDoTopo {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--espaco-lg);
+}
+
+.acaoGrande {
+  min-height: 52px;
+}
+
+.mapa {
+  height: 360px;
+  margin-top: var(--espaco-md);
+  overflow: hidden;
+  border-radius: 28px;
+  box-shadow: var(--sombra-cartao);
+}

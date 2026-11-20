@@ -1,0 +1,234 @@
+.trilha {
+  color: var(--salvia-texto);
+  text-decoration: none;
+}
+
+.trilha:hover {
+  color: var(--musgo);
+  text-decoration: underline;
+}
+
+/* --- Heroi --- */
+
+.heroi {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-lg) var(--espaco-xl);
+  margin-top: var(--espaco-lg);
+}
+
+.foto {
+  flex: 0 0 auto;
+  width: min(100%, 240px);
+}
+
+.heroiTextos {
+  display: flex;
+  flex: 1 1 260px;
+  flex-direction: column;
+  gap: var(--espaco-md);
+  min-width: 0;
+}
+
+.para {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-md);
+  width: fit-content;
+  padding: 6px 26px 6px 6px;
+  border-radius: var(--raio-pill);
+  background: var(--pistache);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--musgo);
+}
+
+.situacao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espaco-sm);
+}
+
+.dose {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.doseRotulo {
+  margin-top: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--musgo);
+}
+
+/* --- Tres cartoes --- */
+
+.cartoes {
+  display: grid;
+  gap: var(--espaco-lg);
+  margin-top: var(--espaco-xl);
+}
+
+@media (min-width: 1024px) {
+  .cartoes {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--espaco-xl);
+  }
+}
+
+.cartoes > * {
+  min-width: 0;
+}
+
+.cartao {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espaco-md);
+  padding: var(--espaco-xl);
+  border-radius: 30px;
+}
+
+.cartaoTopo {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--espaco-lg);
+}
+
+.ladrilho {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border: 6px solid var(--creme-superficie);
+  border-radius: 50%;
+  background: #8fa77f;
+  box-shadow: 0 4px 12px rgba(36, 93, 73, 0.12);
+  color: #ffffff;
+  box-sizing: content-box;
+}
+
+.ladrilho[data-tom='terracota'] {
+  background: var(--terracota);
+}
+
+.cartaoTitulo {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.25;
+  color: var(--musgo);
+}
+
+.cartaoTitulo[data-tom='terracota'] {
+  color: var(--terracota-botao);
+}
+
+.grande {
+  margin-top: var(--espaco-xs);
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--musgo);
+}
+
+.grande[data-tamanho='medio'] {
+  font-size: 26px;
+}
+
+.apoio {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--salvia-texto);
+}
+
+.texto {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--salvia-texto);
+  white-space: pre-line;
+}
+
+.mini {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--espaco-md);
+  margin: var(--espaco-sm) 0 0;
+  padding-top: var(--espaco-md);
+  border-top: 1px solid var(--cor-divider);
+}
+
+.mini dt {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--salvia-texto);
+}
+
+.mini dd {
+  margin: 2px 0 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--musgo);
+  overflow-wrap: anywhere;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--musgo);
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}
+
+/* --- Receita e informacoes --- */
+
+.duas {
+  display: grid;
+  gap: var(--espaco-xl);
+  margin-top: var(--espaco-xl);
+}
+
+@media (min-width: 1024px) {
+  .duas {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+/* --- Rodape --- */
+
+.rodape {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espaco-md);
+  margin-top: var(--espaco-xxl);
+}
+
+.voltar,
+.editar {
+  min-height: 56px;
+}
+
+.secundarias {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espaco-sm);
+  margin-top: var(--espaco-lg);
+}

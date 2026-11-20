@@ -2,18 +2,21 @@ import { useQuery } from '@tanstack/react-query';
 import { healthApi, type AssistantMessage } from '@gestao/shared/api/health';
 import { montarContexto } from '@gestao/shared/lib/contextoDeSaude';
 import { limparMarkdown } from '@gestao/shared/lib/textoDoAssistente';
-import { addDays, endOfDay, startOfDay } from 'date-fns';
+import { descricaoDoRegistro, momentoDoRegistro, tipoDe } from '@gestao/shared/lib/diarioDeSintomas';
+import { addDays, endOfDay, startOfDay, subDays } from 'date-fns';
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { Link } from 'react-router';
 
-import { useAssinaturaExigida, usePerfis, usePlano } from '@/api/consultas';
+import { useAssinaturaExigida, usePlano } from '@/api/consultas';
 import { mensagemDoErro } from '@/api/doses';
+import assistenteImg from '@/imagens/repag/assistente.webp';
+import maeBebe from '@/imagens/repag/mae-bebe-oval.webp';
+import { usePessoaAtiva } from '@/lib/pessoaAtiva';
 import botoes from '@/ui/botoes.module.css';
 import { Carregando } from '@/ui/Carregando';
 import { useDialogos } from '@/ui/Dialogo';
 import { Icone } from '@/ui/Icone';
 import { Pagina } from '@/ui/Pagina';
-import { ProfileSelector } from '@/ui/ProfileSelector';
 import { ScreenHeader } from '@/ui/ScreenHeader';
 import { SurfaceCard } from '@/ui/SurfaceCard';
 
@@ -69,15 +72,20 @@ export function Assistente() {
   const { premium } = usePlano();
   const tratarAssinatura = useAssinaturaExigida();
 
-  const perfis = usePerfis();
-  const lista = perfis.data ?? [];
-  const [escolhido, setEscolhido] = useState<string | null>(null);
-  // Sem pessoa escolhida o assistente nao tem agenda para consultar; o titular
-  // e quem mais pergunta sobre a propria familia.
-  const perfilId =
-    escolhido ?? lista.find((p) => p.isAccountHolder)?.id ?? lista[0]?.id ?? null;
-  const perfil = lista.find((p) => p.id === perfilId) ?? null;
+  // A pessoa vem do seletor do cabecalho. Em "Todos" o assistente conversa
+  // sobre o titular: sem uma pessoa ele nao tem agenda para consultar.
+  const { pessoa, pessoaOuTitular, membros, carregando: carregandoPessoas } = usePessoaAtiva();
+  const perfil = pessoaOuTitular;
+  const perfilId = perfil?.id ?? null;
   const primeiroNome = perfil?.fullName.split(' ')[0] ?? '';
+
+  /** "Historico recente" da coluna lateral: os ultimos sintomas anotados. */
+  const sintomas = useQuery({
+    queryKey: ['sintomas', 'assistente', { perfilId }],
+    queryFn: () =>
+      healthApi.listSymptoms({ profileId: perfilId!, from: startOfDay(subDays(new Date(), 29)), to: endOfDay(new Date()) }),
+    enabled: Boolean(perfilId),
+  });
 
   const remedios = useQuery({
     queryKey: ['remedios', 'assistente', { perfilId }],
@@ -141,7 +149,7 @@ export function Assistente() {
           remedios.data ?? [],
           consultas.data ?? [],
           new Date(),
-          lista,
+          membros,
         ),
       });
       setNovas((atual) => [...atual, ...resposta]);
@@ -218,20 +226,75 @@ export function Assistente() {
   return (
     <Pagina area="assistant" largura="larga">
       <ScreenHeader
-        title="Assistente de Saúde"
-        subtitle="Tire dúvidas sobre os remédios e as consultas da família"
+        title="Como posso ajudar hoje?"
+        subtitle="Conte o que está sentindo ou pergunte sobre remédios e consultas. Eu ajudo a entender melhor e a pensar nos próximos passos."
+        ilustracao={maeBebe}
+        contexto={perfil ? `Conversando sobre ${primeiroNome}` : undefined}
       />
 
+      {!pessoa && perfil ? (
+        <p className={estilos.sobreQuem}>
+          <Icone nome="info" size={16} />
+          Mostrando {primeiroNome} (titular). Para falar de outra pessoa, escolha no topo.
+        </p>
+      ) : null}
+
       <div className={estilos.grade}>
-        <div className={estilos.seletor}>
-          <ProfileSelector
-            profiles={lista}
-            selectedId={perfilId}
-            onSelect={setEscolhido}
-            tituloDoPainel="Começar por"
-            permitirTodos={false}
-          />
-        </div>
+        <aside className={estilos.lateral} aria-label="Sinais de alerta e histórico recente">
+          <SurfaceCard className={estilos.alerta}>
+            <h2 className={estilos.alertaTitulo}>
+              <span className={estilos.alertaIcone} aria-hidden="true">
+                <Icone nome="alert-triangle" size={26} />
+              </span>
+              Sinais de alerta
+            </h2>
+            <ul className={estilos.alertaLista}>
+              <li>Febre alta (acima de 39 °C)</li>
+              <li>Dificuldade para respirar</li>
+              <li>Dor intensa e persistente</li>
+              <li>Vômitos frequentes</li>
+              <li>Sonolência incomum ou confusão</li>
+            </ul>
+            <p className={estilos.alertaAcao}>
+              <Icone nome="shield" size={20} />
+              Em caso de sinais de alerta, procure atendimento médico imediatamente — ligue 192.
+            </p>
+          </SurfaceCard>
+
+          <SurfaceCard className={estilos.recentes}>
+            <h2 className={estilos.recentesTitulo}>
+              <Icone nome="clock" size={22} />
+              Histórico recente
+            </h2>
+            {sintomas.isPending && perfilId ? (
+              <Carregando />
+            ) : (sintomas.data ?? []).length === 0 ? (
+              <p className={estilos.recentesVazio}>
+                Nenhum sintoma anotado nos últimos 30 dias.{' '}
+                <Link to="/sintomas">Abrir o diário</Link>
+              </p>
+            ) : (
+              <ul className={estilos.recentesLista}>
+                {(sintomas.data ?? []).slice(0, 3).map((r) => (
+                  <li key={r.id}>
+                    <Link to="/sintomas" className={estilos.recente}>
+                      <span className={estilos.recenteIcone} aria-hidden="true">
+                        <Icone nome={tipoDe(r.kind)?.icone ?? 'activity'} size={22} />
+                      </span>
+                      <span className={estilos.recenteTextos}>
+                        <span className={estilos.recenteTitulo}>{tipoDe(r.kind)?.rotulo ?? 'Sintoma'}</span>
+                        <span className={estilos.recenteApoio}>
+                          {momentoDoRegistro(r, new Date())} · {descricaoDoRegistro(r)}
+                        </span>
+                      </span>
+                      <Icone nome="chevron-right" size={20} />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </SurfaceCard>
+        </aside>
 
         {/* Saudacao e mensagens no MESMO cartao: a faixa colorida e o topo do painel. */}
         <SurfaceCard flush className={estilos.painel}>
@@ -241,7 +304,7 @@ export function Assistente() {
           </div>
 
           <div className={estilos.conversa} aria-live="polite">
-            {perfis.isPending || (!premium && historico.isPending && Boolean(perfilId)) ? (
+            {carregandoPessoas || (!premium && historico.isPending && Boolean(perfilId)) ? (
               <Carregando />
             ) : mensagens.length === 0 && !premium ? (
               <Bolha
@@ -361,6 +424,18 @@ export function Assistente() {
               </Link>
             </SurfaceCard>
           )}
+        </div>
+      </div>
+
+      <div className={estilos.nota}>
+        <img src={assistenteImg} alt="" className={estilos.notaAvatar} width={72} height={72} />
+        <div>
+          <p className={estilos.notaTitulo}>
+            Estou aqui para ajudar <Icone nome="heart" size={18} />
+          </p>
+          <p className={estilos.notaTexto}>
+            Lembre-se: este é um guia de orientações e não substitui a avaliação de um profissional de saúde.
+          </p>
         </div>
       </div>
     </Pagina>

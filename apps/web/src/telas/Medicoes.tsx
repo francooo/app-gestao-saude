@@ -23,11 +23,12 @@ import {
 import { diaCurto, hora } from '@gestao/shared/lib/posologia';
 import { blocosDoPeriodo, periodoDosUltimos } from '@gestao/shared/lib/relatorio';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router';
+import { Link, useNavigate } from 'react-router';
 
 import { CHAVES, useAssinaturaExigida, usePerfis, usePlano } from '@/api/consultas';
 import { mensagemDoErro } from '@/api/doses';
 import { escolherFotoDeDocumento } from '@/lib/foto';
+import { usePessoaAtiva } from '@/lib/pessoaAtiva';
 import { BlocoDeAviso } from '@/ui/BlocoDeAviso';
 import botoes from '@/ui/botoes.module.css';
 import { Carregando } from '@/ui/Carregando';
@@ -39,7 +40,7 @@ import { Icone } from '@/ui/Icone';
 import { IconTile, LADRILHO_NEUTRO } from '@/ui/IconTile';
 import { Aviso, Pagina } from '@/ui/Pagina';
 import { PrimaryButton } from '@/ui/PrimaryButton';
-import { ProfileSelector } from '@/ui/ProfileSelector';
+import { AvisoDoTitular } from '@/ui/AvisoDoTitular';
 import { ScreenHeader } from '@/ui/ScreenHeader';
 import { SectionHeader } from '@/ui/SectionHeader';
 import { SurfaceCard } from '@/ui/SurfaceCard';
@@ -70,16 +71,12 @@ export function Medicoes() {
   const { confirmar, avisar } = useDialogos();
   const { premium, politicaVelha } = usePlano();
   const tratarAssinatura = useAssinaturaExigida();
-  const [params] = useSearchParams();
 
   const perfis = usePerfis();
   const lista = perfis.data ?? [];
-  const [escolhido, setEscolhido] = useState<string | null>(() => params.get('pessoa'));
-  const perfilId =
-    (escolhido && lista.some((p) => p.id === escolhido) ? escolhido : null) ??
-    lista.find((p) => p.isAccountHolder)?.id ??
-    lista[0]?.id ??
-    null;
+  // A pessoa vem do seletor do cabecalho; em "Todos", o titular.
+  const { pessoaOuTitular } = usePessoaAtiva();
+  const perfilId = pessoaOuTitular?.id ?? null;
 
   const chave = CHAVES.medicoesDe(perfilId, DIAS_BUSCADOS);
   const historico = useQuery({
@@ -141,13 +138,18 @@ export function Medicoes() {
     setErroDaFoto(null);
   }
 
-  function trocarPessoa(id: string | null) {
+  // Trocar de pessoa no cabecalho: a leitura em andamento e o formulario sao
+  // da pessoa anterior.
+  const anterior = useRef(perfilId);
+  useEffect(() => {
+    if (anterior.current === perfilId) return;
+    anterior.current = perfilId;
     cancelamento.current?.abort();
-    setEscolhido(id);
     setSalva(null);
     setTodos(false);
     limparFormulario();
-  }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [perfilId]);
 
   function trocarTipo(novo: MeasurementKind) {
     if (novo === tipoChave) return;
@@ -288,6 +290,7 @@ export function Medicoes() {
   return (
     <Pagina area="medications" largura="larga">
       <ScreenHeader
+        contexto={pessoaOuTitular ? `Cuidado de ${pessoaOuTitular.fullName.split(' ')[0]}` : undefined}
         title="Medições"
         subtitle="Pressão, glicemia, peso e oxigenação de cada pessoa"
         voltar="historico"
@@ -303,15 +306,7 @@ export function Medicoes() {
         </div>
       ) : (
         <>
-          <div className={estilos.seletor}>
-            <ProfileSelector
-              profiles={lista}
-              selectedId={perfilId}
-              onSelect={trocarPessoa}
-              tituloDoPainel="Medições de"
-              permitirTodos={false}
-            />
-          </div>
+          <AvisoDoTitular />
 
           {/* Um cartao por tipo, com a ultima medicao. Escolher o cartao troca
               o formulario e o grafico. */}

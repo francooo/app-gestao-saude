@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { and, count, desc, eq, inArray } from 'drizzle-orm';
 
-import { API_ERROR, POLICY_VERSION } from '../../contracts';
+import { API_ERROR, POLICY_VERSION, perfilDaContaPatchSchema } from '../../contracts';
 import { db } from '../../db/client';
 import {
   appointments,
@@ -15,7 +15,8 @@ import {
   users,
 } from '../../db/schema';
 import type { AuthContext } from '../../lib/auth';
-import { fail, json } from '../../lib/http';
+import { fail, json, parseBody } from '../../lib/http';
+import { normalizarTelefone } from '../../lib/whatsapp';
 import { planoDe } from '../../lib/plano';
 
 /**
@@ -38,8 +39,9 @@ export default async function perfil(
   res: VercelResponse,
   auth: AuthContext,
 ) {
+  if (req.method === 'PATCH') return atualizar(req, res, auth);
   if (req.method !== 'GET') {
-    res.setHeader('Allow', 'GET');
+    res.setHeader('Allow', 'GET, PATCH');
     return fail(res, 405, API_ERROR.METHOD_NOT_ALLOWED);
   }
 
@@ -48,6 +50,7 @@ export default async function perfil(
       id: users.id,
       email: users.email,
       fullName: users.fullName,
+      phone: users.phone,
       createdAt: users.createdAt,
       trialEndsAt: users.trialEndsAt,
       premiumUntil: users.premiumUntil,
@@ -107,6 +110,49 @@ export default async function perfil(
   if (req.query.counts === 'true') corpo.counts = await contagens(auth.userId);
 
   return json(res, 200, corpo);
+}
+
+/**
+ * Ajustes > Perfil: nome e telefone da conta.
+ *
+ * O telefone passa pela mesma normalizacao do acompanhante (so digitos, com
+ * DDI). Vazio apaga. O e-mail NAO muda aqui: trocar e-mail pede a senha atual
+ * e tem rota propria (/api/me/email).
+ */
+async function atualizar(req: VercelRequest, res: VercelResponse, auth: AuthContext) {
+  const body = parseBody(res, perfilDaContaPatchSchema, req.body);
+  if (!body) return;
+
+  const mudancas: Partial<typeof users.$inferInsert> = {};
+  if (body.fullName !== undefined) mudancas.fullName = body.fullName;
+  if (body.phone !== undefined) {
+    if (!body.phone) {
+      mudancas.phone = null;
+    } else {
+      const telefone = normalizarTelefone(body.phone);
+      if (!telefone) {
+        return fail(res, 400, API_ERROR.VALIDATION_ERROR, {
+          phone: 'Informe um telefone com DDD, como (11) 99999-1234',
+        });
+      }
+      mudancas.phone = telefone;
+    }
+  }
+
+  const [u] = Object.keys(mudancas).length
+    ? await db
+        .update(users)
+        .set(mudancas)
+        .where(eq(users.id, auth.userId))
+        .returning({ id: users.id, email: users.email, fullName: users.fullName, phone: users.phone, createdAt: users.createdAt })
+    : await db
+        .select({ id: users.id, email: users.email, fullName: users.fullName, phone: users.phone, createdAt: users.createdAt })
+        .from(users)
+        .where(eq(users.id, auth.userId))
+        .limit(1);
+
+  if (!u) return fail(res, 404, API_ERROR.INTERNAL_ERROR);
+  return json(res, 200, { user: { ...u, createdAt: u.createdAt.toISOString() } });
 }
 
 /**

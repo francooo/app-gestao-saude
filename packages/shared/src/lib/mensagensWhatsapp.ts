@@ -40,6 +40,7 @@ export const NOMES_DOS_AVISOS = {
   notifyLate: 'avisos de dose atrasada',
   notifyLowStock: 'alerta de estoque baixo',
   notifyTaken: 'confirmação de medicamento tomado',
+  notifyAppointment: 'lembrete das consultas',
 } as const satisfies Record<Permissao, string>;
 
 /** O que entra na lista do convite, na ordem do servidor. */

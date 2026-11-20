@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 
 import { professionalInputSchema } from '../../src/contracts';
 import { db } from '../../src/db/client';
@@ -86,7 +86,8 @@ async function listar(req: VercelRequest, res: VercelResponse, userId: string) {
     .select()
     .from(professionals)
     .where(and(...filtros))
-    .orderBy(asc(professionals.name));
+    // Favoritos primeiro (o coracao da tela de Medicos), depois por nome.
+    .orderBy(desc(professionals.isFavorite), asc(professionals.name));
 
   json(res, 200, { professionals: lista.map(serializar) });
 }
@@ -113,6 +114,7 @@ async function criar(req: VercelRequest, res: VercelResponse, userId: string) {
       longitude: coords ? String(coords.longitude) : null,
       defaultModality: body.defaultModality ?? null,
       myRating: body.myRating ?? null,
+      isFavorite: body.isFavorite ?? false,
       ratingNote: body.ratingNote ?? null,
       notes: body.notes ?? null,
       photo: body.photo ?? null,

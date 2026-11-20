@@ -111,6 +111,8 @@ export const professionalSchema = z.object({
    * generico. Com nullish() ela apenas degrada: todos sem foto.
    */
   photo: z.string().nullish(),
+  /** O coracao da tela de Medicos. nullish: servidor antigo nao manda. */
+  isFavorite: z.boolean().nullish(),
 });
 export type Professional = z.infer<typeof professionalSchema>;
 
@@ -125,6 +127,7 @@ export type ProfessionalInput = {
   notes?: string | null;
   /** Data URI JPEG. null remove a foto; ausente preserva a atual. */
   photo?: string | null;
+  isFavorite?: boolean;
 };
 
 // ---------------------------------------------------------------------------

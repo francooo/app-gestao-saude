@@ -15,9 +15,10 @@ import {
 } from '@gestao/shared/lib/diarioDeSintomas';
 import { hora } from '@gestao/shared/lib/posologia';
 import { endOfDay, startOfDay, subDays } from 'date-fns';
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 
 import { CHAVES, usePerfis } from '@/api/consultas';
+import { usePessoaAtiva } from '@/lib/pessoaAtiva';
 import { mensagemDoErro } from '@/api/doses';
 import { Carregando } from '@/ui/Carregando';
 import { Chip, Chips } from '@/ui/Chip';
@@ -26,7 +27,7 @@ import { FormField } from '@/ui/FormField';
 import { Icone } from '@/ui/Icone';
 import { Aviso, Pagina } from '@/ui/Pagina';
 import { PrimaryButton } from '@/ui/PrimaryButton';
-import { ProfileSelector } from '@/ui/ProfileSelector';
+import { AvisoDoTitular } from '@/ui/AvisoDoTitular';
 import { ScreenHeader } from '@/ui/ScreenHeader';
 import { SectionHeader } from '@/ui/SectionHeader';
 import { SurfaceCard } from '@/ui/SurfaceCard';
@@ -50,9 +51,9 @@ export function Sintomas() {
 
   const perfis = usePerfis();
   const lista = perfis.data ?? [];
-  const [escolhido, setEscolhido] = useState<string | null>(null);
-  const perfilId =
-    escolhido ?? lista.find((p) => p.isAccountHolder)?.id ?? lista[0]?.id ?? null;
+  // A pessoa vem do seletor do cabecalho; em "Todos", o titular.
+  const { pessoaOuTitular } = usePessoaAtiva();
+  const perfilId = pessoaOuTitular?.id ?? null;
 
   // Os ultimos 30 dias da pessoa. A chave leva a pessoa: ao trocar, os
   // registros da anterior saem da tela na hora.
@@ -81,11 +82,14 @@ export function Sintomas() {
 
   const agora = new Date();
 
-  function trocarPessoa(id: string | null) {
-    setEscolhido(id);
+  // Trocar de pessoa no cabecalho fecha o "ver tudo" e o aviso de salvo.
+  const anterior = useRef(perfilId);
+  useEffect(() => {
+    if (anterior.current === perfilId) return;
+    anterior.current = perfilId;
     setTodos(false);
     setSalvoAs(null);
-  }
+  }, [perfilId]);
 
   function escolherTipo(novo: SymptomKind) {
     // Clicar de novo NAO desmarca: desmarcar jogaria fora a escala e a
@@ -175,6 +179,7 @@ export function Sintomas() {
   return (
     <Pagina area="medications" largura="larga">
       <ScreenHeader
+        contexto={pessoaOuTitular ? `Cuidado de ${pessoaOuTitular.fullName.split(' ')[0]}` : undefined}
         title="Diário de sintomas"
         subtitle="Anote como cada pessoa está se sentindo"
         voltar="historico"
@@ -197,15 +202,7 @@ export function Sintomas() {
       ) : (
         <div className={estilos.colunas}>
           <div className={estilos.coluna}>
-            <div className={estilos.seletor}>
-              <ProfileSelector
-                profiles={lista}
-                selectedId={perfilId}
-                onSelect={trocarPessoa}
-                tituloDoPainel="Registrar sintoma de"
-                permitirTodos={false}
-              />
-            </div>
+            <AvisoDoTitular />
 
             <SurfaceCard className={estilos.bloco}>
               <h2 className={estilos.blocoTitulo} id="sintomas-tipo">

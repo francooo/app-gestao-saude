@@ -18,6 +18,7 @@ import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { ApiRequestError } from '@/api/cliente';
 import { CHAVES, usePerfil } from '@/api/consultas';
 import { mensagemDoErro } from '@/api/doses';
+import maeBebeGrande from '@/imagens/repag/mae-bebe-grande.webp';
 import { escolherFoto } from '@/lib/foto';
 import { Avatar } from '@/ui/Avatar';
 import botoes from '@/ui/botoes.module.css';
@@ -107,7 +108,8 @@ function Formulario({ id }: { id: string }) {
     setProcessandoFoto(false);
     if (r.ok) setFoto(r.dataUri);
     // Desistir nao e erro: nao mexe na foto atual e nao avisa nada.
-    else if (r.motivo === 'falha') void avisar('Não consegui usar essa imagem', 'Tente outra foto.');
+    else if (r.motivo === 'falha')
+      void avisar('Não consegui usar essa imagem', 'Tente outra foto.');
   }
 
   function validar(): boolean {
@@ -200,12 +202,21 @@ function Formulario({ id }: { id: string }) {
   }
 
   const idade = idadeDescrita(dataParaISO(nascimento));
-  const titulo = deAjustes ? 'Dados pessoais' : novo ? 'Cadastro de membro' : 'Editar membro';
+  const titulo = deAjustes
+    ? 'Dados pessoais'
+    : novo
+      ? 'Adicionar membro da família'
+      : 'Editar membro da família';
   const ocupado = salvando || processandoFoto;
 
   return (
-    <Pagina area="family" largura="formulario">
-      <ScreenHeader title={titulo} voltar="historico" mostrarSino />
+    <Pagina area="family" largura="larga">
+      <ScreenHeader
+        title={titulo}
+        subtitle="Mantenha sua família sempre cuidada e conectada."
+        voltar="historico"
+        contexto={false}
+      />
 
       {!novo && existente.isPending ? (
         <Carregando />
@@ -220,191 +231,213 @@ function Formulario({ id }: { id: string }) {
           </Aviso>
         </div>
       ) : (
-        <form onSubmit={(e) => void salvar(e)} noValidate>
-          <SurfaceCard flush className={`${estilos.foto} ${estilos.bloco}`}>
-            <button
-              type="button"
-              className={estilos.fotoBotao}
-              disabled={ocupado}
-              onClick={() => void aplicarFoto()}
-              aria-label={foto ? 'Alterar a foto' : 'Adicionar foto'}
-            >
-              {foto ? (
-                <Avatar nome={nome || '?'} photo={foto} size={112} />
-              ) : (
-                <span className={estilos.avatarVazio}>
-                  <Icone nome="user" size={60} />
-                </span>
-              )}
-              <span className={estilos.fotoSelo}>
-                {processandoFoto ? (
-                  <span className={botoes.girando} />
-                ) : (
-                  <Icone nome="camera" size={18} />
-                )}
-              </span>
-            </button>
-
-            {foto ? (
+        <div className={estilos.membroGrade}>
+          <form onSubmit={(e) => void salvar(e)} noValidate className={estilos.membroForm}>
+            <SurfaceCard flush className={`${estilos.foto} ${estilos.bloco}`}>
               <button
                 type="button"
-                className={botoes.perigo}
+                className={estilos.fotoBotao}
                 disabled={ocupado}
-                onClick={() => setFoto(null)}
+                onClick={() => void aplicarFoto()}
+                aria-label={foto ? 'Alterar a foto' : 'Adicionar foto'}
               >
-                Remover foto
-              </button>
-            ) : (
-              <p className={estilos.fotoDica}>Clique para adicionar uma foto</p>
-            )}
-          </SurfaceCard>
-
-          <SurfaceCard className={estilos.bloco}>
-            <FormField
-              label="Nome completo"
-              value={nome}
-              onChangeText={setNome}
-              placeholder="Digite o nome do membro"
-              autoComplete="off"
-              autoCapitalize="words"
-              error={erros.fullName}
-              readOnly={salvando}
-            />
-
-            <FormField
-              label="Nascimento"
-              value={nascimento}
-              onChangeText={(v) => setNascimento(formatarData(v))}
-              placeholder="dd/mm/aaaa"
-              inputMode="numeric"
-              maxLength={10}
-              // A idade calculada aparece aqui, sem guardar um numero que
-              // envelhece sozinho.
-              hint={idade ?? undefined}
-              error={erros.birthDate}
-              readOnly={salvando}
-            />
-
-            <div className={estilos.linha}>
-              <FormField
-                label="Peso"
-                value={peso}
-                onChangeText={setPeso}
-                placeholder="Ex.: 68 kg"
-                inputMode="decimal"
-                hint={pesoAnotadoEm}
-                error={erros.weightKg}
-                readOnly={salvando}
-              />
-              <FormField
-                label="Altura"
-                value={altura}
-                onChangeText={setAltura}
-                placeholder="Ex.: 1,70 m"
-                inputMode="decimal"
-                error={erros.heightCm}
-                readOnly={salvando}
-              />
-            </div>
-
-            {/* O peso tem historico: cada peso salvo aqui entra nas medicoes. */}
-            {novo ? null : (
-              <Link to={`/medicoes?pessoa=${id}`} className={`${botoes.texto} ${estilos.atalhoMedicoes}`}>
-                <Icone nome="heart" size={17} />
-                Ver medições e gráfico
-              </Link>
-            )}
-
-            {/* Parentesco nao existe para o titular: a lista nao tem "titular",
-                e campo que so pode ser preenchido errado e pior que nenhum. */}
-            {titular ? null : (
-              <SelectField
-                label="Parentesco"
-                value={parentesco}
-                options={PARENTESCOS}
-                onChange={setParentesco}
-                placeholder="Selecione o parentesco"
-                error={erros.relationship}
-                disabled={salvando}
-              />
-            )}
-
-            <div className={estilos.subtitulo}>
-              <SectionHeader title="Informações de saúde" icon="leaf" />
-            </div>
-
-            <FormField
-              label="Observações"
-              value={observacoes}
-              onChangeText={setObservacoes}
-              placeholder="Alguma informação importante?"
-              multiline
-              error={erros.notes}
-              readOnly={salvando}
-            />
-
-            {erroGeral ? (
-              <p className={estilos.erroGeral} role="alert">
-                {erroGeral}
-              </p>
-            ) : null}
-
-            <PrimaryButton
-              title={novo ? 'Salvar membro' : 'Salvar'}
-              type="submit"
-              loading={salvando}
-            />
-
-            <div className={estilos.acoes}>
-              <button
-                type="button"
-                className={botoes.texto}
-                disabled={salvando}
-                onClick={() => navigate(-1)}
-              >
-                Cancelar
+                {foto ? (
+                  <Avatar nome={nome || '?'} photo={foto} size={112} />
+                ) : (
+                  <span className={estilos.avatarVazio}>
+                    <Icone nome="user" size={60} />
+                  </span>
+                )}
+                <span className={estilos.fotoSelo}>
+                  {processandoFoto ? (
+                    <span className={botoes.girando} />
+                  ) : (
+                    <Icone nome="camera" size={18} />
+                  )}
+                </span>
               </button>
 
-              {!novo ? (
-                <Link to={`/relatorio?pessoa=${id}`} className={botoes.texto}>
-                  <Icone nome="file-text" size={18} />
-                  Relatório para o médico
-                </Link>
-              ) : null}
-
-              {/* O titular e a propria conta: sair da propria familia nao quer
-                  dizer nada, e o servidor recusa de qualquer forma. */}
-              {!novo && !titular ? (
+              {foto ? (
                 <button
                   type="button"
                   className={botoes.perigo}
-                  disabled={salvando}
-                  onClick={() => void remover()}
+                  disabled={ocupado}
+                  onClick={() => setFoto(null)}
                 >
-                  Remover da família
+                  Remover foto
                 </button>
-              ) : null}
+              ) : (
+                <p className={estilos.fotoDica}>Clique para adicionar uma foto</p>
+              )}
+            </SurfaceCard>
 
-              {/* O e-mail nao mora nesta tela, e quem abre "Dados pessoais"
-                  vai procura-lo aqui. */}
-              {deAjustes ? (
-                <Link to="/conta/acesso" replace className={botoes.texto}>
-                  Alterar e-mail ou senha
+            <SurfaceCard className={estilos.bloco}>
+              <FormField
+                label="Nome completo"
+                value={nome}
+                onChangeText={setNome}
+                placeholder="Digite o nome do membro"
+                autoComplete="off"
+                autoCapitalize="words"
+                error={erros.fullName}
+                readOnly={salvando}
+              />
+
+              <FormField
+                label="Nascimento"
+                value={nascimento}
+                onChangeText={(v) => setNascimento(formatarData(v))}
+                placeholder="dd/mm/aaaa"
+                inputMode="numeric"
+                maxLength={10}
+                // A idade calculada aparece aqui, sem guardar um numero que
+                // envelhece sozinho.
+                hint={idade ?? undefined}
+                error={erros.birthDate}
+                readOnly={salvando}
+              />
+
+              <div className={estilos.linha}>
+                <FormField
+                  label="Peso"
+                  value={peso}
+                  onChangeText={setPeso}
+                  placeholder="Ex.: 68 kg"
+                  inputMode="decimal"
+                  hint={pesoAnotadoEm}
+                  error={erros.weightKg}
+                  readOnly={salvando}
+                />
+                <FormField
+                  label="Altura"
+                  value={altura}
+                  onChangeText={setAltura}
+                  placeholder="Ex.: 1,70 m"
+                  inputMode="decimal"
+                  error={erros.heightCm}
+                  readOnly={salvando}
+                />
+              </div>
+
+              {/* O peso tem historico: cada peso salvo aqui entra nas medicoes. */}
+              {novo ? null : (
+                <Link
+                  to={`/medicoes?pessoa=${id}`}
+                  className={`${botoes.texto} ${estilos.atalhoMedicoes}`}
+                >
+                  <Icone nome="heart" size={17} />
+                  Ver medições e gráfico
                 </Link>
+              )}
+
+              {/* Parentesco nao existe para o titular: a lista nao tem "titular",
+                e campo que so pode ser preenchido errado e pior que nenhum. */}
+              {titular ? null : (
+                <SelectField
+                  label="Parentesco"
+                  value={parentesco}
+                  options={PARENTESCOS}
+                  onChange={setParentesco}
+                  placeholder="Selecione o parentesco"
+                  error={erros.relationship}
+                  disabled={salvando}
+                />
+              )}
+
+              {!novo && titular ? (
+                <p className={estilos.souEu}>
+                  <Icone nome="user" size={20} />
+                  <span>Este membro sou eu</span>
+                  <span className={estilos.souEuSelo}>
+                    <Icone nome="lock" size={14} />
+                    Titular da conta
+                  </span>
+                </p>
               ) : null}
-            </div>
 
-            {!novo && titular && !deAjustes ? (
-              <p className={estilos.titularAviso}>
-                Esta é a sua conta, por isso ela não pode ser removida da família.
-              </p>
+              <div className={estilos.subtitulo}>
+                <SectionHeader title="Informações de saúde" icon="leaf" />
+              </div>
+
+              <FormField
+                label="Observações"
+                value={observacoes}
+                onChangeText={setObservacoes}
+                placeholder="Alguma informação importante?"
+                multiline
+                error={erros.notes}
+                readOnly={salvando}
+              />
+
+              {erroGeral ? (
+                <p className={estilos.erroGeral} role="alert">
+                  {erroGeral}
+                </p>
+              ) : null}
+
+              <PrimaryButton
+                title={novo ? 'Salvar membro' : 'Salvar alterações'}
+                tom="terracota"
+                type="submit"
+                loading={salvando}
+              />
+
+              <div className={estilos.acoes}>
+                <button
+                  type="button"
+                  className={botoes.texto}
+                  disabled={salvando}
+                  onClick={() => navigate(-1)}
+                >
+                  Cancelar
+                </button>
+
+                {!novo ? (
+                  <Link to={`/relatorio?pessoa=${id}`} className={botoes.texto}>
+                    <Icone nome="file-text" size={18} />
+                    Relatório para o médico
+                  </Link>
+                ) : null}
+
+                {/* O titular e a propria conta: sair da propria familia nao quer
+                  dizer nada, e o servidor recusa de qualquer forma. */}
+                {!novo && !titular ? (
+                  <button
+                    type="button"
+                    className={botoes.perigo}
+                    disabled={salvando}
+                    onClick={() => void remover()}
+                  >
+                    Remover da família
+                  </button>
+                ) : null}
+
+                {/* O e-mail nao mora nesta tela, e quem abre "Dados pessoais"
+                  vai procura-lo aqui. */}
+                {deAjustes ? (
+                  <Link to="/conta/acesso" replace className={botoes.texto}>
+                    Alterar e-mail ou senha
+                  </Link>
+                ) : null}
+              </div>
+
+              {!novo && titular && !deAjustes ? (
+                <p className={estilos.titularAviso}>
+                  Esta é a sua conta, por isso ela não pode ser removida da família.
+                </p>
+              ) : null}
+            </SurfaceCard>
+
+            {novo ? (
+              <p className={estilos.rodape}>Você poderá editar essas informações depois.</p>
             ) : null}
-          </SurfaceCard>
+          </form>
 
-          {novo ? (
-            <p className={estilos.rodape}>Você poderá editar essas informações depois.</p>
-          ) : null}
-        </form>
+          {/* A ilustracao do mock 07, ao lado do formulario. So em tela larga. */}
+          <div className={estilos.membroIlustracao} aria-hidden="true">
+            <img src={maeBebeGrande} alt="" />
+          </div>
+        </div>
       )}
     </Pagina>
   );

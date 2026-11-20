@@ -1,5 +1,6 @@
-import { useState } from 'react';
 import { Outlet, useOutletContext } from 'react-router';
+
+import { usePessoaAtiva } from '@/lib/pessoaAtiva';
 
 import { ListaDeRemedios } from './ListaDeRemedios';
 
@@ -24,12 +25,12 @@ export function useAreaDeRemedios(): Contexto {
 /**
  * Moldura da area de Remedios: cada rota e uma tela inteira.
  *
- * O filtro de pessoa mora aqui, e nao na lista: assim ele sobrevive a ida ao
- * detalhe e a volta.
+ * A pessoa vem do seletor do cabecalho (lib/pessoaAtiva), o mesmo do site
+ * inteiro: ela sobrevive a ida ao detalhe e a volta.
  */
 export function RemediosLayout() {
-  const [perfilId, setPerfilId] = useState<string | null>(null);
-  return <Outlet context={{ perfilId, setPerfilId, doisPaineis: false }} />;
+  const { pessoaId, setPessoa } = usePessoaAtiva();
+  return <Outlet context={{ perfilId: pessoaId, setPerfilId: setPessoa, doisPaineis: false }} />;
 }
 
 /** A rota /remedios em si: a lista. */

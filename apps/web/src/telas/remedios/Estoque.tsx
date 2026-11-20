@@ -19,7 +19,8 @@ import { endOfDay, startOfDay } from 'date-fns';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router';
 
-import { CHAVES, usePerfis, useRemedio, type ListaDeRemedios } from '@/api/consultas';
+import { CHAVES, useRemedio, type ListaDeRemedios } from '@/api/consultas';
+import { usePessoaAtiva } from '@/lib/pessoaAtiva';
 import { mensagemDoErro } from '@/api/doses';
 import botoes from '@/ui/botoes.module.css';
 import { Carregando } from '@/ui/Carregando';
@@ -28,7 +29,6 @@ import { FilterChips, type Chip } from '@/ui/FilterChips';
 import { Icone } from '@/ui/Icone';
 import { IconTile, LADRILHO_NEUTRO, LADRILHO_POR_FORMA } from '@/ui/IconTile';
 import { Aviso, Pagina } from '@/ui/Pagina';
-import { ProfileSelector } from '@/ui/ProfileSelector';
 import { ScreenHeader } from '@/ui/ScreenHeader';
 import { SectionHeader } from '@/ui/SectionHeader';
 import { SummaryTile } from '@/ui/SummaryTile';
@@ -56,8 +56,8 @@ type ComEstoque = Medication & { stock: Stock };
  */
 export function Estoque() {
   const { doisPaineis } = useAreaDeRemedios();
-  const perfis = usePerfis();
-  const [perfilId, setPerfilId] = useState<string | null>(null);
+  // A pessoa vem do seletor do cabecalho (lib/pessoaAtiva).
+  const { pessoaId: perfilId } = usePessoaAtiva();
   const [filtro, setFiltro] = useState<Filtro | null>(null);
 
   const consulta = useQuery({
@@ -108,18 +108,10 @@ export function Estoque() {
     <Pagina area="medications">
       <ScreenHeader
         title="Estoque de medicamentos"
+        subtitle="Quanto resta de cada remédio e quando vence."
         voltar={doisPaineis ? undefined : '/remedios'}
         mostrarSino
       />
-
-      <div className={comuns.bloco}>
-        <ProfileSelector
-          profiles={perfis.data ?? []}
-          selectedId={perfilId}
-          onSelect={setPerfilId}
-          tituloDoPainel="Ver estoque de"
-        />
-      </div>
 
       {consulta.isPending ? (
         <Carregando />

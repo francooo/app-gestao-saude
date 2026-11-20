@@ -1,0 +1,146 @@
+.seletor {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: var(--raio-pill);
+  background: rgba(255, 253, 246, 0.7);
+  box-shadow: inset 0 0 0 1px var(--cor-divider);
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+  min-height: 40px;
+  padding: 4px 14px 4px 5px;
+  border: 0;
+  border-radius: var(--raio-pill);
+  background: transparent;
+  color: var(--cor-section-title);
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.item:hover {
+  background: var(--areia);
+}
+
+.item[aria-pressed='true'] {
+  background: var(--pistache);
+  box-shadow: inset 0 0 0 1px rgba(36, 93, 73, 0.14);
+  font-weight: 800;
+}
+
+.todos {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--pistache);
+  color: var(--musgo);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.mais {
+  position: relative;
+}
+
+.mais .item {
+  padding-right: 5px;
+}
+
+.lista {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 240px;
+  margin: 0;
+  padding: var(--espaco-sm);
+  list-style: none;
+  border-radius: 20px;
+  background: var(--creme-superficie);
+  box-shadow: var(--sombra-flutuante);
+}
+
+.opcao {
+  display: flex;
+  align-items: center;
+  gap: var(--espaco-md);
+  width: 100%;
+  padding: var(--espaco-sm) var(--espaco-md);
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--cor-section-title);
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.opcao:hover {
+  background: var(--pistache);
+}
+
+.esqueleto {
+  width: 360px;
+  height: 48px;
+  border-radius: var(--raio-pill);
+  background: var(--areia);
+  opacity: 0.6;
+}
+
+/* Tablet: so os avatares no cabecalho. */
+@media (min-width: 768px) and (max-width: 1439px) {
+  .seletor[data-formato='cabecalho'] .nome {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .seletor[data-formato='cabecalho'] .item {
+    padding: 4px;
+  }
+
+  .seletor[data-formato='cabecalho'] .esqueleto {
+    width: 200px;
+  }
+}
+
+/* Celular: fileira rolavel, sem caixa em volta. */
+.seletor[data-formato='fileira'] {
+  overflow-x: auto;
+  padding: 2px 0;
+  background: transparent;
+  box-shadow: none;
+  scrollbar-width: none;
+}
+
+.seletor[data-formato='fileira']::-webkit-scrollbar {
+  display: none;
+}
+
+.seletor[data-formato='fileira'] .item {
+  flex-shrink: 0;
+  background: rgba(255, 253, 246, 0.8);
+  box-shadow: inset 0 0 0 1px var(--cor-divider);
+}
+
+.seletor[data-formato='fileira'] .item[aria-pressed='true'] {
+  background: var(--pistache);
+}
+
+.esqueleto[data-formato='fileira'] {
+  width: 100%;
+}

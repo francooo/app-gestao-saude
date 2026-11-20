@@ -1,8 +1,17 @@
 .cabecalho {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: var(--espaco-lg);
+  gap: var(--espaco-xl);
   min-height: 52px;
+}
+
+.principal {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  gap: var(--espaco-lg);
+  min-width: 0;
 }
 
 .textos {
@@ -10,29 +19,49 @@
   min-width: 0;
 }
 
+.contexto {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espaco-sm);
+  margin-bottom: var(--espaco-sm);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--musgo);
+}
+
+.contexto svg {
+  color: var(--salvia);
+}
+
 .titulo {
-  font-size: 26px;
+  font-size: 30px;
   font-weight: 800;
-  line-height: 1.15;
-  letter-spacing: -0.4px;
-  color: var(--cor-section-title);
+  line-height: 1.12;
+  letter-spacing: -0.5px;
+  color: var(--musgo);
   overflow-wrap: anywhere;
 }
 
-.subtitulo {
-  margin-top: 2px;
-  font-size: 15px;
-  color: var(--moss-700);
+/* O coracao acompanha a ultima palavra; nao quebra sozinho na linha de baixo. */
+.coracao {
+  display: inline-block;
+  margin-left: 12px;
+  color: var(--terracota);
+  vertical-align: 0.05em;
 }
 
-@media (min-width: 768px) {
-  .titulo {
-    font-size: 32px;
-  }
+.coracao svg {
+  width: 0.62em;
+  height: 0.62em;
+  stroke-width: 1.8;
+}
 
-  .subtitulo {
-    font-size: 17px;
-  }
+.subtitulo {
+  margin-top: var(--espaco-sm);
+  max-width: 46ch;
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--salvia-texto);
 }
 
 .acoes {
@@ -40,6 +69,47 @@
   flex-shrink: 0;
   align-items: center;
   gap: var(--espaco-md);
+  margin-left: auto;
+}
+
+/* A ilustracao so aparece onde ha espaco: no celular ela empurraria o conteudo. */
+.ilustracao {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .titulo {
+    font-size: 40px;
+  }
+
+  .subtitulo {
+    font-size: 19px;
+  }
+
+  .contexto {
+    font-size: 18px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .ilustracao {
+    display: block;
+    flex-shrink: 0;
+    width: clamp(280px, 30vw, 440px);
+    height: auto;
+    margin: calc(-1 * var(--espaco-lg)) calc(-1 * var(--espaco-md)) calc(-1 * var(--espaco-lg)) 0;
+    pointer-events: none;
+  }
+}
+
+@media (min-width: 1280px) {
+  .titulo {
+    font-size: 48px;
+  }
+
+  .subtitulo {
+    font-size: 21px;
+  }
 }
 
 /* Voltar e sino: redondos, creme, com sombra leve. */
@@ -53,17 +123,20 @@
   padding: 0;
   border: 0;
   border-radius: 50%;
-  background: var(--cor-surface);
+  background: var(--creme-superficie);
   box-shadow: var(--sombra-cartao);
-  color: var(--cor-section-title);
+  color: var(--musgo);
   transition: background-color 0.15s ease;
 }
 
 .botao:hover {
-  background: var(--cor-chip-more);
+  background: var(--pistache);
 }
 
-/* Sem acoes entre o titulo e o sino, o sino nao encosta no titulo. */
+.principal > .botao {
+  margin-top: 4px;
+}
+
 .sino {
-  margin-left: auto;
+  margin-left: 0;
 }

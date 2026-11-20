@@ -41,6 +41,11 @@ export function textoDeTomado(p: { paciente: string; remedio: string; hora: stri
   return `${primeiro(p.paciente)} tomou ${p.remedio} às ${p.hora}.`;
 }
 
+export function textoDaConsulta(p: { paciente: string; quando: string; profissional: string | null }): string {
+  const com = p.profissional ? ` com ${p.profissional}` : '';
+  return `Lembrete: ${primeiro(p.paciente)} tem consulta${com} ${p.quando}.`;
+}
+
 export function textoDeEstoque(p: { paciente: string; remedio: string; restante: string }): string {
   return `O estoque de ${p.remedio} de ${primeiro(p.paciente)} está acabando: restam ${p.restante}.`;
 }
@@ -51,4 +56,5 @@ export const NOMES_DOS_AVISOS = {
   notifyLate: 'avisos de dose atrasada',
   notifyLowStock: 'alerta de estoque baixo',
   notifyTaken: 'confirmação de medicamento tomado',
+  notifyAppointment: 'lembrete das consultas',
 } as const;

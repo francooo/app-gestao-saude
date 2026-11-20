@@ -51,6 +51,7 @@ export default withErrorHandling(async (req: VercelRequest, res: VercelResponse)
     if (body.myRating !== undefined) mudancas.myRating = body.myRating;
     if (body.ratingNote !== undefined) mudancas.ratingNote = body.ratingNote;
     if (body.notes !== undefined) mudancas.notes = body.notes;
+    if (body.isFavorite !== undefined) mudancas.isFavorite = body.isFavorite;
     // null aqui e intencional: e assim que o app remove a foto. Ausente
     // preserva a foto atual, que e o que acontece ao editar so o telefone.
     if (body.photo !== undefined) mudancas.photo = body.photo;

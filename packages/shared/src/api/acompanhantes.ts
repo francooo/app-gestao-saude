@@ -24,13 +24,20 @@ export const acompanhanteSchema = z.object({
   notifyLate: z.boolean(),
   notifyLowStock: z.boolean(),
   notifyTaken: z.boolean(),
+  /** nullish/default: servidor anterior a estes campos nao os manda. */
+  notifyAppointment: z.boolean().default(false),
+  doseLeadMinutes: z.number().default(0),
   active: z.boolean(),
   invitedAt: z.string().nullable(),
 });
 export type Acompanhante = z.infer<typeof acompanhanteSchema>;
 
 /** As quatro permissoes, na ordem em que as telas as mostram. */
-export const PERMISSOES = ['notifyDose', 'notifyLate', 'notifyLowStock', 'notifyTaken'] as const;
+export const PERMISSOES = ['notifyDose', 'notifyLate', 'notifyLowStock', 'notifyTaken', 'notifyAppointment'] as const;
+
+/** Quanto antes da dose o lembrete sai (o servidor aceita so estes). */
+export const ANTECEDENCIAS = [0, 15, 30, 60] as const;
+export type Antecedencia = (typeof ANTECEDENCIAS)[number];
 export type Permissao = (typeof PERMISSOES)[number];
 export type Permissoes = Record<Permissao, boolean>;
 
@@ -53,6 +60,7 @@ export type NovoAcompanhante = {
   phone: string;
   relationship?: string | null;
   active?: boolean;
+  doseLeadMinutes?: Antecedencia;
 } & Partial<Permissoes>;
 
 export type MudancasNoAcompanhante = Partial<Omit<NovoAcompanhante, 'profileId'>>;

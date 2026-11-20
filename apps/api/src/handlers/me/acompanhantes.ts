@@ -51,6 +51,8 @@ function serializar(c: typeof caregivers.$inferSelect, paciente: string) {
     notifyLate: c.notifyLate,
     notifyLowStock: c.notifyLowStock,
     notifyTaken: c.notifyTaken,
+    notifyAppointment: c.notifyAppointment,
+    doseLeadMinutes: c.doseLeadMinutes,
     active: c.active,
     invitedAt: c.invitedAt?.toISOString() ?? null,
   };
@@ -109,6 +111,8 @@ async function criar(req: VercelRequest, res: VercelResponse, userId: string) {
       notifyLate: body.notifyLate ?? true,
       notifyLowStock: body.notifyLowStock ?? true,
       notifyTaken: body.notifyTaken ?? true,
+      notifyAppointment: body.notifyAppointment ?? false,
+      doseLeadMinutes: body.doseLeadMinutes ?? 0,
       active: body.active ?? true,
     })
     .returning();
@@ -175,9 +179,10 @@ async function atualizar(req: VercelRequest, res: VercelResponse, userId: string
     }
     mudancas.phone = telefone;
   }
-  for (const k of ['notifyDose', 'notifyLate', 'notifyLowStock', 'notifyTaken', 'active'] as const) {
+  for (const k of ['notifyDose', 'notifyLate', 'notifyLowStock', 'notifyTaken', 'notifyAppointment', 'active'] as const) {
     if (body[k] !== undefined) mudancas[k] = body[k];
   }
+  if (body.doseLeadMinutes !== undefined) mudancas.doseLeadMinutes = body.doseLeadMinutes;
 
   await salvarFuso(userId, body.fuso);
 

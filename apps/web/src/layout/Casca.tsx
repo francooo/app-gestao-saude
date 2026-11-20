@@ -1,13 +1,14 @@
-import { Link, NavLink, Outlet, useLocation } from 'react-router';
+import { NavLink, Outlet, useLocation } from 'react-router';
 
-import ramo from '@/imagens/folhas/ramo-canto.png';
 import { AvisosProvider } from '@/lib/avisos';
+import { PessoaAtivaProvider } from '@/lib/pessoaAtiva';
 import { Icone } from '@/ui/Icone';
-import { Logo } from '@/ui/Logo';
+import { Sino } from '@/ui/ScreenHeader';
+import { SeletorDeMembros } from '@/ui/SeletorDeMembros';
 
 import estilos from './Casca.module.css';
 
-/** As cinco areas, na ordem do menu das telas de referencia. */
+/** As cinco areas, na ordem do cabecalho dos mocks. */
 const AREAS = [
   { para: '/inicio', rotulo: 'Início', icone: 'home' },
   { para: '/remedios', rotulo: 'Remédios', icone: 'mci:pill' },
@@ -26,46 +27,55 @@ function mostraBarra(caminho: string): boolean {
 }
 
 /**
- * Moldura da area logada.
+ * Moldura da area logada (repaginacao Organic Contemporary).
  *
- * - Tela larga: painel lateral de cima a baixo, com a marca e as cinco areas.
- * - Tablet: o mesmo painel, recolhido em icones.
- * - Celular: a barra de abas embaixo.
+ * - Computador: cabecalho horizontal fino, sem logo e sem menu lateral. As
+ *   cinco areas a esquerda (a atual numa capsula pistache); a direita o
+ *   seletor de membros e o sino de avisos.
+ * - Tablet: o mesmo cabecalho, com icones no lugar dos rotulos e so os
+ *   avatares no seletor.
+ * - Celular: a barra de abas flutuante embaixo, e no topo uma fileira rolavel
+ *   com os membros e o sino.
  *
- * E uma lista de links so; o CSS decide a forma. Os avisos nao estao no menu:
- * o sino mora no cabecalho de cada tela (ui/ScreenHeader).
+ * O membro escolhido vale para o site inteiro (lib/pessoaAtiva).
  */
 export function Casca() {
   const { pathname } = useLocation();
 
   return (
-    // Os avisos sao calculados uma vez aqui e lidos pelo sino de cada tela.
+    // Os avisos sao calculados uma vez aqui e lidos pelo sino.
     <AvisosProvider>
-      <div className={estilos.casca} data-sem-barra={mostraBarra(pathname) ? undefined : ''}>
-        <nav className={estilos.menu} aria-label="Áreas do site">
-          <Link to="/inicio" className={estilos.marca} aria-label="Família Saúde, ir para o início">
-            <Logo tamanho={52} className={estilos.marcaCompleta} />
-            <Logo formato="simbolo" tamanho={44} className={estilos.marcaRecolhida} />
-          </Link>
+      <PessoaAtivaProvider>
+        <div className={estilos.casca} data-sem-barra={mostraBarra(pathname) ? undefined : ''}>
+          <header className={estilos.cabecalho}>
+            <nav className={estilos.menu} aria-label="Áreas do site">
+              <ul className={estilos.areas}>
+                {AREAS.map(({ para, rotulo, icone }) => (
+                  <li key={para}>
+                    <NavLink to={para} className={estilos.item} title={rotulo}>
+                      <Icone nome={icone} size={22} />
+                      <span className={estilos.rotulo}>{rotulo}</span>
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
+            </nav>
 
-          <ul className={estilos.areas}>
-            {AREAS.map(({ para, rotulo, icone }) => (
-              <li key={para}>
-                <NavLink to={para} className={estilos.item} title={rotulo}>
-                  <Icone nome={icone} size={24} />
-                  <span className={estilos.rotulo}>{rotulo}</span>
-                </NavLink>
-              </li>
-            ))}
-          </ul>
+            <div className={estilos.membrosLargo}>
+              <SeletorDeMembros formato="cabecalho" />
+            </div>
+            <div className={estilos.membrosFileira}>
+              <SeletorDeMembros formato="fileira" />
+            </div>
 
-          <img src={ramo} alt="" className={estilos.ramo} />
-        </nav>
+            {pathname !== '/notificacoes' ? <Sino className={estilos.sino} /> : null}
+          </header>
 
-        <div className={estilos.conteudo}>
-          <Outlet />
+          <div className={estilos.conteudo}>
+            <Outlet />
+          </div>
         </div>
-      </div>
+      </PessoaAtivaProvider>
     </AvisosProvider>
   );
 }

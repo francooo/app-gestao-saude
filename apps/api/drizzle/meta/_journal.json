@@ -155,6 +155,13 @@
       "when": 1794831956285,
       "tag": "0021_rainy_secret_warriors",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1795136101103,
+      "tag": "0022_amusing_warstar",
+      "breakpoints": true
     }
   ]
 }

@@ -1,301 +1,255 @@
-import type { Professional, Profile } from '@gestao/shared/api/health';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ApiRequestError } from '@gestao/shared/api/client';
+import { contaApi } from '@gestao/shared/api/conta';
+import { healthApi, type Profile } from '@gestao/shared/api/health';
 import { resumoDoPlano } from '@gestao/shared/lib/plano';
-import { useState } from 'react';
+import { formatarTelefone, telefoneParaExibir } from '@gestao/shared/lib/telefone';
+import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router';
 
-import { usePerfis, usePlano, useTodosOsMedicos } from '@/api/consultas';
+import { CHAVES, usePerfis, usePlano } from '@/api/consultas';
+import { mensagemDoErro } from '@/api/doses';
 import { useAuth } from '@/auth/AuthProvider';
-import { SettingsGroup, SettingsRow } from '@/ui/Ajustes';
 import { Avatar } from '@/ui/Avatar';
 import botoes from '@/ui/botoes.module.css';
 import { useDialogos } from '@/ui/Dialogo';
+import { FormField } from '@/ui/FormField';
 import { Icone } from '@/ui/Icone';
-import { IconTile } from '@/ui/IconTile';
 import { Pagina } from '@/ui/Pagina';
+import { PrimaryButton } from '@/ui/PrimaryButton';
 import { ScreenHeader } from '@/ui/ScreenHeader';
-import { SectionHeader } from '@/ui/SectionHeader';
 import { SurfaceCard } from '@/ui/SurfaceCard';
 
 import estilos from './Ajustes.module.css';
 
 /**
- * Paleta das linhas. A rotacao verde-ambar-terracota e cadencia visual, nao
- * semantica: o ambar aqui e cor de categoria, e o sinal de "tem coisa para
- * fazer" continua reservado aos botoes.
+ * Ajustes da conta (mock 06 da repaginacao): o menu de secoes a esquerda e o
+ * painel "Perfil e dados pessoais" a direita.
+ *
+ * As outras secoes ja tem tela propria (e-mail e senha, WhatsApp, privacidade,
+ * assinatura, familia); o menu leva ate elas. So o perfil mora aqui, porque e
+ * curto: nome, e-mail (so leitura — trocar pede a senha) e telefone.
  */
-const VERDE = { fundo: 'var(--cor-pill-tablet)', traco: 'var(--cor-section-title)' } as const;
-const AMBAR = { fundo: 'var(--cor-tile-sun)', traco: 'var(--cor-surface)' } as const;
-const TERRACOTA = { fundo: 'var(--cor-terracotta)', traco: 'var(--cor-surface)' } as const;
-
 export function Ajustes() {
   const { user, signOut } = useAuth();
   const { confirmar } = useDialogos();
   const { plano } = usePlano();
   const perfis = usePerfis();
-  const medicos = useTodosOsMedicos();
   const [saindo, setSaindo] = useState(false);
 
   const lista = perfis.data ?? [];
   const titular = lista.find((p) => p.isAccountHolder) ?? lista[0] ?? null;
-  const dadosPessoais = titular ? `/membro/${titular.id}?origem=ajustes` : undefined;
 
   async function sair() {
-    // Confirmar algo que nao destroi nada tem motivo: num computador da
-    // familia, sair sem querer tranca os horarios de remedio de todo mundo ate
-    // alguem lembrar a senha.
-    const confirmou = await confirmar(
-      'Sair da conta?',
-      'Você vai precisar entrar de novo com seu e-mail e senha.',
-      'Sair',
-    );
+    const confirmou = await confirmar('Sair da conta?', 'Você vai precisar entrar de novo com seu e-mail e senha.', 'Sair');
     if (!confirmou) return;
     setSaindo(true);
     await signOut();
   }
 
+  const MENU = [
+    { para: null, icone: 'user', rotulo: 'Perfil e dados pessoais' },
+    { para: '/conta/whatsapp', icone: 'bell', rotulo: 'Notificações e WhatsApp' },
+    { para: '/conta/acesso', icone: 'mail', rotulo: 'E-mail e senha', valor: user?.email },
+    { para: '/conta/privacidade', icone: 'lock', rotulo: 'Privacidade e segurança' },
+    { para: '/conta/assinatura', icone: 'mci:star-four-points', rotulo: 'Assinatura', valor: resumoDoPlano(plano) },
+    { para: '/conta/familia', icone: 'users', rotulo: 'Membros da família', valor: textoDeMembros(lista) },
+    { para: '/relatorio', icone: 'file-text', rotulo: 'Relatório para o médico' },
+  ];
+
   return (
     <Pagina area="settings" largura="larga">
-      <ScreenHeader title="Ajustes" subtitle="Sua conta, a família e as preferências" />
+      <ScreenHeader
+        title="Ajustes da conta"
+        subtitle="Gerencie seus dados, preferências e a segurança da sua conta."
+        contexto={false}
+      />
 
       <div className={estilos.colunas}>
-        <div className={estilos.coluna}>
-          <CartaoDoTitular
-            titular={titular}
-            carregando={perfis.isPending}
-            editar={dadosPessoais}
-          />
+        <SurfaceCard className={estilos.menu}>
+          <nav aria-label="Seções dos ajustes">
+            <ul className={estilos.menuLista}>
+              {MENU.map((item) => (
+                <li key={item.rotulo}>
+                  {item.para ? (
+                    <Link to={item.para} className={estilos.menuItem}>
+                      <Icone nome={item.icone} size={24} />
+                      <span className={estilos.menuTextos}>
+                        <span>{item.rotulo}</span>
+                        {item.valor ? <span className={estilos.menuValor}>{item.valor}</span> : null}
+                      </span>
+                      <Icone nome="chevron-right" size={20} />
+                    </Link>
+                  ) : (
+                    <span className={estilos.menuItem} aria-current="page">
+                      <Icone nome={item.icone} size={24} />
+                      <span className={estilos.menuTextos}>
+                        <span>{item.rotulo}</span>
+                      </span>
+                      <Icone nome="chevron-right" size={20} />
+                    </span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </SurfaceCard>
 
-          <section className={estilos.secao}>
-            {/* Segunda linha so onde ela carrega ESTADO (o e-mail, quantas pessoas). */}
-            <SectionHeader title="Minha conta" />
-            <SettingsGroup>
-              <SettingsRow
-                marcador={<IconTile icone="user" {...VERDE} />}
-                rotulo="Dados pessoais"
-                para={dadosPessoais}
-                desabilitado={!titular}
-              />
-              <SettingsRow
-                marcador={<IconTile icone="mail" {...AMBAR} />}
-                rotulo="E-mail e senha"
-                valor={user?.email}
-                reservarValor
-                para="/conta/acesso"
-              />
-              <SettingsRow
-                marcador={<IconTile icone="users" {...TERRACOTA} />}
-                rotulo="Membros da família"
-                valor={textoDeMembros(lista)}
-                reservarValor
-                para="/conta/familia"
-              />
-              <SettingsRow
-                marcador={<IconTile icone="mci:star-four-points" {...VERDE} />}
-                rotulo="Assinatura"
-                valor={resumoDoPlano(plano)}
-                reservarValor
-                para="/conta/assinatura"
-              />
-            </SettingsGroup>
-          </section>
-        </div>
-
-        <div className={estilos.coluna}>
-          <section className={estilos.secaoDoTopo}>
-            <SectionHeader title="Profissionais vinculados" />
-            <Profissionais
-              medicos={medicos.data ?? []}
-              carregando={medicos.isPending}
-              erro={medicos.isError}
-            />
-          </section>
-
-          <section className={estilos.secao}>
-            <SectionHeader title="Preferências" />
-            <SettingsGroup>
-              <SettingsRow
-                marcador={<IconTile icone="file-text" {...AMBAR} />}
-                rotulo="Relatório para o médico"
-                valor="Remédios, doses e sintomas em PDF"
-                para="/relatorio"
-              />
-              <SettingsRow
-                marcador={<IconTile icone="mci:whatsapp" {...VERDE} />}
-                rotulo="Lembretes por WhatsApp"
-                para="/conta/whatsapp"
-              />
-              <SettingsRow
-                marcador={<IconTile icone="mci:shield-check-outline" {...TERRACOTA} />}
-                rotulo="Privacidade e segurança"
-                para="/conta/privacidade"
-              />
-            </SettingsGroup>
-
-            {/* No aplicativo esta secao tem os interruptores de notificacao do
-                aparelho. O navegador nao agenda alarme: em vez de interruptores
-                que nao fariam nada, a tela diz onde os lembretes tocam. */}
-            <p className={estilos.nota}>
-              <Icone nome="bell" size={16} />
-              <span>
-                Os lembretes de dose e de consulta tocam no aplicativo do celular. Aqui no site, o
-                que precisa de atenção aparece em <Link to="/notificacoes">Avisos</Link>.
-              </span>
-            </p>
-          </section>
-        </div>
+        <SurfaceCard className={estilos.painel}>
+          <PerfilDaConta titular={titular} />
+          <div className={estilos.rodape}>
+            <button
+              type="button"
+              className={`${botoes.contorno} ${estilos.sair}`}
+              onClick={() => void sair()}
+              disabled={saindo}
+            >
+              {saindo ? <span className={botoes.girando} aria-label="Saindo" /> : <Icone nome="log-out" size={20} />}
+              Sair da conta
+            </button>
+          </div>
+        </SurfaceCard>
       </div>
-
-      {/* Sair e contornado verde, largura contida, por ULTIMO: nao e linha com
-          seta (as setas desta tela tem destino) nem ambar (que e pendencia). */}
-      <button
-        type="button"
-        className={`${botoes.contorno} ${estilos.sair}`}
-        onClick={() => void sair()}
-        disabled={saindo}
-      >
-        {saindo ? (
-          <span className={botoes.girando} aria-label="Saindo" />
-        ) : (
-          <>
-            <Icone nome="log-out" size={18} />
-            Sair
-          </>
-        )}
-      </button>
     </Pagina>
   );
 }
 
-function CartaoDoTitular({
-  titular,
-  carregando,
-  editar,
-}: {
-  titular: Profile | null;
-  carregando: boolean;
-  editar: string | undefined;
-}) {
-  if (carregando && !titular) {
-    return (
-      <SurfaceCard className={estilos.titular}>
-        <span className={estilos.esqueletoAvatar} />
-        <span className={estilos.titularTextos}>
-          <span className={estilos.esqueletoBarra} style={{ width: 150 }} />
-          <span className={estilos.esqueletoBarra} style={{ width: 90, height: 12, marginTop: 8 }} />
-        </span>
-      </SurfaceCard>
-    );
-  }
+/** O painel de perfil: foto do titular, nome, e-mail e telefone. */
+function PerfilDaConta({ titular }: { titular: Profile | null }) {
+  const queryClient = useQueryClient();
+  const conta = useQuery({ queryKey: CHAVES.conta, queryFn: () => contaApi.perfil(), staleTime: 5 * 60_000 });
+  const u = conta.data?.user;
 
-  // O cartao le do PERFIL titular, e nao da conta: a foto so existe no perfil,
-  // e nome de um lugar com foto de outro acabaria divergindo.
-  const nome = titular?.fullName ?? 'Minha conta';
+  const [nome, setNome] = useState('');
+  const [telefone, setTelefone] = useState('');
+  const [preenchido, setPreenchido] = useState(false);
+  const [erros, setErros] = useState<Record<string, string>>({});
+  const [salvando, setSalvando] = useState(false);
+  const [resultado, setResultado] = useState<{ ok: boolean; texto: string } | null>(null);
 
-  return (
-    <SurfaceCard className={estilos.titular}>
-      <Avatar
-        nome={nome}
-        photo={titular?.photo}
-        color={titular?.avatarColor ?? undefined}
-        size={64}
-      />
-      <div className={estilos.titularTextos}>
-        <p className={estilos.titularNome}>{nome}</p>
-        <p className={estilos.titularPapel}>
-          {titular ? 'Conta principal' : 'Não consegui carregar seus dados'}
-        </p>
-      </div>
-      {editar ? (
-        <Link to={editar} className={estilos.editar} aria-label="Editar meus dados pessoais">
-          <Icone nome="edit" size={20} />
-        </Link>
-      ) : null}
-    </SurfaceCard>
-  );
-}
+  // Preenche UMA vez: uma nova busca nao passa por cima da digitacao.
+  useEffect(() => {
+    if (preenchido || !u) return;
+    setPreenchido(true);
+    setNome(titular?.fullName ?? u.fullName ?? '');
+    setTelefone(u.phone ? telefoneParaExibir(u.phone) : '');
+  }, [u, titular, preenchido]);
 
-function Profissionais({
-  medicos,
-  carregando,
-  erro,
-}: {
-  medicos: Professional[];
-  carregando: boolean;
-  erro: boolean;
-}) {
-  if (carregando && medicos.length === 0) {
-    return (
-      <div className={estilos.medicos}>
-        {[0, 1].map((i) => (
-          <SurfaceCard key={i} className={estilos.medico}>
-            <span className={estilos.esqueletoAvatar} style={{ width: 52, height: 52 }} />
-            <span className={estilos.esqueletoBarra} style={{ flex: 1, marginLeft: 12 }} />
-          </SurfaceCard>
-        ))}
-      </div>
-    );
-  }
+  const nomeAtual = titular?.fullName ?? u?.fullName ?? '';
+  const telefoneAtual = u?.phone ? telefoneParaExibir(u.phone) : '';
+  const mudou = preenchido && (nome.trim() !== nomeAtual || telefone.trim() !== telefoneAtual);
 
-  // O vazio ocupa espaco AQUI porque ele mesmo oferece a acao que o preenche.
-  if (medicos.length === 0 && !erro) {
-    return (
-      <SurfaceCard className={estilos.vazio}>
-        <IconTile icone="user-plus" size={54} {...VERDE} />
-        <p className={estilos.vazioTitulo}>Nenhum médico cadastrado</p>
-        <p className={estilos.vazioAjuda}>
-          Cadastre quem acompanha a família para agendar consultas e vincular receitas.
-        </p>
-        <Link to="/medico/novo" className={`${botoes.verde} ${botoes.largo} ${estilos.vazioBotao}`}>
-          <Icone nome="plus" size={18} />
-          Cadastrar médico
-        </Link>
-      </SurfaceCard>
-    );
+  async function salvar(e: FormEvent) {
+    e.preventDefault();
+    setErros({});
+    setResultado(null);
+    if (nome.trim().length < 2) {
+      setErros({ fullName: 'Informe o nome' });
+      return;
+    }
+    setSalvando(true);
+    try {
+      // O nome vale para a conta E para a ficha do titular: e o mesmo nome em
+      // todo o site (saudacao, seletor de membros, relatorio).
+      await contaApi.atualizarPerfil({ fullName: nome.trim(), phone: telefone.trim() || null });
+      if (titular && nome.trim() !== titular.fullName) {
+        await healthApi.updateProfile(titular.id, { fullName: nome.trim() });
+      }
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: CHAVES.conta }),
+        queryClient.invalidateQueries({ queryKey: CHAVES.perfis }),
+      ]);
+      setPreenchido(false);
+      setResultado({ ok: true, texto: 'Alterações salvas.' });
+    } catch (erro) {
+      if (erro instanceof ApiRequestError && erro.fields) setErros(erro.fields);
+      setResultado({ ok: false, texto: mensagemDoErro(erro) });
+    } finally {
+      setSalvando(false);
+    }
   }
 
   return (
-    <>
-      {medicos.length > 0 ? (
-        <div className={estilos.medicos}>
-          {medicos.slice(0, 2).map((m) => (
+    <form onSubmit={(e) => void salvar(e)} noValidate>
+      <div className={estilos.perfilTopo}>
+        <div className={estilos.foto}>
+          <Avatar
+            nome={nomeAtual || 'Você'}
+            color={titular?.avatarColor ?? undefined}
+            photo={titular?.photo ?? undefined}
+            size={128}
+          />
+          {titular ? (
             <Link
-              key={m.id}
-              to={`/medico/${m.id}`}
-              className={estilos.medico}
-              aria-label={`${m.name}, ${m.specialty ?? 'sem especialidade'}`}
+              to={`/membro/${titular.id}?origem=ajustes`}
+              className={estilos.trocarFoto}
+              aria-label="Trocar a foto e os dados de saúde do titular"
+              title="Trocar foto"
             >
-              <Avatar nome={m.name} photo={m.photo} size={52} />
-              <span className={estilos.medicoTextos}>
-                <span className={estilos.medicoNome}>{m.name}</span>
-                {m.specialty ? (
-                  <span className={estilos.medicoEspecialidade}>{m.specialty}</span>
-                ) : null}
-              </span>
+              <Icone nome="edit-2" size={18} />
             </Link>
-          ))}
+          ) : null}
         </div>
-      ) : (
-        <SurfaceCard className={estilos.vazio}>
-          <Icone nome="alert-circle" size={22} color="var(--cor-text-error)" />
-          <p className={estilos.vazioAjuda}>Não consegui carregar os médicos agora.</p>
-        </SurfaceCard>
-      )}
+        <div>
+          <h2 className={estilos.perfilTitulo}>Perfil e dados pessoais</h2>
+          <p className={estilos.perfilTexto}>
+            Mantenha suas informações sempre atualizadas para uma melhor experiência no Família Saúde.
+          </p>
+        </div>
+      </div>
 
-      {/* A linha permanece mesmo com a lista falhando: gerenciar nao depende de listar. */}
-      <SettingsGroup className={estilos.gerenciar}>
-        <SettingsRow
-          marcador={<IconTile icone="user-plus" {...VERDE} />}
-          rotulo="Gerenciar médicos"
-          valor={medicos.length > 0 ? `${medicos.length} cadastrados` : undefined}
-          reservarValor
-          para="/medicos"
+      <div className={estilos.campos}>
+        <FormField
+          label="Nome"
+          value={nome}
+          onChangeText={(v) => {
+            setNome(v);
+            setErros((e) => ({ ...e, fullName: '' }));
+            setResultado(null);
+          }}
+          error={erros.fullName || undefined}
+          maxLength={120}
+          readOnly={salvando}
+          autoComplete="name"
+          className={estilos.campoInteiro}
         />
-      </SettingsGroup>
-    </>
+        <div className={estilos.campoComLink}>
+          <FormField label="E-mail" value={u?.email ?? ''} onChangeText={() => undefined} readOnly hint="Para trocar, confirme sua senha." />
+          <Link to="/conta/acesso" className={estilos.linkDoCampo}>
+            Alterar e-mail
+          </Link>
+        </div>
+        <FormField
+          label="Telefone"
+          value={telefone}
+          onChangeText={(v) => {
+            setTelefone(formatarTelefone(v));
+            setErros((e) => ({ ...e, phone: '' }));
+            setResultado(null);
+          }}
+          placeholder="(11) 98765-4321"
+          type="tel"
+          inputMode="tel"
+          maxLength={16}
+          error={erros.phone || undefined}
+          hint="Opcional. Para contato; não é usado para entrar."
+          readOnly={salvando}
+          autoComplete="tel"
+        />
+      </div>
+
+      {resultado ? (
+        <p className={estilos.resultado} data-erro={resultado.ok ? undefined : ''} role={resultado.ok ? 'status' : 'alert'}>
+          {resultado.texto}
+        </p>
+      ) : null}
+
+      <PrimaryButton title="Salvar alterações" tom="terracota" type="submit" loading={salvando} disabled={!mudou} className={estilos.salvar} />
+    </form>
   );
 }
 
 function textoDeMembros(perfis: Profile[]): string | undefined {
   if (perfis.length === 0) return undefined;
-  return perfis.length === 1 ? 'Só você' : `${perfis.length} pessoas`;
+  return perfis.length === 1 ? '1 pessoa' : `${perfis.length} pessoas`;
 }
